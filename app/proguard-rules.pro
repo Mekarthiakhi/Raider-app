@@ -1,0 +1,4 @@
+-dontwarn org.apache.**
+-dontwarn javax.xml.**
+-keep class com.fleettrack.app.data.local.entity.** { *; }
+-keep class com.fleettrack.app.data.model.** { *; }

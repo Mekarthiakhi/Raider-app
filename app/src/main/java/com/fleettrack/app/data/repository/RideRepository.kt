@@ -1,0 +1,121 @@
+package com.fleettrack.app.data.repository
+
+import com.fleettrack.app.data.local.dao.RideDao
+import com.fleettrack.app.data.local.dao.RideEventDao
+import com.fleettrack.app.data.local.entity.RideEntity
+import com.fleettrack.app.data.local.entity.RideEventEntity
+import com.fleettrack.app.data.model.RideSummary
+import com.fleettrack.app.data.model.SyncStatus
+import com.fleettrack.app.data.remote.RideRemoteDataSource
+import com.fleettrack.app.di.IoDispatcher
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+import kotlinx.datetime.Instant
+import javax.inject.Inject
+import javax.inject.Singleton
+
+interface RideRepository {
+    fun getTodayRides(startOfDay: Instant): Flow<List<RideEntity>>
+    fun getRecentRides(limit: Int = 50): Flow<List<RideEntity>>
+    fun getNeedsReviewRides(): Flow<List<RideEntity>>
+    fun getTodaySummary(startOfDay: Instant): Flow<RideSummary>
+    fun getTodaySummaryForVehicle(vehicleId: Long, startOfDay: Instant): Flow<RideSummary>
+    fun getLatestRideForVehicle(vehicleId: Long): Flow<RideEntity?>
+    fun getRidesByVehicle(vehicleId: Long): Flow<List<RideEntity>>
+    suspend fun getRideById(id: Long): RideEntity?
+    suspend fun getRideByRideKey(rideKey: String): RideEntity?
+    suspend fun insertRide(ride: RideEntity): Long
+    suspend fun insertOrIgnoreRide(ride: RideEntity): Long
+    suspend fun updateRide(ride: RideEntity)
+    suspend fun recordEvent(event: RideEventEntity): Long
+    suspend fun resolveReview(id: Long, fare: Double?, distanceKm: Double?, note: String?)
+    suspend fun syncPendingRides(): Result<Int>
+}
+
+@Singleton
+class RideRepositoryImpl @Inject constructor(
+    private val rideDao: RideDao,
+    private val rideEventDao: RideEventDao,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+) : RideRepository {
+
+    override fun getTodayRides(startOfDay: Instant): Flow<List<RideEntity>> =
+        rideDao.getTodayRides(startOfDay)
+
+    override fun getRecentRides(limit: Int): Flow<List<RideEntity>> =
+        rideDao.getRecentRides(limit)
+
+    override fun getNeedsReviewRides(): Flow<List<RideEntity>> =
+        rideDao.getNeedsReview()
+
+    override fun getTodaySummary(startOfDay: Instant): Flow<RideSummary> =
+        rideDao.getTodaySummary(startOfDay)
+
+    override fun getTodaySummaryForVehicle(vehicleId: Long, startOfDay: Instant): Flow<RideSummary> =
+        rideDao.getTodaySummaryForVehicle(vehicleId, startOfDay)
+
+    override fun getLatestRideForVehicle(vehicleId: Long): Flow<RideEntity?> =
+        rideDao.getLatestRideForVehicle(vehicleId)
+
+    override fun getRidesByVehicle(vehicleId: Long): Flow<List<RideEntity>> =
+        rideDao.getByVehicleId(vehicleId)
+
+    override suspend fun getRideById(id: Long): RideEntity? =
+        withContext(ioDispatcher) {
+            rideDao.getById(id)
+        }
+
+    override suspend fun getRideByRideKey(rideKey: String): RideEntity? =
+        withContext(ioDispatcher) {
+            rideDao.getByRideKey(rideKey)
+        }
+
+    override suspend fun insertRide(ride: RideEntity): Long =
+        withContext(ioDispatcher) {
+            rideDao.insert(ride)
+        }
+
+    override suspend fun insertOrIgnoreRide(ride: RideEntity): Long =
+        withContext(ioDispatcher) {
+            rideDao.insertOrIgnore(ride)
+        }
+
+    override suspend fun updateRide(ride: RideEntity) =
+        withContext(ioDispatcher) {
+            rideDao.update(ride)
+        }
+
+    override suspend fun recordEvent(event: RideEventEntity): Long =
+        withContext(ioDispatcher) {
+            rideEventDao.insert(event)
+        }
+
+    override suspend fun resolveReview(
+        id: Long,
+        fare: Double?,
+        distanceKm: Double?,
+        note: String?
+    ) = withContext(ioDispatcher) {
+        rideDao.resolveReview(id, fare, distanceKm, note)
+    }
+
+    override suspend fun syncPendingRides(): Result<Int> =
+        withContext(ioDispatcher) {
+            try {
+                val pending = rideDao.getPendingSync()
+                for (ride in pending) {
+                    // Mark as synced for now; in Stage 4 this connects to Supabase Postgrest
+                    rideDao.updateSyncStatus(
+                        id = ride.id,
+                        syncStatus = SyncStatus.SYNCED,
+                        supabaseId = "local_sync_${ride.id}"
+                    )
+                }
+                Result.success(pending.size)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+}
+
