@@ -109,3 +109,4 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - **Ride Apps Only**: Telemetry runs exclusively when Rapido, Uber, or Ola driver packages are focused.
 - **Strictly No Surveillance**: Zero access to SMS, contacts, personal chats, calls, camera, or personal gallery.
 - **Consent Driven**: Drivers are shown an in-app transparency disclosure with consent timestamps recorded on the backend.
+
