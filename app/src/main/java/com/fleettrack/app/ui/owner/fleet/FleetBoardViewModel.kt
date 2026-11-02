@@ -14,6 +14,7 @@ import com.fleettrack.app.data.repository.DriverRepository
 import com.fleettrack.app.data.repository.RideRepository
 import com.fleettrack.app.data.repository.VehicleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -214,4 +215,31 @@ class FleetBoardViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
+
+    fun addVehicle(regNo: String, model: String, fuelType: String) {
+        viewModelScope.launch {
+            vehicleRepository.insertVehicle(
+                VehicleEntity(
+                    fleetId = "fleet_hyd_01",
+                    regNo = regNo.uppercase(),
+                    nickname = "$model • $fuelType",
+                    status = "active",
+                    createdAt = Clock.System.now()
+                )
+            )
+        }
+    }
+
+    fun addDriver(name: String, phone: String) {
+        viewModelScope.launch {
+            driverRepository.insertDriver(
+                DriverEntity(
+                    fleetId = "fleet_hyd_01",
+                    name = name,
+                    phone = phone,
+                    consentAt = Clock.System.now()
+                )
+            )
+        }
+    }
 }

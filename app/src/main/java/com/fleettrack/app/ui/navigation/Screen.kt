@@ -9,14 +9,26 @@ sealed class Screen(val route: String) {
     data object SetupWizard : Screen("driver_setup")
     data object PrivacyConsent : Screen("driver_privacy")
 
-    // Fleet Owner Routes
-    data object FleetBoard : Screen("owner_fleet_board")
-    data object LiveFeed : Screen("owner_live_feed")
+    // Fleet Owner Main Tabs (matching Fleet Manager Design)
+    data object Dashboard : Screen("owner_dashboard")
+    data object Cars : Screen("owner_cars")
+    data object Trips : Screen("owner_trips")
+    data object Earnings : Screen("owner_earnings")
+    data object More : Screen("owner_more")
+
+    // Sub-screens
     data object VehicleDetail : Screen("owner_vehicle_detail/{vehicleId}") {
         fun createRoute(vehicleId: Long) = "owner_vehicle_detail/$vehicleId"
     }
+    data object Drivers : Screen("owner_drivers")
+    data object Maintenance : Screen("owner_maintenance")
+    data object Expenses : Screen("owner_expenses")
+    data object Settings : Screen("owner_settings")
     data object ReviewQueue : Screen("owner_review_queue")
     data object Reports : Screen("owner_reports")
     data object Alerts : Screen("owner_alerts")
-}
 
+    // Backward compatibility aliases
+    val FleetBoard get() = Dashboard
+    val LiveFeed get() = Trips
+}

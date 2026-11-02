@@ -1,34 +1,34 @@
 package com.fleettrack.app.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-private val DarkColorScheme = darkColorScheme(
-    primary = EmeraldAccent,
-    onPrimary = BackgroundDark,
-    primaryContainer = EmeraldAccentContainer,
-    onPrimaryContainer = EmeraldAccentLight,
+private val FleetLightColorScheme = lightColorScheme(
+    primary = PrimaryPurple,
+    onPrimary = SurfaceWhite,
+    primaryContainer = PrimaryPurpleContainer,
+    onPrimaryContainer = PrimaryPurpleDark,
 
-    secondary = EarningsGold,
-    onSecondary = BackgroundDark,
-    secondaryContainer = EarningsGoldContainer,
-    onSecondaryContainer = EarningsGoldLight,
+    secondary = ActiveGreen,
+    onSecondary = SurfaceWhite,
+    secondaryContainer = ActiveGreenBg,
+    onSecondaryContainer = ActiveGreen,
 
-    error = AlertRed,
-    onError = BackgroundDark,
-    errorContainer = AlertRedContainer,
-    onErrorContainer = AlertRed,
+    error = InactiveRed,
+    onError = SurfaceWhite,
+    errorContainer = InactiveRedBg,
+    onErrorContainer = InactiveRed,
 
-    background = BackgroundDark,
-    onBackground = TextPrimary,
+    background = BackgroundLight,
+    onBackground = TextDark,
 
-    surface = SurfaceDark,
-    onSurface = TextPrimary,
-    surfaceVariant = SurfaceElevatedDark,
-    onSurfaceVariant = TextSecondary,
+    surface = SurfaceWhite,
+    onSurface = TextDark,
+    surfaceVariant = BackgroundLight,
+    onSurfaceVariant = TextGray,
 
-    outline = SurfaceBorderDark
+    outline = SurfaceBorder
 )
 
 @Composable
@@ -36,10 +36,9 @@ fun FleetTrackTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = FleetLightColorScheme,
         typography = Typography,
         shapes = Shapes,
         content = content
     )
 }
-
