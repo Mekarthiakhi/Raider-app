@@ -33,9 +33,14 @@ val UberDark = Color(0xFF1F1F1F)
 val OlaLime = Color(0xFF87C830)
 val OlaLimeContainer = Color(0xFF21330B)
 
+val InDriveGreen = Color(0xFF26CD58)
+val InDriveGreenContainer = Color(0xFF093113)
+
+val NammaYatriBlue = Color(0xFF1E88E5)
+val NammaYatriBlueContainer = Color(0xFF08223D)
+
 // Typography & Content Colors
 val TextPrimary = Color(0xFFE8ECF1)
 val TextSecondary = Color(0xFF8B92A5)
 val TextMuted = Color(0xFF555D71)
 val DividerColor = Color(0xFF1E222F)
-

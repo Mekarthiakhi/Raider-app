@@ -16,6 +16,7 @@ interface VehicleRepository {
     suspend fun getVehicleById(id: Long): VehicleEntity?
     suspend fun getVehicleByRegNo(regNo: String): VehicleEntity?
     suspend fun insertVehicle(vehicle: VehicleEntity): Long
+    suspend fun insertAll(vehicles: List<VehicleEntity>)
     suspend fun updateVehicle(vehicle: VehicleEntity)
     suspend fun deleteVehicle(vehicle: VehicleEntity)
 }
@@ -50,6 +51,11 @@ class VehicleRepositoryImpl @Inject constructor(
             vehicleDao.insert(vehicle)
         }
 
+    override suspend fun insertAll(vehicles: List<VehicleEntity>) =
+        withContext(ioDispatcher) {
+            vehicleDao.insertAll(vehicles)
+        }
+
     override suspend fun updateVehicle(vehicle: VehicleEntity) =
         withContext(ioDispatcher) {
             vehicleDao.update(vehicle)
@@ -60,4 +66,3 @@ class VehicleRepositoryImpl @Inject constructor(
             vehicleDao.delete(vehicle)
         }
 }
-

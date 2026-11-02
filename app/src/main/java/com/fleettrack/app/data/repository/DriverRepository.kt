@@ -15,6 +15,7 @@ interface DriverRepository {
     fun getDriversByFleet(fleetId: String): Flow<List<DriverEntity>>
     suspend fun getDriverById(id: Long): DriverEntity?
     suspend fun insertDriver(driver: DriverEntity): Long
+    suspend fun insertAll(drivers: List<DriverEntity>)
     suspend fun updateDriver(driver: DriverEntity)
     suspend fun updateConsent(id: Long, consentAt: Instant?)
     suspend fun deleteDriver(driver: DriverEntity)
@@ -42,6 +43,11 @@ class DriverRepositoryImpl @Inject constructor(
             driverDao.insert(driver)
         }
 
+    override suspend fun insertAll(drivers: List<DriverEntity>) =
+        withContext(ioDispatcher) {
+            driverDao.insertAll(drivers)
+        }
+
     override suspend fun updateDriver(driver: DriverEntity) =
         withContext(ioDispatcher) {
             driverDao.update(driver)
@@ -57,4 +63,3 @@ class DriverRepositoryImpl @Inject constructor(
             driverDao.delete(driver)
         }
 }
-

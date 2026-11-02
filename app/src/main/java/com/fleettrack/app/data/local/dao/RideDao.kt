@@ -19,6 +19,9 @@ interface RideDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(ride: RideEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(rides: List<RideEntity>)
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertOrIgnore(ride: RideEntity): Long
 
@@ -51,6 +54,12 @@ interface RideDao {
 
     @Query("SELECT * FROM rides WHERE accepted_at >= :startOfDay ORDER BY accepted_at DESC")
     fun getTodayRides(startOfDay: Instant): Flow<List<RideEntity>>
+
+    @Query("SELECT * FROM rides WHERE vehicle_id = :vehicleId AND accepted_at >= :startOfDay ORDER BY accepted_at DESC")
+    fun getTodayRidesForVehicle(vehicleId: Long, startOfDay: Instant): Flow<List<RideEntity>>
+
+    @Query("SELECT * FROM rides WHERE driver_id = :driverId AND accepted_at >= :startOfDay ORDER BY accepted_at DESC")
+    fun getTodayRidesForDriver(driverId: Long, startOfDay: Instant): Flow<List<RideEntity>>
 
     @Query("SELECT * FROM rides ORDER BY accepted_at DESC LIMIT :limit")
     fun getRecentRides(limit: Int = 50): Flow<List<RideEntity>>
@@ -89,6 +98,23 @@ interface RideDao {
     """)
     fun getTodaySummaryForVehicle(vehicleId: Long, startOfDay: Instant): Flow<RideSummary>
 
+    @Query("""
+        SELECT 
+            COUNT(*) as rideCount,
+            COALESCE(SUM(fare), 0.0) as totalFare,
+            COALESCE(SUM(distance_km), 0.0) as totalKm,
+            CASE 
+                WHEN COALESCE(SUM(distance_km), 0.0) > 0 
+                THEN COALESCE(SUM(fare), 0.0) / SUM(distance_km) 
+                ELSE 0.0 
+            END as avgFarePerKm,
+            COALESCE(SUM(duration_min), 0.0) as totalDuration,
+            COUNT(CASE WHEN status = 'CANCELLED' THEN 1 END) as cancelledCount
+        FROM rides 
+        WHERE driver_id = :driverId AND accepted_at >= :startOfDay
+    """)
+    fun getTodaySummaryForDriver(driverId: Long, startOfDay: Instant): Flow<RideSummary>
+
     @Query("SELECT * FROM rides WHERE vehicle_id = :vehicleId ORDER BY accepted_at DESC LIMIT 1")
     fun getLatestRideForVehicle(vehicleId: Long): Flow<RideEntity?>
 
@@ -98,4 +124,3 @@ interface RideDao {
     @Query("UPDATE rides SET needs_review = 0, fare = :fare, distance_km = :distanceKm, review_note = :note WHERE id = :id")
     suspend fun resolveReview(id: Long, fare: Double?, distanceKm: Double?, note: String?)
 }
-

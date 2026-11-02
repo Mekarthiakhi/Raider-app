@@ -17,15 +17,19 @@ import javax.inject.Singleton
 
 interface RideRepository {
     fun getTodayRides(startOfDay: Instant): Flow<List<RideEntity>>
+    fun getTodayRidesForVehicle(vehicleId: Long, startOfDay: Instant): Flow<List<RideEntity>>
+    fun getTodayRidesForDriver(driverId: Long, startOfDay: Instant): Flow<List<RideEntity>>
     fun getRecentRides(limit: Int = 50): Flow<List<RideEntity>>
     fun getNeedsReviewRides(): Flow<List<RideEntity>>
     fun getTodaySummary(startOfDay: Instant): Flow<RideSummary>
     fun getTodaySummaryForVehicle(vehicleId: Long, startOfDay: Instant): Flow<RideSummary>
+    fun getTodaySummaryForDriver(driverId: Long, startOfDay: Instant): Flow<RideSummary>
     fun getLatestRideForVehicle(vehicleId: Long): Flow<RideEntity?>
     fun getRidesByVehicle(vehicleId: Long): Flow<List<RideEntity>>
     suspend fun getRideById(id: Long): RideEntity?
     suspend fun getRideByRideKey(rideKey: String): RideEntity?
     suspend fun insertRide(ride: RideEntity): Long
+    suspend fun insertAllRides(rides: List<RideEntity>)
     suspend fun insertOrIgnoreRide(ride: RideEntity): Long
     suspend fun updateRide(ride: RideEntity)
     suspend fun recordEvent(event: RideEventEntity): Long
@@ -43,6 +47,12 @@ class RideRepositoryImpl @Inject constructor(
     override fun getTodayRides(startOfDay: Instant): Flow<List<RideEntity>> =
         rideDao.getTodayRides(startOfDay)
 
+    override fun getTodayRidesForVehicle(vehicleId: Long, startOfDay: Instant): Flow<List<RideEntity>> =
+        rideDao.getTodayRidesForVehicle(vehicleId, startOfDay)
+
+    override fun getTodayRidesForDriver(driverId: Long, startOfDay: Instant): Flow<List<RideEntity>> =
+        rideDao.getTodayRidesForDriver(driverId, startOfDay)
+
     override fun getRecentRides(limit: Int): Flow<List<RideEntity>> =
         rideDao.getRecentRides(limit)
 
@@ -54,6 +64,9 @@ class RideRepositoryImpl @Inject constructor(
 
     override fun getTodaySummaryForVehicle(vehicleId: Long, startOfDay: Instant): Flow<RideSummary> =
         rideDao.getTodaySummaryForVehicle(vehicleId, startOfDay)
+
+    override fun getTodaySummaryForDriver(driverId: Long, startOfDay: Instant): Flow<RideSummary> =
+        rideDao.getTodaySummaryForDriver(driverId, startOfDay)
 
     override fun getLatestRideForVehicle(vehicleId: Long): Flow<RideEntity?> =
         rideDao.getLatestRideForVehicle(vehicleId)
@@ -74,6 +87,11 @@ class RideRepositoryImpl @Inject constructor(
     override suspend fun insertRide(ride: RideEntity): Long =
         withContext(ioDispatcher) {
             rideDao.insert(ride)
+        }
+
+    override suspend fun insertAllRides(rides: List<RideEntity>) =
+        withContext(ioDispatcher) {
+            rideDao.insertAll(rides)
         }
 
     override suspend fun insertOrIgnoreRide(ride: RideEntity): Long =
@@ -118,4 +136,3 @@ class RideRepositoryImpl @Inject constructor(
             }
         }
 }
-
