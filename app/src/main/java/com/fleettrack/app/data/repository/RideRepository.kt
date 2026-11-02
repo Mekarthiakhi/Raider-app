@@ -26,6 +26,7 @@ interface RideRepository {
     fun getTodaySummaryForDriver(driverId: Long, startOfDay: Instant): Flow<RideSummary>
     fun getLatestRideForVehicle(vehicleId: Long): Flow<RideEntity?>
     fun getRidesByVehicle(vehicleId: Long): Flow<List<RideEntity>>
+    fun getRidesByDriver(driverId: Long): Flow<List<RideEntity>>
     suspend fun getRideById(id: Long): RideEntity?
     suspend fun getRideByRideKey(rideKey: String): RideEntity?
     suspend fun insertRide(ride: RideEntity): Long
@@ -73,6 +74,9 @@ class RideRepositoryImpl @Inject constructor(
 
     override fun getRidesByVehicle(vehicleId: Long): Flow<List<RideEntity>> =
         rideDao.getByVehicleId(vehicleId)
+
+    override fun getRidesByDriver(driverId: Long): Flow<List<RideEntity>> =
+        rideDao.getByDriverId(driverId)
 
     override suspend fun getRideById(id: Long): RideEntity? =
         withContext(ioDispatcher) {

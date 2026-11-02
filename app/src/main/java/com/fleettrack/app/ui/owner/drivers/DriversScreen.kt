@@ -74,6 +74,7 @@ import com.fleettrack.app.ui.theme.TileShape
 @Composable
 fun DriversScreen(
     viewModel: FleetBoardViewModel,
+    onDriverClick: (Long) -> Unit = {},
     onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -230,6 +231,7 @@ fun DriversScreen(
                 items(filteredDrivers, key = { it.driverId }) { driver ->
                     DriverCardItem(
                         driver = driver,
+                        onClick = { onDriverClick(driver.driverId) },
                         onCall = {
                             val intent = Intent(Intent.ACTION_DIAL).apply {
                                 data = Uri.parse("tel:${driver.phone}")
@@ -284,10 +286,12 @@ private fun DriverFilterPill(
 @Composable
 private fun DriverCardItem(
     driver: DriverPerformance,
+    onClick: () -> Unit,
     onCall: () -> Unit
 ) {
     GlassCard(
         modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
         shape = TileShape
     ) {
         Row(
@@ -400,6 +404,11 @@ private fun AddDriverDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var assignedCar by remember { mutableStateOf("TS09 AB 1234") }
+    var shift by remember { mutableStateOf("Day Shift (6 AM - 6 PM)") }
+
+    val carOptions = listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "Unassigned")
+    val shiftOptions = listOf("Day Shift (6 AM - 6 PM)", "Night Shift (6 PM - 6 AM)", "Full Day (24 Hrs)")
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -413,12 +422,12 @@ private fun AddDriverDialog(
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Driver Full Name") },
+                    label = { Text("Driver Full Name *") },
                     placeholder = { Text("e.g. Ramesh Patel") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
@@ -428,12 +437,79 @@ private fun AddDriverDialog(
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
-                    label = { Text("Mobile Number") },
+                    label = { Text("Mobile Number *") },
                     placeholder = { Text("+91 98765 43210") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
                     singleLine = true
                 )
+
+                Text(
+                    text = "Assign Daily Car:",
+                    color = TextDark,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    carOptions.take(3).forEach { car ->
+                        val isSelected = assignedCar == car
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(PillShape)
+                                .background(if (isSelected) PrimaryPurple else SurfaceWhite)
+                                .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, PillShape)
+                                .clickable { assignedCar = car }
+                                .padding(vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = car.split(" ").lastOrNull() ?: car,
+                                color = if (isSelected) Color.White else TextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Text(
+                    text = "Assign Shift:",
+                    color = TextDark,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    shiftOptions.forEach { s ->
+                        val isSelected = shift == s
+                        val label = if (s.startsWith("Day")) "Day" else if (s.startsWith("Night")) "Night" else "Full"
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(PillShape)
+                                .background(if (isSelected) PrimaryPurple else SurfaceWhite)
+                                .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, PillShape)
+                                .clickable { shift = s }
+                                .padding(vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                color = if (isSelected) Color.White else TextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
             }
         },
         confirmButton = {

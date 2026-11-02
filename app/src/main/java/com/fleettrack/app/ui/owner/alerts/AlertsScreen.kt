@@ -22,12 +22,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalGasStation
+import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,6 +45,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fleettrack.app.data.local.entity.AlertEntity
 import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.theme.ActiveGreen
 import com.fleettrack.app.ui.theme.ActiveGreenBg
@@ -58,9 +62,10 @@ import com.fleettrack.app.ui.theme.TextDark
 import com.fleettrack.app.ui.theme.TextGray
 import com.fleettrack.app.ui.theme.TextMutedGray
 import com.fleettrack.app.ui.theme.TileShape
+import kotlinx.datetime.Clock
 
-data class NotificationItem(
-    val id: String,
+data class NotificationDisplayItem(
+    val id: Long,
     val title: String,
     val subtitle: String,
     val timeAgo: String,
@@ -79,58 +84,44 @@ fun AlertsScreen(
     val unreadAlerts by viewModel.unreadAlerts.collectAsState()
     var selectedTab by remember { mutableStateOf("All") }
 
-    val notifications = remember {
-        listOf(
-            NotificationItem(
-                id = "1",
-                title = "Service Due",
-                subtitle = "TS09 AB 1234 • in 3 days",
-                timeAgo = "Now",
-                category = "Service",
-                icon = Icons.Default.Build,
-                iconColor = PrimaryPurple,
-                iconBg = PrimaryPurpleContainer
-            ),
-            NotificationItem(
-                id = "2",
-                title = "Insurance Expiry",
-                subtitle = "TS09 EF 9012 • in 18 days",
-                timeAgo = "2h ago",
-                category = "Expiry",
-                icon = Icons.Default.Security,
-                iconColor = ActiveGreen,
-                iconBg = ActiveGreenBg
-            ),
-            NotificationItem(
-                id = "3",
-                title = "High Fuel Expense",
-                subtitle = "TS09 CD 5678 • ₹5,400 (Today)",
-                timeAgo = "4h ago",
-                category = "Activity",
-                icon = Icons.Default.LocalGasStation,
-                iconColor = InactiveRed,
-                iconBg = InactiveRedBg
-            ),
-            NotificationItem(
-                id = "4",
-                title = "Earnings Update",
-                subtitle = "Today's earnings: ₹18,420",
-                timeAgo = "6h ago",
-                category = "Activity",
-                icon = Icons.AutoMirrored.Filled.TrendingUp,
-                iconColor = PrimaryPurple,
-                iconBg = MetricPurpleBg
-            ),
-            NotificationItem(
-                id = "5",
-                title = "PUC Expiry Alert",
-                subtitle = "TS09 GH 3456 • in 25 days",
-                timeAgo = "1d ago",
-                category = "Expiry",
-                icon = Icons.Default.Warning,
-                iconColor = InactiveRed,
-                iconBg = InactiveRedBg
-            )
+    val now = Clock.System.now()
+
+    // Map Room entities to Display Items
+    val notifications: List<NotificationDisplayItem> = unreadAlerts.map { alert ->
+        val type = alert.alertType.uppercase()
+        val (category, icon, iconColor, iconBg) = when {
+            type.contains("SERVICE") -> Tuple4("Service", Icons.Default.Build, PrimaryPurple, PrimaryPurpleContainer)
+            type.contains("EXPIRY") || type.contains("INSURANCE") || type.contains("PUC") ->
+                Tuple4("Expiry", Icons.Default.Security, ActiveGreen, ActiveGreenBg)
+            type.contains("FUEL") || type.contains("EXPENSE") ->
+                Tuple4("Activity", Icons.Default.LocalGasStation, InactiveRed, InactiveRedBg)
+            type.contains("EARNING") || type.contains("RIDE") ->
+                Tuple4("Activity", Icons.AutoMirrored.Filled.TrendingUp, PrimaryPurple, MetricPurpleBg)
+            else -> Tuple4("Activity", Icons.Default.Warning, PrimaryPurple, PrimaryPurpleContainer)
+        }
+
+        // Relative time calculation
+        val duration = now - alert.createdAt
+        val timeStr = when {
+            duration.inWholeMinutes < 2 -> "Just now"
+            duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m ago"
+            duration.inWholeHours < 24 -> "${duration.inWholeHours}h ago"
+            else -> "${duration.inWholeDays}d ago"
+        }
+
+        val parts = alert.message.split(":", limit = 2)
+        val title = if (parts.size > 1) parts[0].trim() else "Alert"
+        val subtitle = if (parts.size > 1) parts[1].trim() else alert.message
+
+        NotificationDisplayItem(
+            id = alert.id,
+            title = title,
+            subtitle = subtitle,
+            timeAgo = timeStr,
+            category = category,
+            icon = icon,
+            iconColor = iconColor,
+            iconBg = iconBg
         )
     }
 
@@ -148,29 +139,43 @@ fun AlertsScreen(
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 1. Top Header: "< Notifications"
+        // 1. Top Header: "< Notifications" + Clear All
         Row(
             modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (onBackClick != null) {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = TextDark
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (onBackClick != null) {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = TextDark
+                        )
+                    }
+                }
+                Text(
+                    text = "Notifications",
+                    color = TextDark,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (unreadAlerts.isNotEmpty()) {
+                TextButton(onClick = { viewModel.markAllRead() }) {
+                    Text(
+                        text = "Mark all read",
+                        color = PrimaryPurple,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
-            Text(
-                text = "Notifications",
-                color = TextDark,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // 2. Filter Pills: All | Service | Expiry | Activity
         Row(
@@ -178,7 +183,7 @@ fun AlertsScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             NotificationFilterPill(
-                label = "All",
+                label = "All (${notifications.size})",
                 isSelected = selectedTab == "All",
                 onClick = { selectedTab = "All" }
             )
@@ -201,18 +206,62 @@ fun AlertsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 3. Notification List
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 90.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            items(filteredNotifications, key = { it.id }) { item ->
-                NotificationCardItem(item = item)
+        // 3. Notification List or Empty State
+        if (filteredNotifications.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 90.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryPurpleContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.NotificationsNone,
+                            contentDescription = null,
+                            tint = PrimaryPurple,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = "All Caught Up!",
+                        color = TextDark,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "No unread alerts for $selectedTab",
+                        color = TextGray,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 90.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(filteredNotifications, key = { it.id }) { item ->
+                    NotificationCardItem(
+                        item = item,
+                        onDismiss = { viewModel.markRead(item.id) }
+                    )
+                }
             }
         }
     }
 }
+
+private data class Tuple4<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
 
 @Composable
 private fun NotificationFilterPill(
@@ -230,7 +279,7 @@ private fun NotificationFilterPill(
                 shape = PillShape
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -243,7 +292,10 @@ private fun NotificationFilterPill(
 }
 
 @Composable
-private fun NotificationCardItem(item: NotificationItem) {
+private fun NotificationCardItem(
+    item: NotificationDisplayItem,
+    onDismiss: () -> Unit
+) {
     GlassCard(
         modifier = Modifier.fillMaxWidth(),
         shape = TileShape
@@ -292,12 +344,28 @@ private fun NotificationCardItem(item: NotificationItem) {
                 }
             }
 
-            Text(
-                text = item.timeAgo,
-                color = TextMutedGray,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = item.timeAgo,
+                    color = TextMutedGray,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Mark as read",
+                        tint = TextMutedGray,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
         }
     }
 }

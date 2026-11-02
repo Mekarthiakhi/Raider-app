@@ -19,9 +19,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Warning
@@ -73,6 +76,9 @@ fun DashboardScreen(
     onNavigateToTrips: () -> Unit,
     onNavigateToEarnings: () -> Unit,
     onNavigateToAlerts: () -> Unit,
+    onNavigateToDrivers: () -> Unit = {},
+    onNavigateToExpenses: () -> Unit = {},
+    onNavigateToMaintenance: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val overview by viewModel.overview.collectAsState()
@@ -183,6 +189,7 @@ fun DashboardScreen(
                     .fillMaxWidth()
                     .clip(CardShape)
                     .background(PurpleGradient)
+                    .clickable(onClick = onNavigateToEarnings)
                     .padding(20.dp)
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -281,7 +288,10 @@ fun DashboardScreen(
 
         // 4. Earnings Breakdown Bar Chart Card
         item {
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
+            GlassCard(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onNavigateToEarnings
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -374,7 +384,13 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Uber
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(onClick = onNavigateToTrips)
+                            .padding(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         PlatformChip(platform = Platform.UBER)
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
@@ -402,7 +418,13 @@ fun DashboardScreen(
                     )
 
                     // Rapido
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(onClick = onNavigateToTrips)
+                            .padding(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         PlatformChip(platform = Platform.RAPIDO)
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
@@ -425,11 +447,11 @@ fun DashboardScreen(
             }
         }
 
-        // 6. Quick Action Navigation Row
+        // 6. Quick Action Navigation Row (Matching Mockups)
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 QuickActionButton(
                     label = "Trips",
@@ -438,10 +460,22 @@ fun DashboardScreen(
                     onClick = onNavigateToTrips
                 )
                 QuickActionButton(
-                    label = "Expenses",
-                    icon = Icons.Default.TrendingUp,
+                    label = "Drivers",
+                    icon = Icons.Default.People,
                     modifier = Modifier.weight(1f),
-                    onClick = onNavigateToEarnings
+                    onClick = onNavigateToDrivers
+                )
+                QuickActionButton(
+                    label = "Expenses",
+                    icon = Icons.Default.AccountBalanceWallet,
+                    modifier = Modifier.weight(1f),
+                    onClick = onNavigateToExpenses
+                )
+                QuickActionButton(
+                    label = "Service",
+                    icon = Icons.Default.Build,
+                    modifier = Modifier.weight(1f),
+                    onClick = onNavigateToMaintenance
                 )
                 QuickActionButton(
                     label = "Alerts",

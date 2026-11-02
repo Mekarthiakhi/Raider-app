@@ -1,5 +1,8 @@
 package com.fleettrack.app.ui.owner.cars
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.FilterList
@@ -43,6 +47,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -336,6 +342,13 @@ private fun AddCarDialog(
     var model by remember { mutableStateOf("") }
     var year by remember { mutableStateOf("2024") }
     var fuelType by remember { mutableStateOf("Petrol") }
+    var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedPhotoUri = uri
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -351,30 +364,55 @@ private fun AddCarDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Photo Placeholder
+                // Interactive Photo Picker Container
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(90.dp)
+                        .height(110.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(MetricPurpleBg)
-                        .border(1.dp, SurfaceBorder, RoundedCornerShape(12.dp)),
+                        .border(1.dp, if (selectedPhotoUri != null) PrimaryPurple else SurfaceBorder, RoundedCornerShape(12.dp))
+                        .clickable { photoPickerLauncher.launch("image/*") },
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.Upload,
-                            contentDescription = "Upload Photo",
-                            tint = PrimaryPurple,
-                            modifier = Modifier.size(28.dp)
+                    if (selectedPhotoUri != null) {
+                        AsyncImage(
+                            model = selectedPhotoUri,
+                            contentDescription = "Selected Car Photo",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Upload Car Photo",
-                            color = PrimaryPurple,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(8.dp)
+                                .clip(PillShape)
+                                .background(Color.Black.copy(alpha = 0.65f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "Tap to change",
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    } else {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.Upload,
+                                contentDescription = "Upload Photo",
+                                tint = PrimaryPurple,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Upload Car Photo (Tap to browse)",
+                                color = PrimaryPurple,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
 

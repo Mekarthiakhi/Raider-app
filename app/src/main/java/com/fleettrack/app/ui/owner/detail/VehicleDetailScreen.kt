@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
@@ -70,6 +71,7 @@ import java.util.Locale
 fun VehicleDetailScreen(
     viewModel: VehicleDetailViewModel,
     onBackClick: () -> Unit,
+    onDriverClick: ((Long) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val vehicle by viewModel.vehicle.collectAsState()
@@ -242,7 +244,16 @@ fun VehicleDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            val id = assignedDriver?.id ?: 1L
+                                            onDriverClick?.invoke(id)
+                                        }
+                                        .padding(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Box(
                                         modifier = Modifier
                                             .size(40.dp)
@@ -259,9 +270,10 @@ fun VehicleDetailScreen(
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column {
                                         Text(
-                                            text = "Driver",
-                                            color = TextGray,
-                                            fontSize = 11.sp
+                                            text = "Driver (Tap for Report)",
+                                            color = PrimaryPurple,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold
                                         )
                                         Text(
                                             text = assignedDriver?.name ?: "Ravi Kumar",

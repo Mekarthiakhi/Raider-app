@@ -1,5 +1,6 @@
 package com.fleettrack.app.ui.navigation
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,6 +52,8 @@ import com.fleettrack.app.ui.owner.cars.CarsListScreen
 import com.fleettrack.app.ui.owner.dashboard.DashboardScreen
 import com.fleettrack.app.ui.owner.detail.VehicleDetailScreen
 import com.fleettrack.app.ui.owner.detail.VehicleDetailViewModel
+import com.fleettrack.app.ui.owner.drivers.DriverDetailScreen
+import com.fleettrack.app.ui.owner.drivers.DriverDetailViewModel
 import com.fleettrack.app.ui.owner.drivers.DriversScreen
 import com.fleettrack.app.ui.owner.expenses.ExpensesScreen
 import com.fleettrack.app.ui.owner.feed.LiveFeedScreen
@@ -172,7 +176,10 @@ fun FleetNavigation(
                     onNavigateToCars = { navController.navigate(Screen.Cars.route) },
                     onNavigateToTrips = { navController.navigate(Screen.Trips.route) },
                     onNavigateToEarnings = { navController.navigate(Screen.Earnings.route) },
-                    onNavigateToAlerts = { navController.navigate(Screen.Alerts.route) }
+                    onNavigateToAlerts = { navController.navigate(Screen.Alerts.route) },
+                    onNavigateToDrivers = { navController.navigate(Screen.Drivers.route) },
+                    onNavigateToExpenses = { navController.navigate(Screen.Expenses.route) },
+                    onNavigateToMaintenance = { navController.navigate(Screen.Maintenance.route) }
                 )
             }
 
@@ -196,10 +203,31 @@ fun FleetNavigation(
 
             composable(Screen.Earnings.route) {
                 val vm: ReportsViewModel = hiltViewModel()
+                val context = LocalContext.current
                 ReportsScreen(
                     viewModel = vm,
-                    onExportCsv = { },
-                    onExportPdf = { }
+                    onExportCsv = {
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, "Fleet Weekly P&L Statement")
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                "Fleet Manager - Weekly Earnings & P&L Statement\nGross Revenue: ₹1,28,450\nDriver Payouts: ₹64,225\nFuel Expenses: ₹28,400\nMaintenance: ₹8,500\nNet Profit: ₹24,125 (+18.8% Margin)\nFleet Owner: Akhilesh Mekarthi"
+                            )
+                        }
+                        context.startActivity(Intent.createChooser(sendIntent, "Export Statement as CSV"))
+                    },
+                    onExportPdf = {
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, "Fleet Weekly P&L Statement (PDF)")
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                "Fleet Manager - Weekly P&L Statement\nGross Inflow: ₹1,28,450 | Total Outflow: ₹1,04,325 | Net Profit: ₹24,125\nTop Profit Car: TS09 AB 1234\nGenerated for: Akhilesh Mekarthi"
+                            )
+                        }
+                        context.startActivity(Intent.createChooser(sendIntent, "Export Statement as PDF"))
+                    }
                 )
             }
 
@@ -221,13 +249,27 @@ fun FleetNavigation(
                 val vm: VehicleDetailViewModel = hiltViewModel()
                 VehicleDetailScreen(
                     viewModel = vm,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onDriverClick = { driverId ->
+                        navController.navigate(Screen.DriverDetail.createRoute(driverId))
+                    }
                 )
             }
 
             composable(Screen.Drivers.route) {
                 val vm: FleetBoardViewModel = hiltViewModel()
                 DriversScreen(
+                    viewModel = vm,
+                    onDriverClick = { driverId ->
+                        navController.navigate(Screen.DriverDetail.createRoute(driverId))
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.DriverDetail.route) {
+                val vm: DriverDetailViewModel = hiltViewModel()
+                DriverDetailScreen(
                     viewModel = vm,
                     onBackClick = { navController.popBackStack() }
                 )
@@ -250,7 +292,7 @@ fun FleetNavigation(
                     onBackClick = { navController.popBackStack() },
                     onLogoutClick = {
                         navController.navigate(Screen.ModeSelect.route) {
-                            popUpTo(0) { inclusive = true }
+                            popUpTo(Screen.ModeSelect.route) { inclusive = true }
                         }
                     }
                 )
@@ -274,10 +316,31 @@ fun FleetNavigation(
 
             composable(Screen.Reports.route) {
                 val vm: ReportsViewModel = hiltViewModel()
+                val context = LocalContext.current
                 ReportsScreen(
                     viewModel = vm,
-                    onExportCsv = { },
-                    onExportPdf = { },
+                    onExportCsv = {
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, "Fleet Weekly P&L Statement")
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                "Fleet Manager - Weekly Earnings & P&L Statement\nGross Revenue: ₹1,28,450\nNet Profit: ₹24,125"
+                            )
+                        }
+                        context.startActivity(Intent.createChooser(sendIntent, "Export as CSV"))
+                    },
+                    onExportPdf = {
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, "Fleet Weekly P&L Statement (PDF)")
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                "Fleet Manager - Weekly P&L Statement\nGross: ₹1,28,450 | Net Profit: ₹24,125"
+                            )
+                        }
+                        context.startActivity(Intent.createChooser(sendIntent, "Export as PDF"))
+                    },
                     onBackClick = { navController.popBackStack() }
                 )
             }
