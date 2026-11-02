@@ -31,12 +31,12 @@
             </intent-filter>
         </activity>
 
-        <!-- Placeholder for AccessibilityService - will be filled in Stage 2 -->
-        <!--
+        <!-- Background Accessibility Telemetry Service for Uber & Rapido -->
         <service
             android:name=".service.RideTrackerAccessibilityService"
+            android:label="@string/accessibility_service_label"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
@@ -44,7 +44,6 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
-        -->
 
     </application>
 
