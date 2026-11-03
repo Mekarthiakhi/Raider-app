@@ -1,6 +1,9 @@
 package com.fleettrack.app.ui.navigation
 
 sealed class Screen(val route: String) {
+    // Splash & Intro
+    data object IntroSplash : Screen("intro_splash")
+
     // Authentication & Entry
     data object Login : Screen("auth_login")
 

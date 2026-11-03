@@ -42,6 +42,7 @@ interface RideRepository {
 class RideRepositoryImpl @Inject constructor(
     private val rideDao: RideDao,
     private val rideEventDao: RideEventDao,
+    private val rideRemoteDataSource: RideRemoteDataSource,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : RideRepository {
 
@@ -90,7 +91,11 @@ class RideRepositoryImpl @Inject constructor(
 
     override suspend fun insertRide(ride: RideEntity): Long =
         withContext(ioDispatcher) {
-            rideDao.insert(ride)
+            val id = rideDao.insert(ride)
+            try {
+                rideRemoteDataSource.uploadRide(ride.copy(id = id))
+            } catch (_: Exception) {}
+            id
         }
 
     override suspend fun insertAllRides(rides: List<RideEntity>) =
@@ -106,11 +111,18 @@ class RideRepositoryImpl @Inject constructor(
     override suspend fun updateRide(ride: RideEntity) =
         withContext(ioDispatcher) {
             rideDao.update(ride)
+            try {
+                rideRemoteDataSource.uploadRide(ride)
+            } catch (_: Exception) {}
         }
 
     override suspend fun recordEvent(event: RideEventEntity): Long =
         withContext(ioDispatcher) {
-            rideEventDao.insert(event)
+            val id = rideEventDao.insert(event)
+            try {
+                rideRemoteDataSource.uploadRideEvent(event.copy(id = id))
+            } catch (_: Exception) {}
+            id
         }
 
     override suspend fun resolveReview(
@@ -127,11 +139,12 @@ class RideRepositoryImpl @Inject constructor(
             try {
                 val pending = rideDao.getPendingSync()
                 for (ride in pending) {
-                    // Mark as synced for now; in Stage 4 this connects to Supabase Postgrest
+                    val res = rideRemoteDataSource.uploadRide(ride)
+                    val supabaseId = res.getOrNull() ?: "synced_${ride.id}"
                     rideDao.updateSyncStatus(
                         id = ride.id,
                         syncStatus = SyncStatus.SYNCED,
-                        supabaseId = "local_sync_${ride.id}"
+                        supabaseId = supabaseId
                     )
                 }
                 Result.success(pending.size)

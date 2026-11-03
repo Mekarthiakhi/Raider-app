@@ -42,6 +42,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.fleettrack.app.ui.auth.LoginScreen
 import com.fleettrack.app.ui.components.GlassCard
+import com.fleettrack.app.ui.intro.IntroSplashScreen
+import com.fleettrack.app.util.StatementExportHelper
 import com.fleettrack.app.ui.driver.privacy.PrivacyScreen
 import com.fleettrack.app.ui.driver.setup.SetupWizardScreen
 import com.fleettrack.app.ui.driver.setup.SetupWizardViewModel
@@ -82,7 +84,7 @@ import com.fleettrack.app.ui.theme.TextMutedGray
 @Composable
 fun FleetNavigation(
     navController: NavHostController,
-    startDestination: String = Screen.Login.route
+    startDestination: String = Screen.IntroSplash.route
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -140,6 +142,19 @@ fun FleetNavigation(
             startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // ==========================================
+            // Brand Intro & 3-Dot Carousel Splash
+            // ==========================================
+            composable(Screen.IntroSplash.route) {
+                IntroSplashScreen(
+                    onGetStarted = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.IntroSplash.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             // ==========================================
             // Welcome Back / Authentication Entry
             // ==========================================
@@ -231,26 +246,10 @@ fun FleetNavigation(
                 ReportsScreen(
                     viewModel = vm,
                     onExportCsv = {
-                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "Fleet Weekly P&L Statement")
-                            putExtra(
-                                Intent.EXTRA_TEXT,
-                                "Fleet Manager - Weekly Earnings & P&L Statement\nGross Revenue: ₹1,28,450\nDriver Payouts: ₹64,225\nFuel Expenses: ₹28,400\nMaintenance: ₹8,500\nNet Profit: ₹24,125 (+18.8% Margin)\nFleet Owner: Akhilesh Mekarthi"
-                            )
-                        }
-                        context.startActivity(Intent.createChooser(sendIntent, "Export Statement as CSV"))
+                        StatementExportHelper.exportCsvStatement(context, "Weekly_PnL")
                     },
                     onExportPdf = {
-                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "Fleet Weekly P&L Statement (PDF)")
-                            putExtra(
-                                Intent.EXTRA_TEXT,
-                                "Fleet Manager - Weekly P&L Statement\nGross Inflow: ₹1,28,450 | Total Outflow: ₹1,04,325 | Net Profit: ₹24,125\nTop Profit Car: TS09 AB 1234\nGenerated for: Akhilesh Mekarthi"
-                            )
-                        }
-                        context.startActivity(Intent.createChooser(sendIntent, "Export Statement as PDF"))
+                        StatementExportHelper.exportPdfStatement(context, "October 2026")
                     }
                 )
             }
@@ -344,26 +343,10 @@ fun FleetNavigation(
                 ReportsScreen(
                     viewModel = vm,
                     onExportCsv = {
-                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "Fleet Weekly P&L Statement")
-                            putExtra(
-                                Intent.EXTRA_TEXT,
-                                "Fleet Manager - Weekly Earnings & P&L Statement\nGross Revenue: ₹1,28,450\nNet Profit: ₹24,125"
-                            )
-                        }
-                        context.startActivity(Intent.createChooser(sendIntent, "Export as CSV"))
+                        StatementExportHelper.exportCsvStatement(context, "All_Reports")
                     },
                     onExportPdf = {
-                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "Fleet Weekly P&L Statement (PDF)")
-                            putExtra(
-                                Intent.EXTRA_TEXT,
-                                "Fleet Manager - Weekly P&L Statement\nGross: ₹1,28,450 | Net Profit: ₹24,125"
-                            )
-                        }
-                        context.startActivity(Intent.createChooser(sendIntent, "Export as PDF"))
+                        StatementExportHelper.exportPdfStatement(context, "October 2026")
                     },
                     onBackClick = { navController.popBackStack() }
                 )

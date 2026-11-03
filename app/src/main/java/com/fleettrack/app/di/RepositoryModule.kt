@@ -1,5 +1,7 @@
 package com.fleettrack.app.di
 
+import com.fleettrack.app.data.remote.RideRemoteDataSource
+import com.fleettrack.app.data.remote.RideRemoteDataSourceImpl
 import com.fleettrack.app.data.repository.DeviceRepository
 import com.fleettrack.app.data.repository.DeviceRepositoryImpl
 import com.fleettrack.app.data.repository.DriverRepository
@@ -17,6 +19,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindRideRemoteDataSource(
+        impl: RideRemoteDataSourceImpl
+    ): RideRemoteDataSource
 
     @Binds
     @Singleton
