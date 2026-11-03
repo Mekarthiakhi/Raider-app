@@ -19,8 +19,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -247,8 +249,14 @@ fun DriversScreen(
     if (showAddDriverDialog) {
         AddDriverDialog(
             onDismiss = { showAddDriverDialog = false },
-            onSave = { name, phone ->
-                viewModel.addDriver(name, phone)
+            onSave = { name, phone, licenseNo, assignedCar, shift, target ->
+                viewModel.addDriver(
+                    name = name,
+                    phone = phone,
+                    licenseNo = licenseNo,
+                    assignedCarReg = assignedCar,
+                    shift = shift
+                )
                 showAddDriverDialog = false
             }
         )
@@ -400,28 +408,42 @@ private fun DriverCardItem(
 @Composable
 private fun AddDriverDialog(
     onDismiss: () -> Unit,
-    onSave: (name: String, phone: String) -> Unit
+    onSave: (
+        name: String,
+        phone: String,
+        licenseNo: String,
+        assignedCar: String,
+        shift: String,
+        target: String
+    ) -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var licenseNo by remember { mutableStateOf("") }
+    var target by remember { mutableStateOf("₹3,500") }
     var assignedCar by remember { mutableStateOf("TS09 AB 1234") }
     var shift by remember { mutableStateOf("Day Shift (6 AM - 6 PM)") }
 
-    val carOptions = listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "Unassigned")
+    val carOptions = listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "TS09 IJ 7890", "Unassigned")
     val shiftOptions = listOf("Day Shift (6 AM - 6 PM)", "Night Shift (6 PM - 6 AM)", "Full Day (24 Hrs)")
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Add New Driver",
+                text = "Add New Driver & Shift",
                 fontWeight = FontWeight.Bold,
-                color = TextDark
+                color = TextDark,
+                fontSize = 18.sp
             )
         },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 OutlinedTextField(
@@ -439,6 +461,26 @@ private fun AddDriverDialog(
                     onValueChange = { phone = it },
                     label = { Text("Mobile Number *") },
                     placeholder = { Text("+91 98765 43210") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = licenseNo,
+                    onValueChange = { licenseNo = it.uppercase() },
+                    label = { Text("Driving License (DL) Number *") },
+                    placeholder = { Text("e.g. DL-09-2023-0045892") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = target,
+                    onValueChange = { target = it },
+                    label = { Text("Daily Revenue Target") },
+                    placeholder = { Text("e.g. ₹3,500") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
                     singleLine = true
@@ -478,7 +520,7 @@ private fun AddDriverDialog(
                 }
 
                 Text(
-                    text = "Assign Shift:",
+                    text = "Assign Shift Rotation:",
                     color = TextDark,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
@@ -490,7 +532,7 @@ private fun AddDriverDialog(
                 ) {
                     shiftOptions.forEach { s ->
                         val isSelected = shift == s
-                        val label = if (s.startsWith("Day")) "Day" else if (s.startsWith("Night")) "Night" else "Full"
+                        val label = if (s.startsWith("Day")) "Day (12h)" else if (s.startsWith("Night")) "Night (12h)" else "Full (24h)"
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -504,7 +546,7 @@ private fun AddDriverDialog(
                             Text(
                                 text = label,
                                 color = if (isSelected) Color.White else TextDark,
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -516,7 +558,8 @@ private fun AddDriverDialog(
             Button(
                 onClick = {
                     if (name.isNotBlank() && phone.isNotBlank()) {
-                        onSave(name, phone)
+                        val validDl = if (licenseNo.isBlank()) "DL-${name.take(3).uppercase()}-2024" else licenseNo
+                        onSave(name, phone, validDl, assignedCar, shift, target)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),

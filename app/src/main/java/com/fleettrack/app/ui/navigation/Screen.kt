@@ -1,6 +1,9 @@
 package com.fleettrack.app.ui.navigation
 
 sealed class Screen(val route: String) {
+    // Authentication & Entry
+    data object Login : Screen("auth_login")
+
     // Mode selector
     data object ModeSelect : Screen("mode_select")
 

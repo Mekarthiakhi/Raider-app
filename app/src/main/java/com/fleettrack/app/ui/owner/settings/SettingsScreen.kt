@@ -1,5 +1,6 @@
 package com.fleettrack.app.ui.owner.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Extension
@@ -42,20 +44,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fleettrack.app.ui.components.GlassCard
+import com.fleettrack.app.ui.theme.ActiveGreen
+import com.fleettrack.app.ui.theme.ActiveGreenBg
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.CardShape
 import com.fleettrack.app.ui.theme.InactiveRed
 import com.fleettrack.app.ui.theme.InactiveRedBg
+import com.fleettrack.app.ui.theme.PillShape
 import com.fleettrack.app.ui.theme.PrimaryPurple
 import com.fleettrack.app.ui.theme.PrimaryPurpleContainer
 import com.fleettrack.app.ui.theme.SurfaceBorder
 import com.fleettrack.app.ui.theme.TextDark
 import com.fleettrack.app.ui.theme.TextGray
 import com.fleettrack.app.ui.theme.TextMutedGray
+import com.fleettrack.app.util.BatteryOptimizationHelper
 
 @Composable
 fun SettingsScreen(
@@ -134,6 +141,71 @@ fun SettingsScreen(
                         label = "Alerts & Reminders",
                         onClick = { }
                     )
+                    HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
+
+                    // 24/7 Background Battery Optimization Exemption
+                    val context = LocalContext.current
+                    var isBatteryExempt by remember {
+                        mutableStateOf(BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context))
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                BatteryOptimizationHelper.requestIgnoreBatteryOptimizations(context)
+                                Toast.makeText(context, "Battery optimization settings opened", Toast.LENGTH_SHORT).show()
+                                isBatteryExempt = BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context)
+                            }
+                            .padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isBatteryExempt) ActiveGreenBg else InactiveRedBg),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Bolt,
+                                    contentDescription = "Battery Optimization",
+                                    tint = if (isBatteryExempt) ActiveGreen else InactiveRed,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column {
+                                Text(
+                                    text = "24/7 Background Run",
+                                    color = TextDark,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = if (isBatteryExempt) "Battery exemption active" else "Tap to grant 24/7 background run",
+                                    color = if (isBatteryExempt) ActiveGreen else InactiveRed,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(PillShape)
+                                .background(if (isBatteryExempt) ActiveGreenBg else PrimaryPurpleContainer)
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (isBatteryExempt) "Active" else "Enable ›",
+                                color = if (isBatteryExempt) ActiveGreen else PrimaryPurple,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                     HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
 
                     // Theme Switch

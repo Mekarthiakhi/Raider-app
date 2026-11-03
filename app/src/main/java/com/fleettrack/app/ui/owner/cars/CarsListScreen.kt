@@ -20,14 +20,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.LocalGasStation
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
@@ -85,6 +92,7 @@ fun CarsListScreen(
 
     var selectedFilter by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
+    var isSearchVisible by remember { mutableStateOf(false) }
     var showAddCarDialog by remember { mutableStateOf(false) }
 
     val activeCount = vehicles.count { it.isOnline }
@@ -154,13 +162,36 @@ fun CarsListScreen(
                 }
 
                 Row {
-                    IconButton(onClick = { /* Toggle search */ }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search", tint = TextDark)
+                    IconButton(onClick = { isSearchVisible = !isSearchVisible }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = if (isSearchVisible) PrimaryPurple else TextDark
+                        )
                     }
-                    IconButton(onClick = { /* Filter */ }) {
+                    IconButton(onClick = {
+                        selectedFilter = when (selectedFilter) {
+                            "All" -> "Active"
+                            "Active" -> "Inactive"
+                            else -> "All"
+                        }
+                    }) {
                         Icon(Icons.Default.FilterList, contentDescription = "Filter", tint = TextDark)
                     }
                 }
+            }
+
+            // Search Bar Input
+            if (isSearchVisible) {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search car registration, model, RC...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -208,8 +239,15 @@ fun CarsListScreen(
     if (showAddCarDialog) {
         AddCarDialog(
             onDismiss = { showAddCarDialog = false },
-            onSave = { regNo, model, fuelType ->
-                viewModel.addVehicle(regNo, model, fuelType)
+            onSave = { regNo, model, fuelType, rcNo, insuranceExpiry, pucExpiry, assignedDriver ->
+                viewModel.addVehicle(
+                    regNo = regNo,
+                    model = model,
+                    fuelType = fuelType,
+                    rcNo = rcNo,
+                    insuranceExpiry = insuranceExpiry,
+                    pucExpiry = pucExpiry
+                )
                 showAddCarDialog = false
             }
         )
@@ -336,13 +374,30 @@ private fun CarItemCard(
 @Composable
 private fun AddCarDialog(
     onDismiss: () -> Unit,
-    onSave: (regNo: String, model: String, fuelType: String) -> Unit
+    onSave: (
+        regNo: String,
+        model: String,
+        fuelType: String,
+        rcNo: String,
+        insuranceExpiry: String,
+        pucExpiry: String,
+        assignedDriver: String
+    ) -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
     var regNo by remember { mutableStateOf("") }
     var model by remember { mutableStateOf("") }
     var year by remember { mutableStateOf("2024") }
     var fuelType by remember { mutableStateOf("Petrol") }
+    var rcNo by remember { mutableStateOf("") }
+    var insuranceExpiry by remember { mutableStateOf("15 Nov 2026") }
+    var pucExpiry by remember { mutableStateOf("28 Nov 2026") }
+    var assignedDriver by remember { mutableStateOf("Ravi Kumar") }
     var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+
+    val fuelOptions = listOf("Petrol", "CNG", "Diesel", "EV")
+    val driverOptions = listOf("Ravi Kumar", "Suresh Reddy", "Imran Ali", "Mahesh B", "Unassigned")
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -354,21 +409,24 @@ private fun AddCarDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Add New Car",
+                text = "Add New Car & Documents",
                 fontWeight = FontWeight.Bold,
-                color = TextDark
+                color = TextDark,
+                fontSize = 18.sp
             )
         },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Interactive Photo Picker Container
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(110.dp)
+                        .height(100.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(MetricPurpleBg)
                         .border(1.dp, if (selectedPhotoUri != null) PrimaryPurple else SurfaceBorder, RoundedCornerShape(12.dp))
@@ -385,10 +443,10 @@ private fun AddCarDialog(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
-                                .padding(8.dp)
+                                .padding(6.dp)
                                 .clip(PillShape)
                                 .background(Color.Black.copy(alpha = 0.65f))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
                                 text = "Tap to change",
@@ -403,19 +461,20 @@ private fun AddCarDialog(
                                 imageVector = Icons.Default.Upload,
                                 contentDescription = "Upload Photo",
                                 tint = PrimaryPurple,
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(26.dp)
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Upload Car Photo (Tap to browse)",
+                                text = "Upload Car Photo (Tap to select)",
                                 color = PrimaryPurple,
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
                 }
 
+                // 1. Car Core Specs
                 OutlinedTextField(
                     value = regNo,
                     onValueChange = { regNo = it.uppercase() },
@@ -429,12 +488,46 @@ private fun AddCarDialog(
                 OutlinedTextField(
                     value = model,
                     onValueChange = { model = it },
-                    label = { Text("Model *") },
-                    placeholder = { Text("e.g. Hyundai Aura") },
+                    label = { Text("Model Name *") },
+                    placeholder = { Text("e.g. Hyundai Aura / Maruti Dzire") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
                     singleLine = true
                 )
+
+                // Fuel Type Selection Chips
+                Text(
+                    text = "Fuel Type:",
+                    color = TextDark,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    fuelOptions.forEach { f ->
+                        val isSelected = fuelType.equals(f, ignoreCase = true)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(PillShape)
+                                .background(if (isSelected) PrimaryPurple else SurfaceWhite)
+                                .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, PillShape)
+                                .clickable { fuelType = f }
+                                .padding(vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = f,
+                                color = if (isSelected) Color.White else TextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -448,16 +541,79 @@ private fun AddCarDialog(
                         shape = RoundedCornerShape(10.dp),
                         singleLine = true
                     )
+                }
 
-                    OutlinedTextField(
-                        value = fuelType,
-                        onValueChange = { fuelType = it },
-                        label = { Text("Fuel Type") },
-                        placeholder = { Text("Petrol/CNG") },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(10.dp),
-                        singleLine = true
-                    )
+                // 2. Document Vault Fields
+                Text(
+                    text = "Document Vault (RC, Insurance, PUC):",
+                    color = PrimaryPurple,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                OutlinedTextField(
+                    value = rcNo,
+                    onValueChange = { rcNo = it.uppercase() },
+                    label = { Text("RC (Registration Certificate) No *") },
+                    placeholder = { Text("e.g. TS09-RC-2024-9912") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = insuranceExpiry,
+                    onValueChange = { insuranceExpiry = it },
+                    label = { Text("Insurance Expiry Date *") },
+                    placeholder = { Text("e.g. 15 Nov 2026") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = pucExpiry,
+                    onValueChange = { pucExpiry = it },
+                    label = { Text("PUC / Emission Expiry Date *") },
+                    placeholder = { Text("e.g. 28 Nov 2026") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                // 3. Assign Driver
+                Text(
+                    text = "Assign Driver:",
+                    color = TextDark,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    driverOptions.take(3).forEach { d ->
+                        val isSelected = assignedDriver == d
+                        val firstName = d.split(" ").firstOrNull() ?: d
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(PillShape)
+                                .background(if (isSelected) PrimaryPurple else SurfaceWhite)
+                                .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, PillShape)
+                                .clickable { assignedDriver = d }
+                                .padding(vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = firstName,
+                                color = if (isSelected) Color.White else TextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
         },
@@ -465,13 +621,14 @@ private fun AddCarDialog(
             Button(
                 onClick = {
                     if (regNo.isNotBlank() && model.isNotBlank()) {
-                        onSave(regNo, model, fuelType)
+                        val validRc = if (rcNo.isBlank()) "RC-${regNo.takeLast(4)}" else rcNo
+                        onSave(regNo, model, fuelType, validRc, insuranceExpiry, pucExpiry, assignedDriver)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
                 shape = PillShape
             ) {
-                Text("Save", fontWeight = FontWeight.Bold)
+                Text("Save Car", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

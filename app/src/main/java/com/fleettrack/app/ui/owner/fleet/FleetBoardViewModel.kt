@@ -216,13 +216,26 @@ class FleetBoardViewModel @Inject constructor(
         initialValue = emptyList()
     )
 
-    fun addVehicle(regNo: String, model: String, fuelType: String) {
+    fun addVehicle(
+        regNo: String,
+        model: String,
+        fuelType: String,
+        rcNo: String = "",
+        insuranceExpiry: String = "",
+        pucExpiry: String = ""
+    ) {
         viewModelScope.launch {
+            val docInfo = buildString {
+                append("$model • $fuelType")
+                if (rcNo.isNotBlank()) append(" | RC: $rcNo")
+                if (insuranceExpiry.isNotBlank()) append(" | Ins: $insuranceExpiry")
+                if (pucExpiry.isNotBlank()) append(" | PUC: $pucExpiry")
+            }
             vehicleRepository.insertVehicle(
                 VehicleEntity(
-                    fleetId = "fleet_hyd_01",
+                    fleetId = "fleet_blr_central",
                     regNo = regNo.uppercase(),
-                    nickname = "$model • $fuelType",
+                    nickname = docInfo,
                     status = "active",
                     createdAt = Clock.System.now()
                 )
@@ -230,14 +243,21 @@ class FleetBoardViewModel @Inject constructor(
         }
     }
 
-    fun addDriver(name: String, phone: String) {
+    fun addDriver(
+        name: String,
+        phone: String,
+        licenseNo: String = "",
+        assignedCarReg: String = "",
+        shift: String = ""
+    ) {
         viewModelScope.launch {
             driverRepository.insertDriver(
                 DriverEntity(
-                    fleetId = "fleet_hyd_01",
+                    fleetId = "fleet_blr_central",
                     name = name,
                     phone = phone,
-                    consentAt = Clock.System.now()
+                    consentAt = Clock.System.now(),
+                    supabaseId = if (licenseNo.isNotBlank()) "DL:$licenseNo" else null
                 )
             )
         }

@@ -21,13 +21,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -41,8 +45,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.fleettrack.app.util.BatteryOptimizationHelper
 import androidx.compose.ui.unit.sp
 import com.fleettrack.app.data.model.Platform
 import com.fleettrack.app.ui.components.GlassCard
@@ -179,6 +185,99 @@ fun DashboardScreen(
                     containerColor = InactiveRedBg,
                     onClick = onNavigateToCars
                 )
+            }
+        }
+
+        // 2.5 Battery Optimization Exemption Banner
+        item {
+            val context = LocalContext.current
+            var isBatteryIgnored by remember {
+                mutableStateOf(BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context))
+            }
+
+            if (!isBatteryIgnored) {
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = CardShape
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(PrimaryPurpleContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Bolt,
+                                    contentDescription = null,
+                                    tint = PrimaryPurple,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "24/7 Background Sync",
+                                    color = TextDark,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Allow unkilled Uber & Rapido telemetry.",
+                                    color = TextGray,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Button(
+                            onClick = {
+                                BatteryOptimizationHelper.requestIgnoreBatteryOptimizations(context)
+                                isBatteryIgnored = BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                            shape = PillShape,
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            Text("Enable", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(ActiveGreenBg)
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = ActiveGreen,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "24/7 Background Telemetry Active • Unrestricted Sync",
+                        color = ActiveGreen,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
 

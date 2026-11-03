@@ -19,8 +19,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
@@ -91,10 +93,20 @@ fun DriverDetailScreen(
     var showShiftChangeDialog by remember { mutableStateOf(false) }
     var currentCarReg by remember { mutableStateOf(state.currentCarRegNo) }
     var currentShift by remember { mutableStateOf(state.activeShift) }
+    var driverName by remember { mutableStateOf(state.driver?.name ?: "Ravi Kumar") }
+    var driverPhone by remember { mutableStateOf(state.driver?.phone ?: "+91 98765 43210") }
+    var licenseNo by remember { mutableStateOf("DL-09-2023-0045892") }
+    var dailyTarget by remember { mutableStateOf("₹3,500 / day") }
 
     // Update local state when viewmodel loads
     if (currentCarReg == "Unassigned" && state.currentCarRegNo != "Unassigned") {
         currentCarReg = state.currentCarRegNo
+    }
+    if (driverName == "Ravi Kumar" && state.driver?.name != null) {
+        driverName = state.driver!!.name
+    }
+    if (driverPhone == "+91 98765 43210" && state.driver?.phone != null) {
+        driverPhone = state.driver!!.phone
     }
 
     val displayEarnings = when (selectedPeriod) {
@@ -195,21 +207,28 @@ fun DriverDetailScreen(
 
                             Column {
                                 Text(
-                                    text = state.driver?.name ?: "Ravi Kumar",
+                                    text = driverName,
                                     color = TextDark,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = state.driver?.phone ?: "+91 98765 43210",
+                                    text = driverPhone,
                                     color = TextGray,
                                     fontSize = 13.sp
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "DL: $licenseNo",
+                                    color = PrimaryPurple,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
 
-                        // Shift Change Button
+                        // Edit Driver Button
                         Box(
                             modifier = Modifier
                                 .clip(PillShape)
@@ -220,13 +239,13 @@ fun DriverDetailScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
-                                    contentDescription = "Change Shift",
+                                    contentDescription = "Edit Driver",
                                     tint = PrimaryPurple,
                                     modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "Shift",
+                                    text = "Edit",
                                     color = PrimaryPurple,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
@@ -237,7 +256,7 @@ fun DriverDetailScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Tags: Current Car & Shift
+                    // Tags: Current Car, Shift & Target
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -246,20 +265,20 @@ fun DriverDetailScreen(
                             modifier = Modifier
                                 .clip(PillShape)
                                 .background(ActiveGreenBg)
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                .padding(horizontal = 10.dp, vertical = 5.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.DirectionsCar,
                                     contentDescription = null,
                                     tint = ActiveGreen,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(13.dp)
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = "Car: $currentCarReg",
                                     color = ActiveGreen,
-                                    fontSize = 12.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -269,24 +288,51 @@ fun DriverDetailScreen(
                             modifier = Modifier
                                 .clip(PillShape)
                                 .background(MetricPurpleBg)
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                .padding(horizontal = 10.dp, vertical = 5.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.Schedule,
                                     contentDescription = null,
                                     tint = PrimaryPurple,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(13.dp)
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = currentShift,
                                     color = PrimaryPurple,
-                                    fontSize = 12.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Target Badge
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceWhite)
+                            .border(1.dp, SurfaceBorder, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Daily Target: $dailyTarget",
+                            color = TextDark,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Achieved 82% ✓",
+                            color = ActiveGreen,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -462,6 +508,89 @@ fun DriverDetailScreen(
             }
         }
 
+        // 4.5 Weekly Profit & Loss Summary Card
+        if (selectedPeriod != "Today") {
+            item {
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = CardShape
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Weekly P&L Statement • $currentCarReg",
+                                color = TextDark,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(PillShape)
+                                    .background(ActiveGreenBg)
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = "+18.7% Margin",
+                                    color = ActiveGreen,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Gross Fare Inflow", color = TextGray, fontSize = 13.sp)
+                            Text(currencyFormat.format(displayEarnings), color = TextDark, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Driver Payout Share (70%)", color = TextGray, fontSize = 13.sp)
+                            Text("-${currencyFormat.format(displayDriverPayout)}", color = InactiveRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Fuel & Maintenance Cost", color = TextGray, fontSize = 13.sp)
+                            val fuelMaint = (displayEarnings * 0.113).coerceAtLeast(1800.0)
+                            Text("-${currencyFormat.format(fuelMaint)}", color = InactiveRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Net Owner Profit", color = TextDark, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            val netProfit = (displayOwnerProfit - 1800.0).coerceAtLeast(displayEarnings * 0.187)
+                            Text(currencyFormat.format(netProfit), color = ActiveGreen, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
         // 5. Car-Wise Earnings Summary
         item {
             Text(
@@ -585,11 +714,19 @@ fun DriverDetailScreen(
     }
 
     if (showShiftChangeDialog) {
-        ChangeDriverShiftDialog(
+        EditDriverDetailsDialog(
+            currentName = driverName,
+            currentPhone = driverPhone,
+            currentLicense = licenseNo,
+            currentTarget = dailyTarget,
             currentCar = currentCarReg,
             currentShift = currentShift,
             onDismiss = { showShiftChangeDialog = false },
-            onSave = { newCar, newShift ->
+            onSave = { newName, newPhone, newLicense, newTarget, newCar, newShift ->
+                driverName = newName
+                driverPhone = newPhone
+                licenseNo = newLicense
+                dailyTarget = newTarget
                 currentCarReg = newCar
                 currentShift = newShift
                 showShiftChangeDialog = false
@@ -682,96 +819,165 @@ private fun DriverTripRowItem(
 }
 
 @Composable
-private fun ChangeDriverShiftDialog(
+private fun EditDriverDetailsDialog(
+    currentName: String,
+    currentPhone: String,
+    currentLicense: String,
+    currentTarget: String,
     currentCar: String,
     currentShift: String,
     onDismiss: () -> Unit,
-    onSave: (newCar: String, newShift: String) -> Unit
+    onSave: (
+        newName: String,
+        newPhone: String,
+        newLicense: String,
+        newTarget: String,
+        newCar: String,
+        newShift: String
+    ) -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
+    var name by remember { mutableStateOf(currentName) }
+    var phone by remember { mutableStateOf(currentPhone) }
+    var license by remember { mutableStateOf(currentLicense) }
+    var target by remember { mutableStateOf(currentTarget) }
     var selectedCar by remember { mutableStateOf(currentCar) }
     var selectedShift by remember { mutableStateOf(currentShift) }
 
-    val carOptions = listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "TS09 IJ 7890")
+    val carOptions = listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "TS09 IJ 7890", "Unassigned")
     val shiftOptions = listOf("Day Shift (6 AM - 6 PM)", "Night Shift (6 PM - 6 AM)", "Full Day (24 Hrs)")
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Assign Car & Change Shift",
+                text = "Edit Driver & Shift",
                 fontWeight = FontWeight.Bold,
-                color = TextDark
+                color = TextDark,
+                fontSize = 18.sp
             )
         },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Driver Name *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text("Mobile Number *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = license,
+                    onValueChange = { license = it.uppercase() },
+                    label = { Text("Driving License (DL) *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = target,
+                    onValueChange = { target = it },
+                    label = { Text("Daily Target") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
                 Text(
-                    text = "Select Assigned Car for Daily Run:",
+                    text = "Assign Daily Car:",
                     color = TextDark,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
 
-                carOptions.forEach { car ->
-                    val isSelected = selectedCar == car
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (isSelected) PrimaryPurpleContainer else SurfaceWhite)
-                            .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, RoundedCornerShape(10.dp))
-                            .clickable { selectedCar = car }
-                            .padding(horizontal = 14.dp, vertical = 10.dp)
-                    ) {
-                        Text(
-                            text = car,
-                            color = if (isSelected) PrimaryPurple else TextDark,
-                            fontSize = 13.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                        )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    carOptions.take(4).forEach { car ->
+                        val isSelected = selectedCar == car
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(PillShape)
+                                .background(if (isSelected) PrimaryPurple else SurfaceWhite)
+                                .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, PillShape)
+                                .clickable { selectedCar = car }
+                                .padding(vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = car.split(" ").lastOrNull() ?: car,
+                                color = if (isSelected) Color.White else TextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
-                    text = "Select Shift:",
+                    text = "Assign Shift Rotation:",
                     color = TextDark,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
 
-                shiftOptions.forEach { shift ->
-                    val isSelected = selectedShift == shift
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (isSelected) PrimaryPurpleContainer else SurfaceWhite)
-                            .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, RoundedCornerShape(10.dp))
-                            .clickable { selectedShift = shift }
-                            .padding(horizontal = 14.dp, vertical = 10.dp)
-                    ) {
-                        Text(
-                            text = shift,
-                            color = if (isSelected) PrimaryPurple else TextDark,
-                            fontSize = 13.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                        )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    shiftOptions.forEach { shift ->
+                        val isSelected = selectedShift == shift
+                        val label = if (shift.startsWith("Day")) "Day" else if (shift.startsWith("Night")) "Night" else "Full"
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(PillShape)
+                                .background(if (isSelected) PrimaryPurple else SurfaceWhite)
+                                .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, PillShape)
+                                .clickable { selectedShift = shift }
+                                .padding(vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                color = if (isSelected) Color.White else TextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onSave(selectedCar, selectedShift) },
+                onClick = {
+                    onSave(name, phone, license, target, selectedCar, selectedShift)
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
                 shape = PillShape
             ) {
-                Text("Confirm Assignment", fontWeight = FontWeight.Bold)
+                Text("Save Changes", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

@@ -73,6 +73,10 @@ fun LiveFeedScreen(
     val totalFare = trips.sumOf { it.ride.fare ?: 0.0 }
     val totalKm = trips.sumOf { it.ride.distanceKm ?: 0.0 }
 
+    val filteredTrips = trips.filter { item ->
+        selectedCarFilter == "All Cars" || (item.vehicle?.regNo?.contains(selectedCarFilter, ignoreCase = true) == true)
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -113,12 +117,27 @@ fun LiveFeedScreen(
             DropdownFilterPill(
                 label = selectedTimeFilter,
                 modifier = Modifier.weight(1f),
-                onClick = { /* Toggle Time */ }
+                onClick = {
+                    selectedTimeFilter = when (selectedTimeFilter) {
+                        "Today" -> "Yesterday"
+                        "Yesterday" -> "This Week"
+                        "This Week" -> "This Month"
+                        else -> "Today"
+                    }
+                }
             )
             DropdownFilterPill(
                 label = selectedCarFilter,
                 modifier = Modifier.weight(1f),
-                onClick = { /* Toggle Car */ }
+                onClick = {
+                    selectedCarFilter = when (selectedCarFilter) {
+                        "All Cars" -> "TS09 AB 1234"
+                        "TS09 AB 1234" -> "TS09 CD 5678"
+                        "TS09 CD 5678" -> "TS09 EF 9012"
+                        "TS09 EF 9012" -> "TS09 GH 3456"
+                        else -> "All Cars"
+                    }
+                }
             )
         }
 
@@ -194,9 +213,9 @@ fun LiveFeedScreen(
         Spacer(modifier = Modifier.height(14.dp))
 
         // 4. Trip Item Cards
-        if (trips.isEmpty()) {
+        if (filteredTrips.isEmpty()) {
             EmptyState(
-                title = "No trips captured yet",
+                title = "No trips found for $selectedCarFilter",
                 subtitle = "Completed Uber & Rapido trips will appear here automatically."
             )
         } else {
@@ -205,7 +224,7 @@ fun LiveFeedScreen(
                 contentPadding = PaddingValues(bottom = 90.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(trips, key = { it.ride.id }) { item ->
+                items(filteredTrips, key = { it.ride.id }) { item ->
                     MockupTripCard(
                         trip = item,
                         onClick = { onRideClick(item.ride.id) }

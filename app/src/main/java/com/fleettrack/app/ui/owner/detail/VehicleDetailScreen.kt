@@ -19,19 +19,30 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,6 +65,8 @@ import com.fleettrack.app.ui.theme.ActiveGreen
 import com.fleettrack.app.ui.theme.ActiveGreenBg
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.CardShape
+import com.fleettrack.app.ui.theme.InactiveRed
+import com.fleettrack.app.ui.theme.InactiveRedBg
 import com.fleettrack.app.ui.theme.MetricPurpleBg
 import com.fleettrack.app.ui.theme.PillShape
 import com.fleettrack.app.ui.theme.PrimaryPurple
@@ -85,6 +98,10 @@ fun VehicleDetailScreen(
     currencyFormat.maximumFractionDigits = 0
 
     var selectedSegmentTab by remember { mutableStateOf("Overview") }
+    var showEditCarDialog by remember { mutableStateOf(false) }
+    var rcNumber by remember { mutableStateOf("TS09-RC-2024-9912") }
+    var insuranceExpiryDate by remember { mutableStateOf("15 Nov 2026") }
+    var pucExpiryDate by remember { mutableStateOf("28 Nov 2026") }
 
     Column(
         modifier = modifier
@@ -117,10 +134,21 @@ fun VehicleDetailScreen(
             }
 
             Row {
-                IconButton(onClick = { /* Edit */ }) {
+                IconButton(onClick = { showEditCarDialog = true }) {
                     Icon(Icons.Default.Edit, contentDescription = "Edit", tint = TextDark, modifier = Modifier.size(20.dp))
                 }
-                IconButton(onClick = { /* Share */ }) {
+                IconButton(onClick = {
+                    val reg = vehicle?.regNo ?: "TS09 AB 1234"
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, "Vehicle Details: $reg")
+                        putExtra(
+                            Intent.EXTRA_TEXT,
+                            "Vehicle Details - Fleet Manager\nRegistration: $reg\nModel: Hyundai Aura\nDriver: ${assignedDriver?.name ?: "Ravi Kumar"}\nRC: $rcNumber\nInsurance Expiry: $insuranceExpiryDate\nPUC Expiry: $pucExpiryDate"
+                        )
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Share Vehicle Documents"))
+                }) {
                     Icon(Icons.Default.Share, contentDescription = "Share", tint = TextDark, modifier = Modifier.size(20.dp))
                 }
             }
@@ -374,6 +402,7 @@ fun VehicleDetailScreen(
             }
 
             else -> {
+                // Service & Document Vault Tab (Matching Mockup Sheet 2)
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 90.dp),
@@ -381,18 +410,112 @@ fun VehicleDetailScreen(
                 ) {
                     item {
                         GlassCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Document Vault & Renewals",
+                                        color = TextDark,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(PillShape)
+                                            .background(MetricPurpleBg)
+                                            .clickable { showEditCarDialog = true }
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text("Update Docs", color = PrimaryPurple, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
+                                HorizontalDivider(color = SurfaceBorder)
+
+                                // RC
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("Registration Certificate (RC)", color = TextDark, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                        Text(rcNumber, color = TextGray, fontSize = 12.sp)
+                                    }
+                                    Text("Active ✓", color = ActiveGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                HorizontalDivider(color = SurfaceBorder)
+
+                                // Insurance
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("Comprehensive Insurance", color = TextDark, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                        Text("Expires: $insuranceExpiryDate", color = TextGray, fontSize = 12.sp)
+                                    }
+                                    Text("Valid (11d left)", color = InactiveRed, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                HorizontalDivider(color = SurfaceBorder)
+
+                                // PUC
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("Pollution Under Control (PUC)", color = TextDark, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                        Text("Expires: $pucExpiryDate", color = TextGray, fontSize = 12.sp)
+                                    }
+                                    Text("Valid ✓", color = ActiveGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                HorizontalDivider(color = SurfaceBorder)
+
+                                // Fitness
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("Commercial Fitness Certificate", color = TextDark, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                        Text("Expires: Oct 2029", color = TextGray, fontSize = 12.sp)
+                                    }
+                                    Text("Active ✓", color = ActiveGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        GlassCard(modifier = Modifier.fillMaxWidth()) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
-                                    text = "$selectedSegmentTab Summary",
+                                    text = "Scheduled Maintenance",
                                     color = TextDark,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(6.dp))
                                 Text(
-                                    text = "All vehicle maintenance logs, expenses, and platform accounting are synchronized.",
+                                    text = "Next Regular Service: 5,000 km / 15 Dec 2026\nRecommended: Engine Oil change, Brake Pad Inspection, AC Filter clean.",
                                     color = TextGray,
-                                    fontSize = 12.sp
+                                    fontSize = 12.sp,
+                                    lineHeight = 16.sp
                                 )
                             }
                         }
@@ -401,6 +524,97 @@ fun VehicleDetailScreen(
             }
         }
     }
+
+    if (showEditCarDialog) {
+        EditCarDocumentsDialog(
+            currentRc = rcNumber,
+            currentInsurance = insuranceExpiryDate,
+            currentPuc = pucExpiryDate,
+            onDismiss = { showEditCarDialog = false },
+            onSave = { newRc, newIns, newPuc ->
+                rcNumber = newRc
+                insuranceExpiryDate = newIns
+                pucExpiryDate = newPuc
+                showEditCarDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun EditCarDocumentsDialog(
+    currentRc: String,
+    currentInsurance: String,
+    currentPuc: String,
+    onDismiss: () -> Unit,
+    onSave: (newRc: String, newInsurance: String, newPuc: String) -> Unit
+) {
+    val scrollState = rememberScrollState()
+
+    var rc by remember { mutableStateOf(currentRc) }
+    var insurance by remember { mutableStateOf(currentInsurance) }
+    var puc by remember { mutableStateOf(currentPuc) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Edit Car Documents",
+                fontWeight = FontWeight.Bold,
+                color = TextDark,
+                fontSize = 18.sp
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedTextField(
+                    value = rc,
+                    onValueChange = { rc = it.uppercase() },
+                    label = { Text("RC (Registration Certificate) No *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = insurance,
+                    onValueChange = { insurance = it },
+                    label = { Text("Insurance Expiry Date *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = puc,
+                    onValueChange = { puc = it },
+                    label = { Text("PUC Expiry Date *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSave(rc, insurance, puc) },
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                shape = PillShape
+            ) {
+                Text("Save Documents", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = TextGray)
+            }
+        }
+    )
 }
 
 @Composable

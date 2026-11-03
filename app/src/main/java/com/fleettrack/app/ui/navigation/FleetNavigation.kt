@@ -40,6 +40,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.fleettrack.app.ui.auth.LoginScreen
 import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.driver.privacy.PrivacyScreen
 import com.fleettrack.app.ui.driver.setup.SetupWizardScreen
@@ -81,7 +82,7 @@ import com.fleettrack.app.ui.theme.TextMutedGray
 @Composable
 fun FleetNavigation(
     navController: NavHostController,
-    startDestination: String = Screen.ModeSelect.route
+    startDestination: String = Screen.Login.route
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -106,10 +107,17 @@ fun FleetNavigation(
                 OwnerBottomBar(
                     currentRoute = currentRoute,
                     onNavigate = { screen ->
-                        navController.navigate(screen.route) {
-                            popUpTo(Screen.Dashboard.route) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
+                        if (screen.route == Screen.Dashboard.route) {
+                            navController.navigate(Screen.Dashboard.route) {
+                                popUpTo(Screen.Dashboard.route) { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        } else {
+                            navController.navigate(screen.route) {
+                                popUpTo(Screen.Dashboard.route) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
                     }
                 )
@@ -133,12 +141,28 @@ fun FleetNavigation(
             modifier = Modifier.padding(innerPadding)
         ) {
             // ==========================================
+            // Welcome Back / Authentication Entry
+            // ==========================================
+            composable(Screen.Login.route) {
+                LoginScreen(
+                    onLoginSuccess = {
+                        navController.navigate(Screen.Dashboard.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    },
+                    onDriverCompanionClick = {
+                        navController.navigate(Screen.SetupWizard.route)
+                    }
+                )
+            }
+
+            // ==========================================
             // Welcome & Mode Selection Entry
             // ==========================================
             composable(Screen.ModeSelect.route) {
                 ModeSelectionScreen(
                     onSelectDriver = { navController.navigate(Screen.SetupWizard.route) },
-                    onSelectOwner = { navController.navigate(Screen.Dashboard.route) }
+                    onSelectOwner = { navController.navigate(Screen.Login.route) }
                 )
             }
 
@@ -291,8 +315,8 @@ fun FleetNavigation(
                 SettingsScreen(
                     onBackClick = { navController.popBackStack() },
                     onLogoutClick = {
-                        navController.navigate(Screen.ModeSelect.route) {
-                            popUpTo(Screen.ModeSelect.route) { inclusive = true }
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
                         }
                     }
                 )
