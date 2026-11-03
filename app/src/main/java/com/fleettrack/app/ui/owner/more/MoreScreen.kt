@@ -22,6 +22,8 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
@@ -57,6 +59,8 @@ fun MoreScreen(
     onNavigateToExpenses: () -> Unit,
     onNavigateToAlerts: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToLiveTracking: () -> Unit = {},
+    onNavigateToDocumentVault: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -139,7 +143,7 @@ fun MoreScreen(
         // 3. Section Title
         item {
             Text(
-                text = "Fleet Management",
+                text = "Fleet Operations",
                 color = TextGray,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -152,6 +156,14 @@ fun MoreScreen(
             Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                // Live Tracking (Sheet 2 Feature Suggestion & Screen)
+                MoreMenuItem(
+                    icon = Icons.Default.Navigation,
+                    title = "Live Tracking",
+                    subtitle = "Real-time location & trip status on map",
+                    onClick = onNavigateToLiveTracking
+                )
+
                 MoreMenuItem(
                     icon = Icons.AutoMirrored.Filled.TrendingUp,
                     title = "Reports & Analytics",
@@ -169,7 +181,7 @@ fun MoreScreen(
                 MoreMenuItem(
                     icon = Icons.Default.People,
                     title = "Drivers",
-                    subtitle = "28 Active drivers, assignments & payouts",
+                    subtitle = "28 Active drivers, shifts & payouts",
                     onClick = onNavigateToDrivers
                 )
 
@@ -178,6 +190,14 @@ fun MoreScreen(
                     title = "Expenses",
                     subtitle = "Fuel, maintenance, driver payments",
                     onClick = onNavigateToExpenses
+                )
+
+                // Document Vault (Sheet 2 Feature Suggestion)
+                MoreMenuItem(
+                    icon = Icons.Default.Description,
+                    title = "Document Vault",
+                    subtitle = "RC, Insurance, PUC & Permits",
+                    onClick = onNavigateToDocumentVault
                 )
 
                 MoreMenuItem(
@@ -264,4 +284,3 @@ private fun MoreMenuItem(
         }
     }
 }
-

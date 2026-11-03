@@ -72,6 +72,7 @@ data class ExpenseCategory(
 @Composable
 fun ExpensesScreen(
     onBackClick: (() -> Unit)? = null,
+    onNavigateToAddFuel: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
@@ -97,7 +98,13 @@ fun ExpensesScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showAddFuelDialog = true },
+                onClick = {
+                    if (onNavigateToAddFuel != null) {
+                        onNavigateToAddFuel()
+                    } else {
+                        showAddFuelDialog = true
+                    }
+                },
                 containerColor = PrimaryPurple,
                 contentColor = Color.White,
                 shape = PillShape,
@@ -152,14 +159,13 @@ fun ExpensesScreen(
                         )
                     }
 
-                    // Month Selector Pill
+                    // Month Selector Dropdown Pill
                     Box(
                         modifier = Modifier
                             .clip(PillShape)
                             .background(SurfaceWhite)
                             .border(1.dp, SurfaceBorder, PillShape)
-                            .clickable { }
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
@@ -173,14 +179,14 @@ fun ExpensesScreen(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Select Month",
                                 tint = TextGray,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
                 }
             }
 
-            // 2. Donut Chart Card
+            // 2. Donut Chart Card (Matching Mockup Sheet 2)
             item {
                 GlassCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -189,44 +195,45 @@ fun ExpensesScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(24.dp),
+                            .padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // Donut Chart Canvas
                         Box(
-                            modifier = Modifier.size(200.dp),
+                            modifier = Modifier.size(190.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            // Donut arcs
                             Canvas(modifier = Modifier.fillMaxSize()) {
                                 var startAngle = -90f
-                                val strokeWidth = 26.dp.toPx()
+                                val strokeWidth = 32f
 
-                                categories.forEach { category ->
-                                    val sweepAngle = (category.amount / totalExpenses).toFloat() * 360f
+                                for (cat in categories) {
+                                    val sweep = (cat.amount / totalExpenses).toFloat() * 360f
                                     drawArc(
-                                        color = category.color,
+                                        color = cat.color,
                                         startAngle = startAngle,
-                                        sweepAngle = sweepAngle - 2f, // gap between segments
+                                        sweepAngle = sweep - 2f,
                                         useCenter = false,
                                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                                     )
-                                    startAngle += sweepAngle
+                                    startAngle += sweep
                                 }
                             }
 
-                            // Center Text: Total Expenses
+                            // Center Total Text
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     text = currencyFormat.format(totalExpenses),
                                     color = TextDark,
-                                    fontSize = 22.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontSize = 19.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = "Total Expenses",
                                     color = TextGray,
-                                    fontSize = 12.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -235,7 +242,17 @@ fun ExpensesScreen(
                 }
             }
 
-            // 3. Breakdown List Card
+            // 3. Category Breakdown List
+            item {
+                Text(
+                    text = "Category Breakdown",
+                    color = TextDark,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
+
             item {
                 GlassCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -244,17 +261,10 @@ fun ExpensesScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(18.dp),
+                            .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Text(
-                            text = "Breakdown",
-                            color = TextDark,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        categories.forEach { category ->
+                        categories.forEachIndexed { index, cat ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -265,11 +275,11 @@ fun ExpensesScreen(
                                         modifier = Modifier
                                             .size(12.dp)
                                             .clip(CircleShape)
-                                            .background(category.color)
+                                            .background(cat.color)
                                     )
-                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Spacer(modifier = Modifier.width(12.dp))
                                     Text(
-                                        text = category.name,
+                                        text = cat.name,
                                         color = TextDark,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Medium
@@ -278,21 +288,65 @@ fun ExpensesScreen(
 
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = currencyFormat.format(category.amount),
+                                        text = currencyFormat.format(cat.amount),
                                         color = TextDark,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "(${category.percentage}%)",
-                                        color = TextGray,
+                                        text = "(${cat.percentage}%)",
+                                        color = TextMutedGray,
                                         fontSize = 12.sp
                                     )
                                 }
                             }
+
+                            if (index < categories.size - 1) {
+                                androidx.compose.material3.HorizontalDivider(
+                                    color = SurfaceBorder,
+                                    thickness = 0.5.dp
+                                )
+                            }
                         }
                     }
+                }
+            }
+
+            // 4. Recent Fuel & Operational Transactions
+            item {
+                Text(
+                    text = "Recent Fuel Log",
+                    color = TextDark,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                )
+            }
+
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FuelTransactionTile(
+                        carReg = "TS09 AB 1234",
+                        date = "02 Nov 2026",
+                        liters = "25.40 L (Petrol)",
+                        odo = "42,340 km",
+                        amount = 2840.0
+                    )
+                    FuelTransactionTile(
+                        carReg = "TS09 CD 5678",
+                        date = "01 Nov 2026",
+                        liters = "18.20 kg (CNG)",
+                        odo = "58,120 km",
+                        amount = 1640.0
+                    )
+                    FuelTransactionTile(
+                        carReg = "TS09 EF 9012",
+                        date = "31 Oct 2026",
+                        liters = "22.00 L (Petrol)",
+                        odo = "31,850 km",
+                        amount = 2460.0
+                    )
                 }
             }
         }
@@ -306,6 +360,61 @@ fun ExpensesScreen(
                 showAddFuelDialog = false
             }
         )
+    }
+}
+
+@Composable
+private fun FuelTransactionTile(
+    carReg: String,
+    date: String,
+    liters: String,
+    odo: String,
+    amount: Double
+) {
+    val currencyFormat = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
+    currencyFormat.maximumFractionDigits = 0
+
+    GlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = TileShape
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = carReg,
+                        color = TextDark,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = date,
+                        color = TextMutedGray,
+                        fontSize = 11.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "$liters • Odo: $odo",
+                    color = TextGray,
+                    fontSize = 12.sp
+                )
+            }
+
+            Text(
+                text = "- " + currencyFormat.format(amount),
+                color = Color(0xFFE53935),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -405,4 +514,3 @@ private fun AddFuelExpenseDialog(
         }
     )
 }
-

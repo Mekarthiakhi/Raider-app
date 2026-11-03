@@ -58,10 +58,12 @@ import com.fleettrack.app.ui.owner.detail.VehicleDetailViewModel
 import com.fleettrack.app.ui.owner.drivers.DriverDetailScreen
 import com.fleettrack.app.ui.owner.drivers.DriverDetailViewModel
 import com.fleettrack.app.ui.owner.drivers.DriversScreen
+import com.fleettrack.app.ui.owner.expenses.AddFuelExpenseScreen
 import com.fleettrack.app.ui.owner.expenses.ExpensesScreen
 import com.fleettrack.app.ui.owner.feed.LiveFeedScreen
 import com.fleettrack.app.ui.owner.feed.LiveFeedViewModel
 import com.fleettrack.app.ui.owner.fleet.FleetBoardViewModel
+import com.fleettrack.app.ui.owner.maintenance.AddServiceScreen
 import com.fleettrack.app.ui.owner.maintenance.MaintenanceScreen
 import com.fleettrack.app.ui.owner.more.MoreScreen
 import com.fleettrack.app.ui.owner.reports.ReportsScreen
@@ -69,6 +71,8 @@ import com.fleettrack.app.ui.owner.reports.ReportsViewModel
 import com.fleettrack.app.ui.owner.review.ReviewQueueScreen
 import com.fleettrack.app.ui.owner.review.ReviewQueueViewModel
 import com.fleettrack.app.ui.owner.settings.SettingsScreen
+import com.fleettrack.app.ui.owner.tracking.LiveTrackingScreen
+import com.fleettrack.app.ui.owner.vault.DocumentVaultScreen
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.CardShape
 import com.fleettrack.app.ui.theme.PillShape
@@ -218,7 +222,8 @@ fun FleetNavigation(
                     onNavigateToAlerts = { navController.navigate(Screen.Alerts.route) },
                     onNavigateToDrivers = { navController.navigate(Screen.Drivers.route) },
                     onNavigateToExpenses = { navController.navigate(Screen.Expenses.route) },
-                    onNavigateToMaintenance = { navController.navigate(Screen.Maintenance.route) }
+                    onNavigateToMaintenance = { navController.navigate(Screen.Maintenance.route) },
+                    onNavigateToLiveTracking = { navController.navigate(Screen.LiveTracking.route) }
                 )
             }
 
@@ -261,12 +266,14 @@ fun FleetNavigation(
                     onNavigateToDrivers = { navController.navigate(Screen.Drivers.route) },
                     onNavigateToExpenses = { navController.navigate(Screen.Expenses.route) },
                     onNavigateToAlerts = { navController.navigate(Screen.Alerts.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToLiveTracking = { navController.navigate(Screen.LiveTracking.route) },
+                    onNavigateToDocumentVault = { navController.navigate(Screen.DocumentVault.route) }
                 )
             }
 
             // ==========================================
-            // Fleet Owner Sub-Screens
+            // Fleet Owner Sub-Screens & Feature Modules
             // ==========================================
             composable(Screen.VehicleDetail.route) {
                 val vm: VehicleDetailViewModel = hiltViewModel()
@@ -300,12 +307,41 @@ fun FleetNavigation(
 
             composable(Screen.Maintenance.route) {
                 MaintenanceScreen(
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateToAddService = { navController.navigate(Screen.AddService.route) }
                 )
             }
 
             composable(Screen.Expenses.route) {
                 ExpensesScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateToAddFuel = { navController.navigate(Screen.AddFuelExpense.route) }
+                )
+            }
+
+            composable(Screen.LiveTracking.route) {
+                LiveTrackingScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onVehicleClick = { regNo ->
+                        navController.navigate(Screen.Cars.route)
+                    }
+                )
+            }
+
+            composable(Screen.AddFuelExpense.route) {
+                AddFuelExpenseScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.AddService.route) {
+                AddServiceScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.DocumentVault.route) {
+                DocumentVaultScreen(
                     onBackClick = { navController.popBackStack() }
                 )
             }

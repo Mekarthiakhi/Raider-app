@@ -87,6 +87,7 @@ enum class MaintenanceType {
 @Composable
 fun MaintenanceScreen(
     onBackClick: (() -> Unit)? = null,
+    onNavigateToAddService: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableStateOf("Upcoming") }
@@ -115,7 +116,13 @@ fun MaintenanceScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showAddDialog = true },
+                onClick = {
+                    if (onNavigateToAddService != null) {
+                        onNavigateToAddService()
+                    } else {
+                        showAddDialog = true
+                    }
+                },
                 containerColor = PrimaryPurple,
                 contentColor = Color.White,
                 shape = PillShape,
@@ -167,62 +174,58 @@ fun MaintenanceScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // 2. Segmented Tabs: Upcoming (5) | History
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(PillShape)
-                    .background(SurfaceWhite)
+                    .background(SurfaceWhite, PillShape)
                     .border(1.dp, SurfaceBorder, PillShape)
-                    .padding(4.dp)
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(PillShape)
-                        .background(if (selectedTab == "Upcoming") PrimaryPurple else Color.Transparent)
-                        .clickable { selectedTab = "Upcoming" }
-                        .padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Upcoming (${maintenanceItems.size})",
-                        color = if (selectedTab == "Upcoming") Color.White else TextDark,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                listOf("Upcoming", "History").forEach { tab ->
+                    val isSelected = selectedTab == tab
+                    val label = if (tab == "Upcoming") "Upcoming (${maintenanceItems.size})" else "History (${historyItems.size})"
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(PillShape)
-                        .background(if (selectedTab == "History") PrimaryPurple else Color.Transparent)
-                        .clickable { selectedTab = "History" }
-                        .padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "History",
-                        color = if (selectedTab == "History") Color.White else TextDark,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(PillShape)
+                            .background(if (isSelected) PrimaryPurple else Color.Transparent)
+                            .clickable { selectedTab = tab }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = label,
+                            color = if (isSelected) Color.White else TextGray,
+                            fontSize = 13.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // 3. Maintenance List
+            // 3. Maintenance Items List
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 90.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(displayedItems, key = { it.id }) { item ->
-                    MaintenanceCardItem(item = item)
+                    MaintenanceCardItem(
+                        item = item,
+                        onMarkComplete = {
+                            if (!item.isCompleted) {
+                                maintenanceItems.remove(item)
+                                historyItems.add(0, item.copy(isCompleted = true))
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -232,14 +235,19 @@ fun MaintenanceScreen(
         AddServiceDialog(
             onDismiss = { showAddDialog = false },
             onSave = { car, type, date, amount, notes ->
+                val mType = when {
+                    type.contains("Insurance", ignoreCase = true) -> MaintenanceType.INSURANCE
+                    type.contains("PUC", ignoreCase = true) -> MaintenanceType.PUC
+                    else -> MaintenanceType.SERVICE
+                }
                 maintenanceItems.add(
                     0,
                     MaintenanceItem(
                         id = System.currentTimeMillis().toString(),
                         regNo = car,
-                        title = "$type - $notes",
+                        title = type,
                         dueDate = date,
-                        type = MaintenanceType.SERVICE,
+                        type = mType,
                         cost = amount
                     )
                 )
@@ -250,16 +258,20 @@ fun MaintenanceScreen(
 }
 
 @Composable
-private fun MaintenanceCardItem(item: MaintenanceItem) {
-    val (icon, tintBg, tintColor) = when (item.type) {
+private fun MaintenanceCardItem(
+    item: MaintenanceItem,
+    onMarkComplete: () -> Unit
+) {
+    val (icon, iconBg, iconTint) = when (item.type) {
         MaintenanceType.SERVICE -> Triple(Icons.Default.Build, MetricPurpleBg, PrimaryPurple)
-        MaintenanceType.INSURANCE -> Triple(Icons.Default.Security, ActiveGreenBg, ActiveGreen)
-        MaintenanceType.PUC -> Triple(Icons.Default.Description, InactiveRedBg, InactiveRed)
-        MaintenanceType.FITNESS -> Triple(Icons.Default.Warning, MetricPurpleBg, PrimaryPurple)
+        MaintenanceType.INSURANCE -> Triple(Icons.Default.Security, InactiveRedBg, InactiveRed)
+        MaintenanceType.PUC -> Triple(Icons.Default.Warning, Color(0xFFFFF4E5), Color(0xFFFF9500))
+        MaintenanceType.FITNESS -> Triple(Icons.Default.Description, ActiveGreenBg, ActiveGreen)
     }
 
     GlassCard(
         modifier = Modifier.fillMaxWidth(),
+        onClick = onMarkComplete,
         shape = TileShape
     ) {
         Row(
@@ -269,32 +281,29 @@ private fun MaintenanceCardItem(item: MaintenanceItem) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
-                        .background(tintBg),
+                        .background(iconBg),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
-                        contentDescription = item.title,
-                        tint = tintColor,
+                        contentDescription = null,
+                        tint = iconTint,
                         modifier = Modifier.size(20.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.width(14.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
                 Column {
                     Text(
                         text = item.regNo,
                         color = TextDark,
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(2.dp))
@@ -417,4 +426,3 @@ private fun AddServiceDialog(
         }
     )
 }
-

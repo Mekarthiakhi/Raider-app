@@ -37,6 +37,12 @@ sealed class Screen(val route: String) {
     data object Reports : Screen("owner_reports")
     data object Alerts : Screen("owner_alerts")
 
+    // New Dedicated Screens from Figma Mockups
+    data object LiveTracking : Screen("owner_live_tracking")
+    data object AddFuelExpense : Screen("owner_add_fuel_expense")
+    data object AddService : Screen("owner_add_service")
+    data object DocumentVault : Screen("owner_document_vault")
+
     // Backward compatibility aliases
     val FleetBoard get() = Dashboard
     val LiveFeed get() = Trips

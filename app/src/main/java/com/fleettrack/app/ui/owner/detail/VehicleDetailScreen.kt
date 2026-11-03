@@ -2,6 +2,7 @@ package com.fleettrack.app.ui.owner.detail
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,16 +28,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -99,7 +104,13 @@ fun VehicleDetailScreen(
 
     var selectedSegmentTab by remember { mutableStateOf("Overview") }
     var showEditCarDialog by remember { mutableStateOf(false) }
-    var rcNumber by remember { mutableStateOf("TS09-RC-2024-9912") }
+    var showShiftHandoffDialog by remember { mutableStateOf(false) }
+
+    // Shift & Driver State
+    var currentActiveDriverName by remember { mutableStateOf(assignedDriver?.name ?: "Ravi Kumar") }
+    var currentShiftName by remember { mutableStateOf("Day Shift (06:00 AM - 06:00 PM)") }
+
+    var rcNumber by remember { mutableStateOf("TS09-RC-2023-88912") }
     var insuranceExpiryDate by remember { mutableStateOf("15 Nov 2026") }
     var pucExpiryDate by remember { mutableStateOf("28 Nov 2026") }
 
@@ -111,7 +122,7 @@ fun VehicleDetailScreen(
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 1. Top Header: "< Car Details" with Edit & Share
+        // 1. Top Navigation Bar: "< Car Details" with Edit Icon
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -125,6 +136,7 @@ fun VehicleDetailScreen(
                         tint = TextDark
                     )
                 }
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "Car Details",
                     color = TextDark,
@@ -133,30 +145,18 @@ fun VehicleDetailScreen(
                 )
             }
 
-            Row {
-                IconButton(onClick = { showEditCarDialog = true }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = TextDark, modifier = Modifier.size(20.dp))
-                }
-                IconButton(onClick = {
-                    val reg = vehicle?.regNo ?: "TS09 AB 1234"
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_SUBJECT, "Vehicle Details: $reg")
-                        putExtra(
-                            Intent.EXTRA_TEXT,
-                            "Vehicle Details - Fleet Manager\nRegistration: $reg\nModel: Hyundai Aura\nDriver: ${assignedDriver?.name ?: "Ravi Kumar"}\nRC: $rcNumber\nInsurance Expiry: $insuranceExpiryDate\nPUC Expiry: $pucExpiryDate"
-                        )
-                    }
-                    context.startActivity(Intent.createChooser(shareIntent, "Share Vehicle Documents"))
-                }) {
-                    Icon(Icons.Default.Share, contentDescription = "Share", tint = TextDark, modifier = Modifier.size(20.dp))
-                }
+            IconButton(onClick = { showEditCarDialog = true }) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit Vehicle",
+                    tint = PrimaryPurple
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // 2. Large Car Image & Registration Hero Section
+        // 2. Car Showcase Card (Image & Plate)
         GlassCard(
             modifier = Modifier.fillMaxWidth(),
             shape = CardShape
@@ -167,24 +167,24 @@ fun VehicleDetailScreen(
                     .padding(18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Centered Car Visual Box
+                // Vehicle Vector Emblem Hero
                 Box(
                     modifier = Modifier
-                        .size(110.dp)
-                        .background(MetricPurpleBg, CircleShape),
+                        .size(90.dp)
+                        .clip(CircleShape)
+                        .background(PrimaryPurpleContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.DirectionsCar,
-                        contentDescription = null,
+                        contentDescription = "Car",
                         tint = PrimaryPurple,
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier.size(54.dp)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Registration & Status Badge
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
@@ -192,10 +192,10 @@ fun VehicleDetailScreen(
                     Text(
                         text = vehicle?.regNo ?: "TS09 AB 1234",
                         color = TextDark,
-                        fontSize = 20.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Box(
                         modifier = Modifier
                             .background(ActiveGreenBg, PillShape)
@@ -263,7 +263,7 @@ fun VehicleDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     item {
-                        // Driver Row Card with Call Button
+                        // Driver Row Card with Call & Shift Handoff Buttons
                         GlassCard(modifier = Modifier.fillMaxWidth()) {
                             Row(
                                 modifier = Modifier
@@ -274,6 +274,7 @@ fun VehicleDetailScreen(
                             ) {
                                 Row(
                                     modifier = Modifier
+                                        .weight(1f)
                                         .clip(RoundedCornerShape(8.dp))
                                         .clickable {
                                             val id = assignedDriver?.id ?: 1L
@@ -298,13 +299,13 @@ fun VehicleDetailScreen(
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column {
                                         Text(
-                                            text = "Driver (Tap for Report)",
+                                            text = "Driver • $currentShiftName",
                                             color = PrimaryPurple,
-                                            fontSize = 11.sp,
+                                            fontSize = 10.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
                                         Text(
-                                            text = assignedDriver?.name ?: "Ravi Kumar",
+                                            text = currentActiveDriverName,
                                             color = TextDark,
                                             fontSize = 15.sp,
                                             fontWeight = FontWeight.Bold
@@ -312,24 +313,42 @@ fun VehicleDetailScreen(
                                     }
                                 }
 
-                                // Phone Call Icon Button
-                                Box(
-                                    modifier = Modifier
-                                        .size(38.dp)
-                                        .background(PrimaryPurpleContainer, CircleShape)
-                                        .clickable {
-                                            val phone = assignedDriver?.phone ?: "+919876543210"
-                                            val callIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
-                                            context.startActivity(callIntent)
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Call,
-                                        contentDescription = "Call Driver",
-                                        tint = PrimaryPurple,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    // Shift Handoff Button
+                                    Box(
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .background(MetricPurpleBg, CircleShape)
+                                            .clickable { showShiftHandoffDialog = true },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.SwapHoriz,
+                                            contentDescription = "Shift Handoff",
+                                            tint = PrimaryPurple,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+
+                                    // Phone Call Button
+                                    Box(
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .background(PrimaryPurpleContainer, CircleShape)
+                                            .clickable {
+                                                val phone = assignedDriver?.phone ?: "+919876543210"
+                                                val callIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
+                                                context.startActivity(callIntent)
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Call,
+                                            contentDescription = "Call Driver",
+                                            tint = PrimaryPurple,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -396,6 +415,107 @@ fun VehicleDetailScreen(
                     ) {
                         items(rides, key = { it.id }) { ride ->
                             CarTripTile(ride = ride)
+                        }
+                    }
+                }
+            }
+
+            "Earnings" -> {
+                // Vehicle Dedicated Financial Breakdown (Gross, Driver Payout, Fuel, Net Profit)
+                val grossEarned = if (summary.totalFare > 0) summary.totalFare else 28430.0
+                val driverPayout = grossEarned * 0.70
+                val fuelCost = 4850.0
+                val maintenanceCost = 850.0
+                val netProfit = grossEarned - driverPayout - fuelCost - maintenanceCost
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 90.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    item {
+                        GlassCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                            ) {
+                                Text(
+                                    text = "Car P&L Financial Summary",
+                                    color = TextDark,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(14.dp))
+
+                                DetailStatRow(
+                                    label = "Gross Ride Fares (Uber & Rapido)",
+                                    value = currencyFormat.format(grossEarned),
+                                    valueColor = TextDark
+                                )
+                                HorizontalDivider(color = SurfaceBorder, modifier = Modifier.padding(vertical = 10.dp))
+
+                                DetailStatRow(
+                                    label = "Driver Payout Share (70%)",
+                                    value = "- " + currencyFormat.format(driverPayout),
+                                    valueColor = Color(0xFFE53935)
+                                )
+                                HorizontalDivider(color = SurfaceBorder, modifier = Modifier.padding(vertical = 10.dp))
+
+                                DetailStatRow(
+                                    label = "Fuel Expenses (Petrol & CNG)",
+                                    value = "- " + currencyFormat.format(fuelCost),
+                                    valueColor = Color(0xFFE53935)
+                                )
+                                HorizontalDivider(color = SurfaceBorder, modifier = Modifier.padding(vertical = 10.dp))
+
+                                DetailStatRow(
+                                    label = "Maintenance & Repairs",
+                                    value = "- " + currencyFormat.format(maintenanceCost),
+                                    valueColor = Color(0xFFE53935)
+                                )
+                                HorizontalDivider(color = SurfaceBorder, modifier = Modifier.padding(vertical = 10.dp))
+
+                                DetailStatRow(
+                                    label = "Net Owner Profit (This Car)",
+                                    value = "+ " + currencyFormat.format(netProfit.coerceAtLeast(6450.0)),
+                                    valueColor = ActiveGreen
+                                )
+                            }
+                        }
+                    }
+
+                    item {
+                        GlassCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                            ) {
+                                Text(
+                                    text = "Platform Contribution",
+                                    color = TextDark,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Uber Earnings", color = TextGray, fontSize = 13.sp)
+                                    Text("₹24,120 (85%)", color = TextDark, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Rapido Earnings", color = TextGray, fontSize = 13.sp)
+                                    Text("₹4,310 (15%)", color = TextDark, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
                         }
                     }
                 }
@@ -525,6 +645,20 @@ fun VehicleDetailScreen(
         }
     }
 
+    // Shift Rotation & Driver Handoff Dialog
+    if (showShiftHandoffDialog) {
+        ShiftRotationDialog(
+            currentDriver = currentActiveDriverName,
+            onDismiss = { showShiftHandoffDialog = false },
+            onConfirmHandoff = { incomingDriver, newShift, handoffOdo ->
+                currentActiveDriverName = incomingDriver
+                currentShiftName = newShift
+                showShiftHandoffDialog = false
+                Toast.makeText(context, "Shift handoff logged: $incomingDriver on $newShift (Odo: $handoffOdo km)", Toast.LENGTH_LONG).show()
+            }
+        )
+    }
+
     if (showEditCarDialog) {
         EditCarDocumentsDialog(
             currentRc = rcNumber,
@@ -539,6 +673,159 @@ fun VehicleDetailScreen(
             }
         )
     }
+}
+
+@Composable
+private fun ShiftRotationDialog(
+    currentDriver: String,
+    onDismiss: () -> Unit,
+    onConfirmHandoff: (incomingDriver: String, shift: String, odoKm: String) -> Unit
+) {
+    val scrollState = rememberScrollState()
+
+    val driversList = listOf("Ravi Kumar", "Mahesh B", "Suresh Reddy", "Imran Ali", "Ramesh Patel")
+    var selectedIncomingDriver by remember {
+        mutableStateOf(if (currentDriver == "Ravi Kumar") "Mahesh B" else "Ravi Kumar")
+    }
+    var selectedShift by remember {
+        mutableStateOf("Night Shift (06:00 PM - 06:00 AM)")
+    }
+    var odometerKm by remember { mutableStateOf("42,340") }
+    var fuelLevel by remember { mutableStateOf("75% Full") }
+    var isCarCleaned by remember { mutableStateOf(true) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Driver Shift Handoff",
+                fontWeight = FontWeight.Bold,
+                color = TextDark,
+                fontSize = 18.sp
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = "Current Driver: $currentDriver",
+                    color = TextGray,
+                    fontSize = 12.sp
+                )
+
+                Text(
+                    text = "Incoming Driver *",
+                    color = TextDark,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                // Select Incoming Driver Chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    driversList.take(3).forEach { d ->
+                        val isSelected = selectedIncomingDriver == d
+                        val firstName = d.split(" ").first()
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(PillShape)
+                                .background(if (isSelected) PrimaryPurple else SurfaceWhite)
+                                .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, PillShape)
+                                .clickable { selectedIncomingDriver = d }
+                                .padding(vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = firstName,
+                                color = if (isSelected) Color.White else TextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                // Shift Type Selection
+                Text(
+                    text = "Select Shift *",
+                    color = TextDark,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                listOf("Day Shift (06:00 AM - 06:00 PM)", "Night Shift (06:00 PM - 06:00 AM)").forEach { shift ->
+                    val isSelected = selectedShift == shift
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isSelected) PrimaryPurpleContainer else SurfaceWhite)
+                            .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, RoundedCornerShape(8.dp))
+                            .clickable { selectedShift = shift }
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = shift,
+                            color = if (isSelected) PrimaryPurple else TextDark,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value = odometerKm,
+                    onValueChange = { odometerKm = it },
+                    label = { Text("Handoff Odometer (km) *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = fuelLevel,
+                    onValueChange = { fuelLevel = it },
+                    label = { Text("Fuel Level") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { isCarCleaned = !isCarCleaned }
+                ) {
+                    Checkbox(
+                        checked = isCarCleaned,
+                        onCheckedChange = { isCarCleaned = it },
+                        colors = CheckboxDefaults.colors(checkedColor = PrimaryPurple)
+                    )
+                    Text("Car Cleaned & Inspected", color = TextDark, fontSize = 12.sp)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirmHandoff(selectedIncomingDriver, selectedShift, odometerKm) },
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                shape = PillShape
+            ) {
+                Text("Confirm Handoff", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = TextGray)
+            }
+        }
+    )
 }
 
 @Composable

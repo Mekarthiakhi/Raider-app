@@ -56,3 +56,4 @@ class SupabaseRealtimeSyncManager @Inject constructor(
         }
     }
 }
+

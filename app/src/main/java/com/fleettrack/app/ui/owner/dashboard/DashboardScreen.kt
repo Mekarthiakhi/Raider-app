@@ -85,6 +85,7 @@ fun DashboardScreen(
     onNavigateToDrivers: () -> Unit = {},
     onNavigateToExpenses: () -> Unit = {},
     onNavigateToMaintenance: () -> Unit = {},
+    onNavigateToLiveTracking: () -> Unit = onNavigateToCars,
     modifier: Modifier = Modifier
 ) {
     val overview by viewModel.overview.collectAsState()
@@ -173,7 +174,7 @@ fun DashboardScreen(
                     label = "Active",
                     iconColor = ActiveGreen,
                     containerColor = ActiveGreenBg,
-                    onClick = onNavigateToCars
+                    onClick = onNavigateToLiveTracking
                 )
 
                 // Inactive
