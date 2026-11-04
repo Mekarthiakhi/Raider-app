@@ -34,10 +34,10 @@ jobs:
       - name: Accept Android SDK Licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Build Debug APK
+      - name: Build Debug and Release APKs
         run: |
           set +e
-          ./gradlew assembleDebug --stacktrace --no-daemon > build.log 2>&1
+          ./gradlew assembleDebug assembleRelease --stacktrace --no-daemon > build.log 2>&1
           EXIT_CODE=$?
           echo "### Gradle Build Output (Exit Code: $EXIT_CODE)" >> $GITHUB_STEP_SUMMARY
           echo '```text' >> $GITHUB_STEP_SUMMARY
@@ -46,12 +46,12 @@ jobs:
           cat build.log
           exit $EXIT_CODE
 
-      - name: Upload Debug APK Artifact
+      - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: FleetTrack-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: FleetTrack-apks
+          path: app/build/outputs/apk/*/*.apk
           retention-days: 14
 
       - name: Publish Direct Mobile Download Release
@@ -61,6 +61,8 @@ jobs:
           tag_name: latest
           name: "Fleet Track APK (Latest)"
           body: "Direct 1-click download for mobile phone testing without GitHub login"
-          files: app/build/outputs/apk/debug/app-debug.apk
+          files: |
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/apk/debug/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
