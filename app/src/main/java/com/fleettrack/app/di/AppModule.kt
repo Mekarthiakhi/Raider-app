@@ -87,6 +87,9 @@ object AppModule {
     fun provideAlertDao(db: FleetDatabase): AlertDao = db.alertDao()
 
     @Provides
+    fun provideDutyLogDao(db: FleetDatabase): com.fleettrack.app.data.local.dao.DutyLogDao = db.dutyLogDao()
+
+    @Provides
     @Singleton
     fun provideRideRemoteDataSource(impl: RideRemoteDataSourceImpl): RideRemoteDataSource = impl
 

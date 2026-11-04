@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.owner.more
+package com.fleettrack.app.ui.owner.more
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -61,6 +61,7 @@ fun MoreScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToLiveTracking: () -> Unit = {},
     onNavigateToDocumentVault: () -> Unit = {},
+    onNavigateToOfficeRegister: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -156,6 +157,14 @@ fun MoreScreen(
             Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                // Office Duty Register (SVM Commission Base)
+                MoreMenuItem(
+                    icon = Icons.Default.Description,
+                    title = "Office Duty Register",
+                    subtitle = "Paper logbook, cash collection & SVM commission base",
+                    onClick = onNavigateToOfficeRegister
+                )
+
                 // Live Tracking (Sheet 2 Feature Suggestion & Screen)
                 MoreMenuItem(
                     icon = Icons.Default.Navigation,

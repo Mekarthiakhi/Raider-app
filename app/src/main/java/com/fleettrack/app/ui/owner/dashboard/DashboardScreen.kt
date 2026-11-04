@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.owner.dashboard
+package com.fleettrack.app.ui.owner.dashboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -86,6 +86,7 @@ fun DashboardScreen(
     onNavigateToExpenses: () -> Unit = {},
     onNavigateToMaintenance: () -> Unit = {},
     onNavigateToLiveTracking: () -> Unit = onNavigateToCars,
+    onNavigateToOfficeRegister: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val overview by viewModel.overview.collectAsState()
@@ -147,6 +148,70 @@ fun DashboardScreen(
                             .padding(end = 2.dp, top = 2.dp)
                             .background(InactiveRed, CircleShape)
                     )
+                }
+            }
+        }
+
+        // SVM FLEET Office Register Quick Action Banner
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(PrimaryPurpleContainer)
+                    .border(1.dp, PrimaryPurple.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
+                    .clickable(onClick = onNavigateToOfficeRegister)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(PrimaryPurple),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ReceiptLong,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Office Duty Register",
+                                color = PrimaryPurple,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "SVM Commission Base • Paper Logbook",
+                                color = TextDark.copy(alpha = 0.8f),
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(PillShape)
+                            .background(PrimaryPurple)
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "Open Register",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

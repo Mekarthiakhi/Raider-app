@@ -1,14 +1,17 @@
-﻿package com.fleettrack.app.data.local
+package com.fleettrack.app.data.local
 
 import com.fleettrack.app.data.local.entity.DriverEntity
+import com.fleettrack.app.data.local.entity.DutyLogEntity
 import com.fleettrack.app.data.local.entity.RideEntity
 import com.fleettrack.app.data.local.entity.VehicleEntity
 import com.fleettrack.app.data.model.Platform
 import com.fleettrack.app.data.model.RideStatus
 import com.fleettrack.app.data.model.SyncStatus
 import com.fleettrack.app.data.repository.DriverRepository
+import com.fleettrack.app.data.repository.DutyLogRepository
 import com.fleettrack.app.data.repository.RideRepository
 import com.fleettrack.app.data.repository.VehicleRepository
+import com.fleettrack.app.util.SvmCommissionCalculator
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
 import javax.inject.Inject
@@ -17,55 +20,63 @@ import kotlin.random.Random
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
+/**
+ * Seeder configured for SVM FLEET - Moosapet, Hyderabad (500018)
+ * Contacts: 9391915013, 9959859347
+ * Includes drivers and logs from official office paper register.
+ */
 @Singleton
 class FleetDataSeeder @Inject constructor(
     private val vehicleRepository: VehicleRepository,
     private val driverRepository: DriverRepository,
-    private val rideRepository: RideRepository
+    private val rideRepository: RideRepository,
+    private val dutyLogRepository: DutyLogRepository
 ) {
     private val carModels = listOf(
         "Hyundai Aura", "Maruti Dzire", "Honda Amaze", "Tata Tigor",
         "Maruti Tour S", "Hyundai Grand i10", "Toyota Etios"
     )
 
+    // Drivers from the SVM FLEET office logbook
     private val driverList = listOf(
-        Pair("Ravi Kumar", "+91 98765 43210"),
-        Pair("Suresh Reddy", "+91 98451 23456"),
-        Pair("Imran Ali", "+91 97412 89012"),
-        Pair("Mahesh B", "+91 96321 78901"),
-        Pair("Anil Kumar", "+91 98452 34567"),
-        Pair("Vijay Rao", "+91 99001 23489"),
-        Pair("Karthik N", "+91 98450 99881"),
-        Pair("Manjunath S", "+91 97312 44556"),
-        Pair("Deepak Sharma", "+91 98860 11223"),
-        Pair("Sunil Verma", "+91 99450 33445"),
-        Pair("Rajesh Babu", "+91 98456 77889"),
-        Pair("Ganesh Murthy", "+91 97410 55667"),
-        Pair("Santosh Hegde", "+91 96112 33445"),
-        Pair("Arun Prasad", "+91 98801 22334"),
-        Pair("Raghuveer S", "+91 99002 88990"),
-        Pair("Dinesh K", "+91 98453 66778"),
-        Pair("Mahesh Shetty", "+91 97413 77889"),
-        Pair("Shiva Kumar", "+91 96324 88990"),
-        Pair("Venkat Raman", "+91 98862 44556"),
-        Pair("Naveen Raj", "+91 99452 66778"),
-        Pair("Pradeep Joshi", "+91 98457 11223"),
-        Pair("Harish Gowda", "+91 97314 55667"),
-        Pair("Chetan Kumar", "+91 96114 77889"),
-        Pair("Ravindra Nath", "+91 98803 99001"),
-        Pair("Yogesh Gowda", "+91 99004 11223"),
-        Pair("Manoj Tiwari", "+91 98458 33445"),
-        Pair("Girish Kumar", "+91 97415 55667"),
-        Pair("Sandip Das", "+91 96326 77889"),
-        Pair("Kiran Hegde", "+91 98864 99001"),
-        Pair("Praveen Rao", "+91 99454 11223")
+        Pair("Suman", "+91 93919 15013"),
+        Pair("Narendra", "+91 99598 59347"),
+        Pair("Pavan", "+91 98451 22710"),
+        Pair("Siva", "+91 97412 27330"),
+        Pair("Prasad", "+91 96321 33200"),
+        Pair("Baleru", "+91 98452 44550"),
+        Pair("Ramesh Kumar", "+91 99001 55660"),
+        Pair("Krishna Reddy", "+91 98450 66770"),
+        Pair("Naresh G", "+91 97312 77880"),
+        Pair("Mallesh Yadav", "+91 98860 88990"),
+        Pair("Srinivas Rao", "+91 99450 11220"),
+        Pair("Venkat Swamy", "+91 98456 22330"),
+        Pair("Mahesh Goud", "+91 97410 33440"),
+        Pair("Santosh V", "+91 96112 44550"),
+        Pair("Arun Teja", "+91 98801 55660"),
+        Pair("Raghavendra", "+91 99002 66770"),
+        Pair("Dinesh Chary", "+91 98453 77880"),
+        Pair("Chandrasekhar", "+91 97413 88990"),
+        Pair("Shiva Shankar", "+91 96324 99000"),
+        Pair("Anji Babu", "+91 98862 10100"),
+        Pair("Naveen Kumar", "+91 99452 20200"),
+        Pair("Pradeep Varma", "+91 98457 30300"),
+        Pair("Harish Naidu", "+91 97314 40400"),
+        Pair("Chetan Sai", "+91 96114 50500"),
+        Pair("Ravinder Reddy", "+91 98803 60600"),
+        Pair("Yadagiri", "+91 99004 70700"),
+        Pair("Manoj K", "+91 98458 80800"),
+        Pair("Giri Babu", "+91 97415 90900"),
+        Pair("Bhanu Prasad", "+91 96326 12120"),
+        Pair("Kiran Kumar", "+91 98864 13130")
     )
 
-    private val bangaloreLocations = listOf(
-        "Koramangala 5th Block", "Indiranagar 100ft Rd", "HSR Layout Sector 2",
-        "Whitefield ITPL Main Rd", "Electronic City Phase 1", "MG Road Metro",
-        "Kempegowda Int'l Airport", "Jayanagar 4th Block", "Bellandur EcoSpace",
-        "Marathahalli Bridge", "BTM Layout 2nd Stage", "Hebbal Flyover"
+    private val hyderabadLocations = listOf(
+        "Moosapet Metro Station", "Kukatpally Y Junction", "Hitec City Cyber Towers",
+        "Gachibowli DLF IT Park", "Madhapur Metro", "Jubilee Hills Road No. 36",
+        "Banjara Hills Rd 12", "Secunderabad Railway Station", "Begumpet Airport Rd",
+        "Ameerpet Circle", "Kondapur RTO", "Shamshabad Airport RGIA",
+        "Miyapur Allwyn X Road", "Panjagutta Central Mall", "KPHB Colony Phase 3"
     )
 
     suspend fun seedIfEmpty() {
@@ -73,9 +84,9 @@ class FleetDataSeeder @Inject constructor(
         if (existingVehicles.isNotEmpty()) return
 
         val now = Clock.System.now()
-        val fleetId = "fleet_blr_central"
+        val fleetId = "svm_fleet_hyderabad"
 
-        // 1. Create 30 Drivers
+        // 1. Create 30 Drivers (SVM Fleet)
         val driversToInsert = driverList.mapIndexed { index, pair ->
             DriverEntity(
                 id = (index + 1).toLong(),
@@ -88,17 +99,21 @@ class FleetDataSeeder @Inject constructor(
         }
         driverRepository.insertAll(driversToInsert)
 
-        // 2. Create 30 Vehicles (matching TS09 AB 1234 pattern from mockup)
-        val regPrefixes = listOf("TS09 AB", "TS09 CD", "TS09 EF", "TS09 GH", "KA01 MJ", "KA05 NB", "KA03 MH")
+        // 2. Create 30 Vehicles (TS09 Hyderabad plates matching paper logbook)
+        val specificVehicles = listOf("3368", "2271", "2733", "3320", "2950", "1840")
         val vehiclesToInsert = (1..30).map { index ->
-            val prefix = regPrefixes[(index - 1) % regPrefixes.size]
-            val number = 1000 + (index * 137 % 8999)
+            val number = if (index <= specificVehicles.size) {
+                specificVehicles[index - 1]
+            } else {
+                "${1000 + (index * 179 % 8999)}"
+            }
+            val regNo = "TS09 UB $number"
             val model = carModels[(index - 1) % carModels.size]
 
             VehicleEntity(
                 id = index.toLong(),
                 fleetId = fleetId,
-                regNo = "$prefix $number",
+                regNo = regNo,
                 nickname = model,
                 status = if (index <= 28) "active" else "idle",
                 supabaseId = "veh_$index",
@@ -107,7 +122,150 @@ class FleetDataSeeder @Inject constructor(
         }
         vehicleRepository.insertAll(vehiclesToInsert)
 
-        // 3. Generate Realistic Today's Rides (Uber + Rapido)
+        // 3. Seed Office Paper Register Entries (Image 2 exact records)
+        val officeDutyLogs = listOf(
+            DutyLogEntity(
+                fleetId = fleetId,
+                shiftType = "12_HOURS",
+                loginDate = "01/11/2026",
+                loginTime = "06:00 AM",
+                logoutDate = "01/11/2026",
+                logoutTime = "08:15 PM",
+                vehicleNo = "TS09 UB 3368",
+                driverName = "Suman",
+                driverPhone = "+91 93919 15013",
+                trips = 16,
+                earnings = 2950.0,
+                cashCollection = 2503.0,
+                expenditure = 200.0,
+                commissionRent = 1032.5, // 35% tier (>= 2500)
+                drivePass = 0.0,
+                advance = 0.0,
+                paymentCash = 0.0,
+                paymentOnline = 278.0,
+                netBalance = 0.0,
+                status = "SETTLED",
+                remarks = "Settled online via UPI. Good performance."
+            ),
+            DutyLogEntity(
+                fleetId = fleetId,
+                shiftType = "12_HOURS",
+                loginDate = "01/11/2026",
+                loginTime = "06:30 AM",
+                logoutDate = "01/11/2026",
+                logoutTime = "07:00 PM",
+                vehicleNo = "TS09 UA 2271",
+                driverName = "Narendra",
+                driverPhone = "+91 99598 59347",
+                trips = 7,
+                earnings = 2271.0,
+                cashCollection = 1850.0,
+                expenditure = 150.0,
+                commissionRent = 0.0, // Trips (7) < minimum 10
+                drivePass = 0.0,
+                advance = 0.0,
+                paymentCash = 1700.0,
+                paymentOnline = 0.0,
+                netBalance = 0.0,
+                status = "SETTLED",
+                remarks = "Trips below 10 min threshold. Flat vehicle rent settled."
+            ),
+            DutyLogEntity(
+                fleetId = fleetId,
+                shiftType = "12_HOURS",
+                loginDate = "01/11/2026",
+                loginTime = "05:45 AM",
+                logoutDate = "01/11/2026",
+                logoutTime = "06:30 PM",
+                vehicleNo = "TS09 UC 2733",
+                driverName = "Pavan",
+                driverPhone = "+91 98451 22710",
+                trips = 11,
+                earnings = 2733.0,
+                cashCollection = 2100.0,
+                expenditure = 100.0,
+                commissionRent = 956.55, // 35% tier
+                drivePass = 50.0,
+                advance = 0.0,
+                paymentCash = 0.0,
+                paymentOnline = 450.0,
+                netBalance = 0.0,
+                status = "SETTLED",
+                remarks = "35% commission applied. On time."
+            ),
+            DutyLogEntity(
+                fleetId = fleetId,
+                shiftType = "12_HOURS",
+                loginDate = "01/11/2026",
+                loginTime = "06:15 AM",
+                logoutDate = "01/11/2026",
+                logoutTime = "07:45 PM",
+                vehicleNo = "TS09 UD 3320",
+                driverName = "Siva",
+                driverPhone = "+91 97412 27330",
+                trips = 12,
+                earnings = 3320.0,
+                cashCollection = 2800.0,
+                expenditure = 250.0,
+                commissionRent = 1162.0, // 35% tier
+                drivePass = 0.0,
+                advance = 200.0,
+                paymentCash = 0.0,
+                paymentOnline = 350.0,
+                netBalance = 0.0,
+                status = "SETTLED",
+                remarks = "High collection day."
+            ),
+            DutyLogEntity(
+                fleetId = fleetId,
+                shiftType = "12_HOURS",
+                loginDate = "02/11/2026",
+                loginTime = "06:00 AM",
+                logoutDate = "02/11/2026",
+                logoutTime = "06:00 PM",
+                vehicleNo = "TS09 UE 2950",
+                driverName = "Prasad",
+                driverPhone = "+91 96321 33200",
+                trips = 9,
+                earnings = 1850.0,
+                cashCollection = 1400.0,
+                expenditure = 100.0,
+                commissionRent = 0.0,
+                drivePass = 0.0,
+                advance = 0.0,
+                paymentCash = 0.0,
+                paymentOnline = 0.0,
+                netBalance = -1300.0,
+                status = "OPEN",
+                remarks = "Active shift. Evening settlement pending."
+            ),
+            DutyLogEntity(
+                fleetId = fleetId,
+                shiftType = "24_HOURS",
+                loginDate = "01/11/2026",
+                loginTime = "08:00 AM",
+                logoutDate = "02/11/2026",
+                logoutTime = "08:00 AM",
+                vehicleNo = "TS09 UF 1840",
+                driverName = "Baleru",
+                driverPhone = "+91 98452 44550",
+                trips = 19,
+                earnings = 6800.0,
+                cashCollection = 5200.0,
+                expenditure = 800.0,
+                commissionRent = 2720.0, // 40% tier for >= 6500
+                drivePass = 100.0,
+                advance = 500.0,
+                paymentCash = 0.0,
+                paymentOnline = 1200.0,
+                netBalance = 0.0,
+                status = "SETTLED",
+                remarks = "24hr shift completed. 40% highest commission tier earned."
+            )
+        )
+        dutyLogRepository.insertAll(officeDutyLogs)
+
+        // 4. Generate Realistic Today's Rides (Uber + Rapido in Hyderabad)
         val ridesToInsert = mutableListOf<RideEntity>()
         var rideIdCounter = 1L
 
@@ -129,10 +287,10 @@ class FleetDataSeeder @Inject constructor(
                 val baseRate = if (platform == Platform.UBER) 18.0 else 16.5
                 val fare = ((distanceKm * baseRate + Random.nextInt(35, 75)) / 10).toInt() * 10.0
 
-                val pickup = bangaloreLocations.random()
-                var dropoff = bangaloreLocations.random()
+                val pickup = hyderabadLocations.random()
+                var dropoff = hyderabadLocations.random()
                 while (dropoff == pickup) {
-                    dropoff = bangaloreLocations.random()
+                    dropoff = hyderabadLocations.random()
                 }
 
                 val rideKey = "${platform.name.lowercase()}_${cabIndex}_${acceptedAt.toEpochMilliseconds()}"

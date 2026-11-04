@@ -68,6 +68,8 @@ import com.fleettrack.app.ui.owner.fleet.FleetBoardViewModel
 import com.fleettrack.app.ui.owner.maintenance.AddServiceScreen
 import com.fleettrack.app.ui.owner.maintenance.MaintenanceScreen
 import com.fleettrack.app.ui.owner.more.MoreScreen
+import com.fleettrack.app.ui.owner.officeregister.OfficeRegisterScreen
+import com.fleettrack.app.ui.owner.officeregister.OfficeRegisterViewModel
 import com.fleettrack.app.ui.owner.reports.ReportsScreen
 import com.fleettrack.app.ui.owner.reports.ReportsViewModel
 import com.fleettrack.app.ui.owner.review.ReviewQueueScreen
@@ -228,7 +230,8 @@ fun FleetNavigation(
                     onNavigateToDrivers = { navController.navigate(Screen.Drivers.route) },
                     onNavigateToExpenses = { navController.navigate(Screen.Expenses.route) },
                     onNavigateToMaintenance = { navController.navigate(Screen.Maintenance.route) },
-                    onNavigateToLiveTracking = { navController.navigate(Screen.LiveTracking.route) }
+                    onNavigateToLiveTracking = { navController.navigate(Screen.LiveTracking.route) },
+                    onNavigateToOfficeRegister = { navController.navigate(Screen.OfficeRegister.route) }
                 )
             }
 
@@ -273,7 +276,8 @@ fun FleetNavigation(
                     onNavigateToAlerts = { navController.navigate(Screen.Alerts.route) },
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToLiveTracking = { navController.navigate(Screen.LiveTracking.route) },
-                    onNavigateToDocumentVault = { navController.navigate(Screen.DocumentVault.route) }
+                    onNavigateToDocumentVault = { navController.navigate(Screen.DocumentVault.route) },
+                    onNavigateToOfficeRegister = { navController.navigate(Screen.OfficeRegister.route) }
                 )
             }
 
@@ -347,6 +351,14 @@ fun FleetNavigation(
 
             composable(Screen.DocumentVault.route) {
                 DocumentVaultScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.OfficeRegister.route) {
+                val vm: OfficeRegisterViewModel = hiltViewModel()
+                OfficeRegisterScreen(
+                    viewModel = vm,
                     onBackClick = { navController.popBackStack() }
                 )
             }
