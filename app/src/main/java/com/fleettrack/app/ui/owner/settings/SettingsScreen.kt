@@ -178,7 +178,7 @@ fun SettingsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                BatteryOptimizationHelper.requestIgnoreBatteryOptimization(context)
+                                BatteryOptimizationHelper.requestIgnoreBatteryOptimizations(context)
                             }
                             .padding(vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -211,11 +211,11 @@ fun SettingsScreen(
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    text = if (BatteryOptimizationHelper.isBatteryOptimizationIgnored(context))
+                                    text = if (BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context))
                                         "Unrestricted • Tracking active 24/7"
                                     else
                                         "Tap to enable unrestricted battery",
-                                    color = if (BatteryOptimizationHelper.isBatteryOptimizationIgnored(context))
+                                    color = if (BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context))
                                         ActiveGreen
                                     else
                                         TextMutedGray,

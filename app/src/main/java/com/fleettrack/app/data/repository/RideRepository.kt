@@ -126,13 +126,14 @@ class RideRepositoryImpl @Inject constructor(
             rideDao.insertOrIgnore(ride)
         }
 
-    override suspend fun updateRide(ride: RideEntity) =
+    override suspend fun updateRide(ride: RideEntity) {
         withContext(ioDispatcher) {
             rideDao.update(ride)
             try {
                 rideRemoteDataSource.uploadRide(ride)
             } catch (_: Exception) {}
         }
+    }
 
     override suspend fun updateStatus(id: Long, status: RideStatus) =
         withContext(ioDispatcher) {

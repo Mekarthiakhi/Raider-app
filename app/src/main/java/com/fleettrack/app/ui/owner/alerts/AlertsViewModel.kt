@@ -1,4 +1,4 @@
-package com.fleettrack.app.ui.owner.alerts
+﻿package com.fleettrack.app.ui.owner.alerts
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

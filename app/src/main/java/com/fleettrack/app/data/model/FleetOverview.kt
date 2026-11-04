@@ -1,4 +1,4 @@
-package com.fleettrack.app.data.model
+﻿package com.fleettrack.app.data.model
 
 data class FleetOverview(
     val totalEarningsToday: Double = 0.0,

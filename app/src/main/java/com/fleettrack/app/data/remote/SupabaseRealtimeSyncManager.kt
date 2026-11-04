@@ -1,4 +1,4 @@
-package com.fleettrack.app.data.remote
+﻿package com.fleettrack.app.data.remote
 
 import com.fleettrack.app.data.repository.RideRepository
 import io.github.jan.supabase.realtime.Realtime

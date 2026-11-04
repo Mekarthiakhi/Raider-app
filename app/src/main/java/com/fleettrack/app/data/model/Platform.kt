@@ -1,4 +1,4 @@
-package com.fleettrack.app.data.model
+﻿package com.fleettrack.app.data.model
 
 enum class Platform(
     val primaryPackage: String,

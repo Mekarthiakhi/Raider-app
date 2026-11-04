@@ -1,4 +1,4 @@
-package com.fleettrack.app.ui.owner.vault
+﻿package com.fleettrack.app.ui.owner.vault
 
 import android.net.Uri
 import android.widget.Toast

@@ -58,6 +58,7 @@ import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.components.PlatformChip
 import com.fleettrack.app.ui.theme.ActiveGreen
 import com.fleettrack.app.ui.theme.ActiveGreenBg
+import com.fleettrack.app.ui.theme.InactiveRed
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.CardShape
 import com.fleettrack.app.ui.theme.MetricPurpleBg

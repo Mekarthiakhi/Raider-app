@@ -15,6 +15,13 @@ object BatteryOptimizationHelper {
         return powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: false
     }
 
+    fun isBatteryOptimizationIgnored(context: Context): Boolean =
+        isIgnoringBatteryOptimizations(context)
+
+    @SuppressLint("BatteryLife")
+    fun requestIgnoreBatteryOptimization(context: Context) =
+        requestIgnoreBatteryOptimizations(context)
+
     @SuppressLint("BatteryLife")
     fun requestIgnoreBatteryOptimizations(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

@@ -1,4 +1,4 @@
-package com.fleettrack.app.util
+﻿package com.fleettrack.app.util
 
 import android.content.Context
 import android.content.Intent

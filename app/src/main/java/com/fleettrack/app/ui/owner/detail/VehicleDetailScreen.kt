@@ -1,4 +1,4 @@
-package com.fleettrack.app.ui.owner.detail
+﻿package com.fleettrack.app.ui.owner.detail
 
 import android.content.Intent
 import android.net.Uri

@@ -1,4 +1,4 @@
-package com.fleettrack.app.service.parser
+﻿package com.fleettrack.app.service.parser
 
 import com.fleettrack.app.data.model.Platform
 import com.fleettrack.app.data.model.RideStatus

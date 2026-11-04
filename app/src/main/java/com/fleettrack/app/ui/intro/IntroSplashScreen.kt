@@ -1,4 +1,4 @@
-package com.fleettrack.app.ui.intro
+﻿package com.fleettrack.app.ui.intro
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat

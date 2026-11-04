@@ -1,4 +1,4 @@
-package com.fleettrack.app
+﻿package com.fleettrack.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

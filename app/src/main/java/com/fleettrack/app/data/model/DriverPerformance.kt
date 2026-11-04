@@ -1,4 +1,4 @@
-package com.fleettrack.app.data.model
+﻿package com.fleettrack.app.data.model
 
 data class DriverPerformance(
     val driverId: Long,

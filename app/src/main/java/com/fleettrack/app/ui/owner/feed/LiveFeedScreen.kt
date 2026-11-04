@@ -74,7 +74,7 @@ fun LiveFeedScreen(
     val totalKm = trips.sumOf { it.ride.distanceKm ?: 0.0 }
 
     val filteredTrips = trips.filter { item ->
-        selectedCarFilter == "All Cars" || (item.vehicle?.regNo?.contains(selectedCarFilter, ignoreCase = true) == true)
+        selectedCarFilter == "All Cars" || item.vehicleRegNo.contains(selectedCarFilter, ignoreCase = true)
     }
 
     Column(

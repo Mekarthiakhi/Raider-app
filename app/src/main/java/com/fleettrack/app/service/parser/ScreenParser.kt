@@ -1,4 +1,4 @@
-package com.fleettrack.app.service.parser
+﻿package com.fleettrack.app.service.parser
 
 import android.view.accessibility.AccessibilityNodeInfo
 import com.fleettrack.app.data.model.Platform
