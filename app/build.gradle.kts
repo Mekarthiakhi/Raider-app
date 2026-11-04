@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "com.fleettrack.app"
-        minSdk = 30
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
@@ -47,6 +47,13 @@ android {
         }
     }
 
+    signingConfigs {
+        getByName("debug") {
+            v1SigningEnabled = true
+            v2SigningEnabled = true
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -60,6 +67,7 @@ android {
         debug {
             isDebuggable = true
             applicationIdSuffix = ".debug"
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
