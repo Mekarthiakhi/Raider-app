@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,7 +66,9 @@ import com.fleettrack.app.ui.theme.SurfaceBorder
 import com.fleettrack.app.ui.theme.TextDark
 import com.fleettrack.app.ui.theme.TextGray
 import com.fleettrack.app.ui.theme.TextMutedGray
+import com.fleettrack.app.util.AppUpdateHelper
 import com.fleettrack.app.util.BatteryOptimizationHelper
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
@@ -370,9 +374,31 @@ fun SettingsScreen(
                     }
                     HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
 
+                    val scope = rememberCoroutineScope()
+                    SettingItemRow(
+                        icon = Icons.Default.SystemUpdate,
+                        label = "Check for In-App Updates (Direct Install)",
+                        onClick = {
+                            scope.launch {
+                                android.widget.Toast.makeText(context, "Checking for latest SVM FLEET release...", android.widget.Toast.LENGTH_SHORT).show()
+                                val update = AppUpdateHelper.checkForUpdate(context)
+                                if (update != null) {
+                                    android.widget.Toast.makeText(context, "Downloading update (${update.sizeMb} MB)...", android.widget.Toast.LENGTH_LONG).show()
+                                    AppUpdateHelper.downloadAndInstall(context, update.downloadUrl) { status ->
+                                        // update progress
+                                    }
+                                } else {
+                                    android.widget.Toast.makeText(context, "SVM FLEET is already up to date!", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    )
+
+                    HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
+
                     SettingItemRow(
                         icon = Icons.Default.Info,
-                        label = "About App (v1.0.4)",
+                        label = "About App (SVM FLEET v1.0.0)",
                         onClick = { }
                     )
                 }

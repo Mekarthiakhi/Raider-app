@@ -78,3 +78,4 @@ VALUES
 ('svm_fleet_hyderabad', '12_HOURS', '01/11/2026', '06:15 AM', '01/11/2026', '07:45 PM', 'TS09 UD 3320', 'Siva', 12, 3320.00, 2800.00, 250.00, 1162.00, 350.00, 'SETTLED', 'High collection shift.'),
 ('svm_fleet_hyderabad', '24_HOURS', '01/11/2026', '08:00 AM', '02/11/2026', '08:00 AM', 'TS09 UF 1840', 'Baleru', 19, 6800.00, 5200.00, 800.00, 2720.00, 1200.00, 'SETTLED', '24hr shift. 40% commission tier earned.')
 ON CONFLICT DO NOTHING;
+

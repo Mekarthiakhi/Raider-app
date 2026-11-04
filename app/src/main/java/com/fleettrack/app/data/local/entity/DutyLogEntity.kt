@@ -93,3 +93,4 @@ data class DutyLogEntity(
     @ColumnInfo(name = "created_at")
     val createdAt: Instant = Clock.System.now()
 )
+

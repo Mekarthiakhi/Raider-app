@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FleetTrack</string>
-    <string name="accessibility_service_label">FleetTrack Ride Telemetry</string>
+    <string name="app_name">SVM FLEET</string>
+    <string name="accessibility_service_label">SVM FLEET Ride Telemetry</string>
     <string name="accessibility_service_description">Captures trip completion and fare telemetry exclusively from Uber Driver, Rapido Captain, and Ola Driver for automated fleet accounting. Does not access personal chats, calls, or private apps.</string>
 </resources>

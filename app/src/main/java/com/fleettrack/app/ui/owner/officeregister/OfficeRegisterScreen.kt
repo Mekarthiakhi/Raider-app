@@ -72,6 +72,7 @@ import com.fleettrack.app.data.local.entity.DutyLogEntity
 import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.theme.ActiveGreen
 import com.fleettrack.app.ui.theme.BackgroundLight
+import com.fleettrack.app.ui.theme.IdleOrange
 import com.fleettrack.app.ui.theme.InactiveRed
 import com.fleettrack.app.ui.theme.PillShape
 import com.fleettrack.app.ui.theme.PrimaryPurple
@@ -82,7 +83,6 @@ import com.fleettrack.app.ui.theme.SurfaceWhite
 import com.fleettrack.app.ui.theme.TextDark
 import com.fleettrack.app.ui.theme.TextGray
 import com.fleettrack.app.ui.theme.TextMutedGray
-import com.fleettrack.app.ui.theme.WarningAmber
 import com.fleettrack.app.util.SvmCommissionCalculator
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -173,7 +173,7 @@ fun OfficeRegisterScreen(
                     OfficeKpiCard(
                         title = "Cash Collection",
                         value = "₹${uiState.totalCashCollection.toInt()}",
-                        color = WarningAmber,
+                        color = IdleOrange,
                         modifier = Modifier.weight(1f)
                     )
                     OfficeKpiCard(
@@ -364,7 +364,7 @@ fun OfficeRegisterScreen(
 private fun DutyLogCard(log: DutyLogEntity) {
     GlassCard(
         modifier = Modifier.fillMaxWidth(),
-        cornerRadius = 14.dp
+        shape = RoundedCornerShape(14.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             // Header: Vehicle No, Driver, Shift Tag & Status
@@ -413,12 +413,12 @@ private fun DutyLogCard(log: DutyLogEntity) {
                     Box(
                         modifier = Modifier
                             .clip(PillShape)
-                            .background(if (log.status == "SETTLED") ActiveGreen.copy(alpha = 0.15f) else WarningAmber.copy(alpha = 0.15f))
+                            .background(if (log.status == "SETTLED") ActiveGreen.copy(alpha = 0.15f) else IdleOrange.copy(alpha = 0.15f))
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
                             text = log.status,
-                            color = if (log.status == "SETTLED") ActiveGreen else WarningAmber,
+                            color = if (log.status == "SETTLED") ActiveGreen else IdleOrange,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -465,7 +465,7 @@ private fun DutyLogCard(log: DutyLogEntity) {
             ) {
                 RegisterMetric(title = "TRIPS", value = "${log.trips}")
                 RegisterMetric(title = "EARNING'S", value = "₹${log.earnings.toInt()}", valueColor = ActiveGreen)
-                RegisterMetric(title = "CASH COLL.", value = "₹${log.cashCollection.toInt()}", valueColor = WarningAmber)
+                RegisterMetric(title = "CASH COLL.", value = "₹${log.cashCollection.toInt()}", valueColor = IdleOrange)
                 RegisterMetric(title = "COMMISSION", value = "₹${log.commissionRent.toInt()}", valueColor = PrimaryPurple)
             }
 

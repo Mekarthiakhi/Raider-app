@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.intro
+package com.fleettrack.app.ui.intro
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -56,19 +56,19 @@ fun IntroSplashScreen(
 
     val slides = listOf(
         Triple(
-            "Fleet Manager",
-            "Manage your Uber cars,\ntrips, and earnings\nin one place.",
-            "Uber & Rapido Telemetry"
+            "SVM FLEET",
+            "Manage your Uber, Rapido & Ola\nfleet, trips, and commission\nin one place.",
+            "Moosapet Hyderabad • Live Dispatch"
+        ),
+        Triple(
+            "Office Duty Register",
+            "Paper logbook, cash collection,\nand driver commission base\ncalculated automatically.",
+            "Official SVM Commission Tiers"
         ),
         Triple(
             "Live Trip Telemetry",
             "Capture fares, routes, and\npayouts automatically\nin the background.",
-            "24/7 OEM Unrestricted Sync"
-        ),
-        Triple(
-            "Weekly P&L Reports",
-            "Monitor owner profits, driver splits,\nand fuel expenses with\none-tap statement export.",
-            "Full Accounting Control"
+            "24/7 Unrestricted Sync"
         )
     )
 

@@ -44,3 +44,4 @@ interface DutyLogDao {
     @Query("SELECT COALESCE(SUM(trips), 0) FROM duty_logs")
     fun getTotalTrips(): Flow<Int>
 }
+
