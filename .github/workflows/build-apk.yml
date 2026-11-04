@@ -19,19 +19,26 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Official Gradle 8.11.1
-        run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip
-          unzip -q gradle-8.11.1-bin.zip -d $HOME
-          echo "$HOME/gradle-8.11.1/bin" >> $GITHUB_PATH
-
       - name: Accept Android SDK Licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Generate Wrapper & Permissions
+      - name: Bootstrap Gradle Wrapper JAR
         run: |
-          $HOME/gradle-8.11.1/bin/gradle wrapper --gradle-version 8.11.1
+          # Download the official Gradle 8.11.1 distribution
+          wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip -O /tmp/gradle.zip
+
+          # Extract ONLY the wrapper jar from the distribution
+          mkdir -p gradle/wrapper
+          unzip -j /tmp/gradle.zip "gradle-8.11.1/lib/plugins/gradle-wrapper-8.11.1.jar" -d /tmp/wrapper-extract
+
+          # Place it where gradlew expects it
+          cp /tmp/wrapper-extract/gradle-wrapper-8.11.1.jar gradle/wrapper/gradle-wrapper.jar
+
+          # Ensure gradlew is executable
           chmod +x gradlew
+
+          echo "✅ Wrapper JAR bootstrapped successfully"
+          ls -la gradle/wrapper/
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon
