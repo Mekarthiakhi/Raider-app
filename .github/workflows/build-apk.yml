@@ -19,21 +19,33 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: Remove Outdated System Gradle
+        run: sudo rm -f /usr/bin/gradle
+
+      - name: Fix Line Endings and Permissions
+        run: |
+          sed -i 's/\r$//' gradlew
+          chmod +x gradlew
+          ls -la gradle/wrapper/
 
       - name: Accept Android SDK Licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-
-      - name: Make Gradlew Executable
-        run: chmod +x gradlew
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: FleetTrack-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
+
+      - name: Upload Build Reports on Failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-reports
+          path: app/build/reports/
+          if-no-files-found: ignore
