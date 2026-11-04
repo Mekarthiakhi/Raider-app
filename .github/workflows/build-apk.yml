@@ -46,6 +46,13 @@ jobs:
           cat build.log
           exit $EXIT_CODE
 
+      - name: Upload Build Log on Failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: gradle-build-failure-log
+          path: build.log
+
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         if: success()
