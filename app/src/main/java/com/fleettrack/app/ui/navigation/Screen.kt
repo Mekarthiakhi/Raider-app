@@ -43,6 +43,9 @@ sealed class Screen(val route: String) {
     data object AddService : Screen("owner_add_service")
     data object DocumentVault : Screen("owner_document_vault")
 
+    // Debug & Inspection
+    data object NodeInspector : Screen("debug_node_inspector")
+
     // Backward compatibility aliases
     val FleetBoard get() = Dashboard
     val LiveFeed get() = Trips

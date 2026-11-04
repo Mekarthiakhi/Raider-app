@@ -4,17 +4,17 @@ import android.accessibilityservice.AccessibilityService
 import android.graphics.Bitmap
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
-import com.fleettrack.app.data.local.entity.RideEntity
 import com.fleettrack.app.data.model.Platform
 import com.fleettrack.app.data.model.RideStatus
-import com.fleettrack.app.data.model.SyncStatus
-import com.fleettrack.app.data.repository.RideRepository
 import com.fleettrack.app.data.session.ShiftManager
+import com.fleettrack.app.service.parser.AccessibilityNodeUtils
 import com.fleettrack.app.service.parser.OcrFallbackEngine
 import com.fleettrack.app.service.parser.OlaDriverParser
 import com.fleettrack.app.service.parser.ParsedRideData
 import com.fleettrack.app.service.parser.RapidoCaptainParser
 import com.fleettrack.app.service.parser.UberDriverParser
+import com.fleettrack.app.service.statemachine.RideStateMachine
+import com.fleettrack.app.service.statemachine.TelemetryLogEntry
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,10 +22,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import timber.log.Timber
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.minutes
 
 @AndroidEntryPoint
 class RideTrackerAccessibilityService : AccessibilityService() {
@@ -34,7 +32,7 @@ class RideTrackerAccessibilityService : AccessibilityService() {
     lateinit var shiftManager: ShiftManager
 
     @Inject
-    lateinit var rideRepository: RideRepository
+    lateinit var rideStateMachine: RideStateMachine
 
     @Inject
     lateinit var uberParser: UberDriverParser
@@ -50,8 +48,22 @@ class RideTrackerAccessibilityService : AccessibilityService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    // Debounce timestamp to avoid re-parsing the exact same frame repeatedly within 2 seconds
+    // Debounce timestamp to avoid re-parsing the exact same frame repeatedly within 1.2 seconds
     private var lastParseTimestamp: Long = 0L
+
+    companion object {
+        var isServiceRunning: Boolean = false
+            private set
+
+        var lastActiveWindowDump: String = ""
+            private set
+    }
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        isServiceRunning = true
+        Timber.i("RideTrackerAccessibilityService connected")
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val packageName = event?.packageName?.toString() ?: return
@@ -65,7 +77,7 @@ class RideTrackerAccessibilityService : AccessibilityService() {
         }
 
         val now = System.currentTimeMillis()
-        if (now - lastParseTimestamp < 1500) {
+        if (now - lastParseTimestamp < 1200) {
             return
         }
         lastParseTimestamp = now
@@ -74,14 +86,36 @@ class RideTrackerAccessibilityService : AccessibilityService() {
 
         serviceScope.launch {
             try {
+                // Update live window dump for Debug Node Inspector
+                val hierarchyDump = AccessibilityNodeUtils.dumpNodeHierarchy(rootNode)
+                lastActiveWindowDump = hierarchyDump
+
+                val shift = shiftManager.currentShift.first()
+                val vehicleId = shift.vehicleId ?: 1L
+                val driverId = shift.driverId ?: 1L
+
                 // 1. Attempt Node Hierarchy Extraction (Fast & Efficient)
                 val parsedData = parser.parse(rootNode)
 
-                if (parsedData != null && parsedData.status == RideStatus.COMPLETED && parsedData.fare != null) {
-                    recordCompletedRide(parsedData)
-                } else if (parsedData == null && isCompletedScreenHeuristic(rootNode)) {
+                if (parsedData != null) {
+                    rideStateMachine.processParsedScreen(
+                        data = parsedData,
+                        vehicleId = vehicleId,
+                        driverId = driverId,
+                        rawHierarchyDump = hierarchyDump
+                    )
+                } else if (isCompletedScreenHeuristic(rootNode)) {
                     // 2. Fallback to ML Kit OCR if view IDs are obfuscated on completion screen
-                    triggerOcrFallback(parser.platform)
+                    triggerOcrFallback(parser.platform, vehicleId, driverId)
+                } else {
+                    rideStateMachine.logTelemetry(
+                        TelemetryLogEntry(
+                            platform = parser.platform,
+                            eventType = "WINDOW_CHANGE",
+                            detectedStatus = null,
+                            snippet = "Package: $packageName | Elements: ${rootNode.childCount}"
+                        )
+                    )
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error processing accessibility telemetry event for %s", packageName)
@@ -90,12 +124,12 @@ class RideTrackerAccessibilityService : AccessibilityService() {
     }
 
     private fun isCompletedScreenHeuristic(rootNode: android.view.accessibility.AccessibilityNodeInfo): Boolean {
-        val texts = com.fleettrack.app.service.parser.AccessibilityNodeUtils.extractAllTexts(rootNode)
+        val texts = AccessibilityNodeUtils.extractAllTexts(rootNode)
         val joined = texts.joinToString(" ").lowercase()
         return joined.contains("collect") || joined.contains("completed") || joined.contains("fare") || joined.contains("earnings")
     }
 
-    private fun triggerOcrFallback(platform: Platform) {
+    private fun triggerOcrFallback(platform: Platform, vehicleId: Long, driverId: Long) {
         takeScreenshot(
             Display.DEFAULT_DISPLAY,
             mainExecutor,
@@ -110,7 +144,12 @@ class RideTrackerAccessibilityService : AccessibilityService() {
                         serviceScope.launch {
                             val ocrData = ocrFallbackEngine.extractFromBitmap(bitmap, platform)
                             if (ocrData != null && ocrData.fare != null) {
-                                recordCompletedRide(ocrData)
+                                rideStateMachine.processParsedScreen(
+                                    data = ocrData,
+                                    vehicleId = vehicleId,
+                                    driverId = driverId,
+                                    rawHierarchyDump = "ML Kit OCR Extraction"
+                                )
                             }
                         }
                     }
@@ -123,59 +162,14 @@ class RideTrackerAccessibilityService : AccessibilityService() {
         )
     }
 
-    private suspend fun recordCompletedRide(data: ParsedRideData) {
-        val shift = shiftManager.currentShift.first()
-        val vehicleId = shift.vehicleId ?: 1L
-        val driverId = shift.driverId ?: 1L
-
-        val durationMinutes = data.durationMin ?: 15.0
-        val acceptedAt = Clock.System.now() - durationMinutes.toInt().minutes
-        val completedAt = Clock.System.now()
-
-        val rideKey = data.rideKey ?: "${data.platform.name.lowercase()}_${vehicleId}_${completedAt.toEpochMilliseconds()}"
-
-        val ride = RideEntity(
-            vehicleId = vehicleId,
-            driverId = driverId,
-            platform = data.platform,
-            rideKey = rideKey,
-            status = RideStatus.COMPLETED,
-            acceptedAt = acceptedAt,
-            completedAt = completedAt,
-            fare = data.fare,
-            distanceKm = data.distanceKm,
-            durationMin = durationMinutes,
-            pickup = data.pickup,
-            dropoff = data.dropoff,
-            confidence = data.confidence,
-            needsReview = data.confidence < 0.8,
-            reviewNote = if (data.confidence < 0.8) "Parsed via ML Kit OCR" else null,
-            rawExtracted = data.rawExtracted,
-            syncStatus = SyncStatus.PENDING,
-            createdAt = completedAt
-        )
-
-        val insertedId = rideRepository.insertOrIgnoreRide(ride)
-        if (insertedId > 0) {
-            Timber.i(
-                "✅ Captured %s trip: ₹%.2f (%.1f km) for Cab #%d, Driver #%d",
-                data.platform.displayName,
-                data.fare,
-                data.distanceKm ?: 0.0,
-                vehicleId,
-                driverId
-            )
-        }
-    }
-
     override fun onInterrupt() {
         Timber.w("RideTrackerAccessibilityService interrupted")
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        isServiceRunning = false
         serviceScope.cancel()
         Timber.i("RideTrackerAccessibilityService destroyed")
     }
 }
-

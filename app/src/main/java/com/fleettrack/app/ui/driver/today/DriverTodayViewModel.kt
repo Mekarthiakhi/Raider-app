@@ -31,7 +31,9 @@ data class DriverPlatformSummary(
     val uberFare: Double = 0.0,
     val uberRides: Int = 0,
     val rapidoFare: Double = 0.0,
-    val rapidoRides: Int = 0
+    val rapidoRides: Int = 0,
+    val olaFare: Double = 0.0,
+    val olaRides: Int = 0
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -98,6 +100,8 @@ class DriverTodayViewModel @Inject constructor(
         var uCount = 0
         var rFare = 0.0
         var rCount = 0
+        var oFare = 0.0
+        var oCount = 0
 
         for (ride in rides) {
             val fare = ride.fare ?: 0.0
@@ -110,6 +114,10 @@ class DriverTodayViewModel @Inject constructor(
                     rFare += fare
                     rCount++
                 }
+                Platform.OLA -> {
+                    oFare += fare
+                    oCount++
+                }
                 else -> {}
             }
         }
@@ -117,7 +125,9 @@ class DriverTodayViewModel @Inject constructor(
             uberFare = uFare,
             uberRides = uCount,
             rapidoFare = rFare,
-            rapidoRides = rCount
+            rapidoRides = rCount,
+            olaFare = oFare,
+            olaRides = oCount
         )
     }.stateIn(
         scope = viewModelScope,

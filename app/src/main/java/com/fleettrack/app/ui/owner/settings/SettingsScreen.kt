@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Extension
@@ -69,6 +70,7 @@ import com.fleettrack.app.util.BatteryOptimizationHelper
 fun SettingsScreen(
     onBackClick: (() -> Unit)? = null,
     onLogoutClick: () -> Unit = {},
+    onNodeInspectorClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var isDarkTheme by remember { mutableStateOf(false) }
@@ -78,10 +80,10 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(BackgroundLight)
             .padding(horizontal = 18.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 90.dp),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1. Top Header: "< Settings"
+        // Top Bar
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -95,126 +97,158 @@ fun SettingsScreen(
                             tint = TextDark
                         )
                     }
+                    Spacer(modifier = Modifier.width(6.dp))
                 }
-                Text(
-                    text = "Settings",
-                    color = TextDark,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Column {
+                    Text(
+                        text = "Settings",
+                        color = TextDark,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Fleet preferences & device configuration",
+                        color = TextGray,
+                        fontSize = 13.sp
+                    )
+                }
             }
         }
 
-        // 2. Settings Group Card
+        // 1. Account & Organization Card
         item {
-            GlassCard(
-                modifier = Modifier.fillMaxWidth(),
-                shape = CardShape
-            ) {
+            GlassCard(modifier = Modifier.fillMaxWidth(), shape = CardShape) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .padding(16.dp)
                 ) {
+                    Text(
+                        text = "ACCOUNT & FLEET",
+                        color = TextMutedGray,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     SettingItemRow(
                         icon = Icons.Default.Person,
-                        label = "My Profile",
+                        label = "Fleet Profile & Owner Info",
                         onClick = { }
                     )
                     HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
 
                     SettingItemRow(
                         icon = Icons.Default.Group,
-                        label = "Manage Team & Roles",
+                        label = "Manage Drivers & Permissions",
                         onClick = { }
                     )
                     HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
 
                     SettingItemRow(
                         icon = Icons.Default.Extension,
-                        label = "Integrations (Uber, Rapido, GPS)",
+                        label = "Platform Integrations (Uber, Rapido, Ola)",
                         onClick = { }
                     )
-                    HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
+                }
+            }
+        }
 
-                    SettingItemRow(
-                        icon = Icons.Default.Notifications,
-                        label = "Alerts & Reminders",
-                        onClick = { }
+        // 2. Telemetry, Battery & Cloud Sync Card
+        item {
+            val context = LocalContext.current
+            GlassCard(modifier = Modifier.fillMaxWidth(), shape = CardShape) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "TELEMETRY & SYSTEM HEALTH",
+                        color = TextMutedGray,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
                     )
-                    HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    // 24/7 Background Battery Optimization Exemption
-                    val context = LocalContext.current
-                    var isBatteryExempt by remember {
-                        mutableStateOf(BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context))
-                    }
-
+                    // 24/7 Battery Optimization Item
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                BatteryOptimizationHelper.requestIgnoreBatteryOptimizations(context)
-                                Toast.makeText(context, "Battery optimization settings opened", Toast.LENGTH_SHORT).show()
-                                isBatteryExempt = BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context)
+                                BatteryOptimizationHelper.requestIgnoreBatteryOptimization(context)
                             }
                             .padding(vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(if (isBatteryExempt) ActiveGreenBg else InactiveRedBg),
+                                    .background(PrimaryPurpleContainer),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Bolt,
                                     contentDescription = "Battery Optimization",
-                                    tint = if (isBatteryExempt) ActiveGreen else InactiveRed,
+                                    tint = PrimaryPurple,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
                                 Text(
-                                    text = "24/7 Background Run",
+                                    text = "24/7 Background Telemetry",
                                     color = TextDark,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    text = if (isBatteryExempt) "Battery exemption active" else "Tap to grant 24/7 background run",
-                                    color = if (isBatteryExempt) ActiveGreen else InactiveRed,
+                                    text = if (BatteryOptimizationHelper.isBatteryOptimizationIgnored(context))
+                                        "Unrestricted • Tracking active 24/7"
+                                    else
+                                        "Tap to enable unrestricted battery",
+                                    color = if (BatteryOptimizationHelper.isBatteryOptimizationIgnored(context))
+                                        ActiveGreen
+                                    else
+                                        TextMutedGray,
                                     fontSize = 11.sp
                                 )
                             }
                         }
 
-                        Box(
-                            modifier = Modifier
-                                .clip(PillShape)
-                                .background(if (isBatteryExempt) ActiveGreenBg else PrimaryPurpleContainer)
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = if (isBatteryExempt) "Active" else "Enable ›",
-                                color = if (isBatteryExempt) ActiveGreen else PrimaryPurple,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = "Configure Battery",
+                            tint = TextMutedGray,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
+
                     HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
 
-                    // Supabase Real-time Cloud Sync
+                    // Debug Node Inspector
+                    SettingItemRow(
+                        icon = Icons.Default.BugReport,
+                        label = "Debug Node Inspector & Live Dumper",
+                        onClick = onNodeInspectorClick
+                    )
+
+                    HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
+
+                    // Supabase Cloud Sync Status
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                Toast.makeText(context, "Supabase Cloud: fleet_telemetry_live connected", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Cloud sync is live with Supabase Realtime", Toast.LENGTH_SHORT).show()
                             }
                             .padding(vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -265,13 +299,39 @@ fun SettingsScreen(
                             )
                         }
                     }
+
                     HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
 
-                    // Theme Switch
+                    SettingItemRow(
+                        icon = Icons.Default.Notifications,
+                        label = "Alerts & Offline Vehicle Thresholds",
+                        onClick = { }
+                    )
+                }
+            }
+        }
+
+        // 3. App Preferences
+        item {
+            GlassCard(modifier = Modifier.fillMaxWidth(), shape = CardShape) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "PREFERENCES",
+                        color = TextMutedGray,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 12.dp),
+                            .padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -285,14 +345,14 @@ fun SettingsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.DarkMode,
-                                    contentDescription = "Theme",
+                                    contentDescription = "Dark Theme",
                                     tint = PrimaryPurple,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(14.dp))
                             Text(
-                                text = "Theme (Light / Dark)",
+                                text = "Dark Mode",
                                 color = TextDark,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium
@@ -319,7 +379,7 @@ fun SettingsScreen(
             }
         }
 
-        // 3. Logout Card
+        // 4. Logout Card
         item {
             GlassCard(
                 modifier = Modifier.fillMaxWidth(),

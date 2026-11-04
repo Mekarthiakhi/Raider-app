@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Warning
@@ -35,7 +36,6 @@ import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.theme.AlertRed
 import com.fleettrack.app.ui.theme.BackgroundDark
 import com.fleettrack.app.ui.theme.EmeraldAccent
-import com.fleettrack.app.ui.theme.SurfaceBorderDark
 import com.fleettrack.app.ui.theme.TextMuted
 import com.fleettrack.app.ui.theme.TextPrimary
 import com.fleettrack.app.ui.theme.TextSecondary
@@ -45,6 +45,7 @@ import com.fleettrack.app.ui.theme.TileShape
 fun SetupWizardScreen(
     viewModel: SetupWizardViewModel,
     onSetupComplete: () -> Unit,
+    onInspectNodesClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsState()
@@ -119,8 +120,8 @@ fun SetupWizardScreen(
             title = "OEM Auto-Start / Keep Alive",
             description = "On Xiaomi, Vivo, Oppo or Samsung, enable Auto-start and lock app in recents.",
             isCompleted = state.isOemAutoStartConfigured,
-            buttonText = "View OEM Guide",
-            onAction = { /* OEM guidance dialog */ }
+            buttonText = "Allow in Settings",
+            onAction = { viewModel.openAppSettings(context) }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -136,6 +137,26 @@ fun SetupWizardScreen(
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp
             )
+        }
+
+        if (onInspectNodesClick != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = onInspectNodesClick,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.BugReport,
+                    contentDescription = null,
+                    tint = EmeraldAccent
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Debug Node Inspector / View Tree",
+                    fontSize = 13.sp
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(80.dp))
@@ -220,4 +241,3 @@ private fun SetupStepCard(
         }
     }
 }
-

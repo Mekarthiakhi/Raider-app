@@ -7,19 +7,31 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class UberDriverParser @Inject constructor() : ScreenParser {
+class UberDriverParser @Inject constructor(
+    private val dynamicSelectorEngine: DynamicSelectorEngine
+) : ScreenParser {
 
     override val platform: Platform = Platform.UBER
 
     private val completedKeywords = listOf(
-        "trip earnings", "collect cash", "cash trip", "trip balance",
-        "trip completed", "cash collected", "you earned", "complete trip",
-        "payment details", "trip fare", "cash received", "done"
+        "trip balance", "total payout", "your earnings", "fare", "cash collected",
+        "trip completed", "rate rider", "paid with cash", "receipt", "earning for this trip",
+        "customer paid", "किराया", "कमाई"
     )
 
     private val inTripKeywords = listOf(
-        "dropping off", "pickup", "navigating", "end trip", "complete uber",
-        "ubergo", "uber premier", "uberxl", "uber auto", "rider on board"
+        "drop off", "navigate", "on trip", "ubergo", "uberpremier", "uberauto",
+        "arrived at destination", "completing trip", "slide to complete"
+    )
+
+    private val acceptedKeywords = listOf(
+        "navigate to pickup", "picking up", "arrived", "start uber", "slide to start",
+        "confirm pickup", "arriving", "rider is waiting"
+    )
+
+    private val cancelledKeywords = listOf(
+        "trip was cancelled", "cancelled by rider", "rider cancelled", "cancellation fee",
+        "trip cancelled"
     )
 
     override fun canHandle(packageName: String): Boolean {
@@ -30,10 +42,19 @@ class UberDriverParser @Inject constructor() : ScreenParser {
         val texts = AccessibilityNodeUtils.extractAllTexts(rootNode)
         if (texts.isEmpty()) return null
 
+        // 1. Evaluate OTA Remote Selectors first
+        val dynamicResult = dynamicSelectorEngine.evaluate(platform, rootNode, texts)
+        if (dynamicResult != null) {
+            return dynamicResult
+        }
+
+        // 2. Static heuristic fallback
         val lowerJoined = texts.joinToString(" ").lowercase()
 
         val isCompleted = completedKeywords.any { lowerJoined.contains(it) }
+        val isCancelled = cancelledKeywords.any { lowerJoined.contains(it) }
         val isInTrip = inTripKeywords.any { lowerJoined.contains(it) }
+        val isAccepted = acceptedKeywords.any { lowerJoined.contains(it) }
 
         val fare = AccessibilityNodeUtils.extractFare(texts)
         val distance = AccessibilityNodeUtils.extractDistanceKm(texts)
@@ -41,7 +62,6 @@ class UberDriverParser @Inject constructor() : ScreenParser {
 
         return when {
             isCompleted && fare != null -> {
-                // Trip completed with fare extracted
                 val minuteWindow = System.currentTimeMillis() / 60000
                 val rideKey = "uber_${minuteWindow}_${fare.toInt()}"
 
@@ -57,13 +77,30 @@ class UberDriverParser @Inject constructor() : ScreenParser {
                 )
             }
 
+            isCancelled -> {
+                ParsedRideData(
+                    platform = Platform.UBER,
+                    status = RideStatus.CANCELLED,
+                    confidence = 0.95,
+                    rawExtracted = texts.take(10).joinToString(" | ")
+                )
+            }
+
             isInTrip -> {
                 ParsedRideData(
                     platform = Platform.UBER,
                     status = RideStatus.IN_TRIP,
                     distanceKm = distance,
-                    durationMin = duration,
-                    confidence = 0.9,
+                    confidence = 0.95,
+                    rawExtracted = texts.take(10).joinToString(" | ")
+                )
+            }
+
+            isAccepted -> {
+                ParsedRideData(
+                    platform = Platform.UBER,
+                    status = RideStatus.ACCEPTED,
+                    confidence = 0.95,
                     rawExtracted = texts.take(10).joinToString(" | ")
                 )
             }
@@ -72,4 +109,3 @@ class UberDriverParser @Inject constructor() : ScreenParser {
         }
     }
 }
-

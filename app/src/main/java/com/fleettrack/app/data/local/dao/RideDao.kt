@@ -118,6 +118,36 @@ interface RideDao {
     @Query("SELECT * FROM rides WHERE vehicle_id = :vehicleId ORDER BY accepted_at DESC LIMIT 1")
     fun getLatestRideForVehicle(vehicleId: Long): Flow<RideEntity?>
 
+    @Query("SELECT * FROM rides WHERE vehicle_id = :vehicleId AND status IN ('ACCEPTED', 'IN_TRIP') ORDER BY accepted_at DESC LIMIT 1")
+    suspend fun getActiveRideForVehicle(vehicleId: Long): RideEntity?
+
+    @Query("UPDATE rides SET status = :status WHERE id = :id")
+    suspend fun updateStatus(id: Long, status: RideStatus)
+
+    @Query("""
+        UPDATE rides 
+        SET status = 'COMPLETED',
+            completed_at = :completedAt,
+            fare = :fare,
+            distance_km = :distanceKm,
+            duration_min = :durationMin,
+            confidence = :confidence,
+            needs_review = :needsReview,
+            raw_extracted = :rawExtracted,
+            sync_status = 'PENDING'
+        WHERE id = :id
+    """)
+    suspend fun completeRide(
+        id: Long,
+        completedAt: Instant,
+        fare: Double?,
+        distanceKm: Double?,
+        durationMin: Double?,
+        confidence: Double,
+        needsReview: Boolean,
+        rawExtracted: String?
+    )
+
     @Query("UPDATE rides SET sync_status = :syncStatus, supabase_id = :supabaseId WHERE id = :id")
     suspend fun updateSyncStatus(id: Long, syncStatus: SyncStatus, supabaseId: String?)
 

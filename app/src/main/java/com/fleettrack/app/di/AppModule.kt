@@ -12,6 +12,12 @@ import com.fleettrack.app.data.local.dao.DriverDao
 import com.fleettrack.app.data.local.dao.RideDao
 import com.fleettrack.app.data.local.dao.RideEventDao
 import com.fleettrack.app.data.local.dao.VehicleDao
+import com.fleettrack.app.data.remote.DeviceRemoteDataSource
+import com.fleettrack.app.data.remote.DeviceRemoteDataSourceImpl
+import com.fleettrack.app.data.remote.RemoteSelectorDataSource
+import com.fleettrack.app.data.remote.RemoteSelectorDataSourceImpl
+import com.fleettrack.app.data.remote.RideRemoteDataSource
+import com.fleettrack.app.data.remote.RideRemoteDataSourceImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -79,6 +85,18 @@ object AppModule {
 
     @Provides
     fun provideAlertDao(db: FleetDatabase): AlertDao = db.alertDao()
+
+    @Provides
+    @Singleton
+    fun provideRideRemoteDataSource(impl: RideRemoteDataSourceImpl): RideRemoteDataSource = impl
+
+    @Provides
+    @Singleton
+    fun provideDeviceRemoteDataSource(impl: DeviceRemoteDataSourceImpl): DeviceRemoteDataSource = impl
+
+    @Provides
+    @Singleton
+    fun provideRemoteSelectorDataSource(impl: RemoteSelectorDataSourceImpl): RemoteSelectorDataSource = impl
 
     @Provides
     @IoDispatcher

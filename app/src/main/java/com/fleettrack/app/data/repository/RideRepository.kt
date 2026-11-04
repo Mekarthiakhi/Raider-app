@@ -4,6 +4,7 @@ import com.fleettrack.app.data.local.dao.RideDao
 import com.fleettrack.app.data.local.dao.RideEventDao
 import com.fleettrack.app.data.local.entity.RideEntity
 import com.fleettrack.app.data.local.entity.RideEventEntity
+import com.fleettrack.app.data.model.RideStatus
 import com.fleettrack.app.data.model.RideSummary
 import com.fleettrack.app.data.model.SyncStatus
 import com.fleettrack.app.data.remote.RideRemoteDataSource
@@ -27,12 +28,24 @@ interface RideRepository {
     fun getLatestRideForVehicle(vehicleId: Long): Flow<RideEntity?>
     fun getRidesByVehicle(vehicleId: Long): Flow<List<RideEntity>>
     fun getRidesByDriver(driverId: Long): Flow<List<RideEntity>>
+    suspend fun getActiveRideForVehicle(vehicleId: Long): RideEntity?
     suspend fun getRideById(id: Long): RideEntity?
     suspend fun getRideByRideKey(rideKey: String): RideEntity?
     suspend fun insertRide(ride: RideEntity): Long
     suspend fun insertAllRides(rides: List<RideEntity>)
     suspend fun insertOrIgnoreRide(ride: RideEntity): Long
     suspend fun updateRide(ride: RideEntity)
+    suspend fun updateStatus(id: Long, status: RideStatus)
+    suspend fun completeRide(
+        id: Long,
+        completedAt: Instant,
+        fare: Double?,
+        distanceKm: Double?,
+        durationMin: Double?,
+        confidence: Double,
+        needsReview: Boolean,
+        rawExtracted: String?
+    )
     suspend fun recordEvent(event: RideEventEntity): Long
     suspend fun resolveReview(id: Long, fare: Double?, distanceKm: Double?, note: String?)
     suspend fun syncPendingRides(): Result<Int>
@@ -79,6 +92,11 @@ class RideRepositoryImpl @Inject constructor(
     override fun getRidesByDriver(driverId: Long): Flow<List<RideEntity>> =
         rideDao.getByDriverId(driverId)
 
+    override suspend fun getActiveRideForVehicle(vehicleId: Long): RideEntity? =
+        withContext(ioDispatcher) {
+            rideDao.getActiveRideForVehicle(vehicleId)
+        }
+
     override suspend fun getRideById(id: Long): RideEntity? =
         withContext(ioDispatcher) {
             rideDao.getById(id)
@@ -115,6 +133,40 @@ class RideRepositoryImpl @Inject constructor(
                 rideRemoteDataSource.uploadRide(ride)
             } catch (_: Exception) {}
         }
+
+    override suspend fun updateStatus(id: Long, status: RideStatus) =
+        withContext(ioDispatcher) {
+            rideDao.updateStatus(id, status)
+        }
+
+    override suspend fun completeRide(
+        id: Long,
+        completedAt: Instant,
+        fare: Double?,
+        distanceKm: Double?,
+        durationMin: Double?,
+        confidence: Double,
+        needsReview: Boolean,
+        rawExtracted: String?
+    ) = withContext(ioDispatcher) {
+        rideDao.completeRide(
+            id = id,
+            completedAt = completedAt,
+            fare = fare,
+            distanceKm = distanceKm,
+            durationMin = durationMin,
+            confidence = confidence,
+            needsReview = needsReview,
+            rawExtracted = rawExtracted
+        )
+        // Auto trigger remote upload
+        val updatedRide = rideDao.getById(id)
+        if (updatedRide != null) {
+            try {
+                rideRemoteDataSource.uploadRide(updatedRide)
+            } catch (_: Exception) {}
+        }
+    }
 
     override suspend fun recordEvent(event: RideEventEntity): Long =
         withContext(ioDispatcher) {

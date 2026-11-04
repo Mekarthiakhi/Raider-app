@@ -195,7 +195,7 @@ fun DriverTodayScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Platform Split Breakdown Row
+                // Platform Split Breakdown Row (Uber, Rapido, Ola)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -204,14 +204,15 @@ fun DriverTodayScreen(
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Uber
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         PlatformChip(platform = Platform.UBER)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Column {
                             Text(
                                 text = currencyFormat.format(platformStats.uberFare),
                                 color = TextPrimary,
-                                fontSize = 13.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
@@ -229,18 +230,45 @@ fun DriverTodayScreen(
                             .background(SurfaceBorderDark)
                     )
 
+                    // Rapido
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         PlatformChip(platform = Platform.RAPIDO)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Column {
                             Text(
                                 text = currencyFormat.format(platformStats.rapidoFare),
                                 color = EarningsGold,
-                                fontSize = 13.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = "${platformStats.rapidoRides} trips",
+                                color = TextSecondary,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(28.dp)
+                            .background(SurfaceBorderDark)
+                    )
+
+                    // Ola
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        PlatformChip(platform = Platform.OLA)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column {
+                            Text(
+                                text = currencyFormat.format(platformStats.olaFare),
+                                color = TextPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${platformStats.olaRides} trips",
                                 color = TextSecondary,
                                 fontSize = 10.sp
                             )
@@ -264,7 +292,7 @@ fun DriverTodayScreen(
         if (rides.isEmpty()) {
             EmptyState(
                 title = "No trips recorded for this shift",
-                subtitle = "Accept and complete trips in Uber Driver or Rapido Captain. Telemetry will automatically track and reconcile amounts."
+                subtitle = "Accept and complete trips in Uber Driver, Rapido Captain, or Ola Driver. Telemetry will automatically track and reconcile amounts."
             )
         } else {
             LazyColumn(

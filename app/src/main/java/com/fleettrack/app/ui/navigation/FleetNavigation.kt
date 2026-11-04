@@ -42,6 +42,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.fleettrack.app.ui.auth.LoginScreen
 import com.fleettrack.app.ui.components.GlassCard
+import com.fleettrack.app.ui.debug.NodeInspectorScreen
+import com.fleettrack.app.ui.debug.NodeInspectorViewModel
 import com.fleettrack.app.ui.intro.IntroSplashScreen
 import com.fleettrack.app.util.StatementExportHelper
 import com.fleettrack.app.ui.driver.privacy.PrivacyScreen
@@ -196,6 +198,9 @@ fun FleetNavigation(
                         navController.navigate(Screen.DriverToday.route) {
                             popUpTo(Screen.ModeSelect.route) { inclusive = true }
                         }
+                    },
+                    onInspectNodesClick = {
+                        navController.navigate(Screen.NodeInspector.route)
                     }
                 )
             }
@@ -353,6 +358,9 @@ fun FleetNavigation(
                         navController.navigate(Screen.Login.route) {
                             popUpTo(0) { inclusive = true }
                         }
+                    },
+                    onNodeInspectorClick = {
+                        navController.navigate(Screen.NodeInspector.route)
                     }
                 )
             }
@@ -384,6 +392,14 @@ fun FleetNavigation(
                     onExportPdf = {
                         StatementExportHelper.exportPdfStatement(context, "October 2026")
                     },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.NodeInspector.route) {
+                val vm: NodeInspectorViewModel = hiltViewModel()
+                NodeInspectorScreen(
+                    viewModel = vm,
                     onBackClick = { navController.popBackStack() }
                 )
             }
