@@ -124,6 +124,7 @@ dependencies {
     // WorkManager
     implementation(libs.workmanager.runtime.ktx)
     implementation(libs.workmanager.hilt)
+    ksp(libs.androidx.hilt.compiler)
 
     // Supabase
     implementation(libs.supabase.postgrest)
