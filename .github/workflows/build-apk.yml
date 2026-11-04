@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -43,7 +46,7 @@ jobs:
           cat build.log
           exit $EXIT_CODE
 
-      - name: Upload Debug APK
+      - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         if: success()
         with:
@@ -51,10 +54,13 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
 
-      - name: Upload Build Log Artifact
-        uses: actions/upload-artifact@v4
-        if: always()
+      - name: Publish Direct Mobile Download Release
+        uses: softprops/action-gh-release@v2
+        if: success()
         with:
-          name: build-log
-          path: build.log
-          if-no-files-found: ignore
+          tag_name: latest
+          name: "Fleet Track APK (Latest)"
+          body: "Direct 1-click download for mobile phone testing without GitHub login"
+          files: app/build/outputs/apk/debug/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
