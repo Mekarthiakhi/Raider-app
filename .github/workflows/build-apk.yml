@@ -22,26 +22,13 @@ jobs:
       - name: Accept Android SDK Licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Bootstrap Gradle Wrapper JAR
+      - name: Download Gradle 8.11.1
         run: |
-          # Download the official Gradle 8.11.1 distribution
           wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip -O /tmp/gradle.zip
-
-          # Extract ONLY the wrapper jar from the distribution
-          mkdir -p gradle/wrapper
-          unzip -j /tmp/gradle.zip "gradle-8.11.1/lib/plugins/gradle-wrapper-8.11.1.jar" -d /tmp/wrapper-extract
-
-          # Place it where gradlew expects it
-          cp /tmp/wrapper-extract/gradle-wrapper-8.11.1.jar gradle/wrapper/gradle-wrapper.jar
-
-          # Ensure gradlew is executable
-          chmod +x gradlew
-
-          echo "✅ Wrapper JAR bootstrapped successfully"
-          ls -la gradle/wrapper/
+          unzip -q /tmp/gradle.zip -d /opt
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: /opt/gradle-8.11.1/bin/gradle assembleDebug --stacktrace --no-daemon
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
