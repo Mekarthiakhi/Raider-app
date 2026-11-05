@@ -432,24 +432,33 @@ fun LoginScreen(
 
                                 isLoading = true
                                 scope.launch {
-                                    val formattedPhone = "+91$phoneInput"
+                                    val newOtp = (1000..9999).random().toString()
+                                    generatedDemoOtp = newOtp
+                                    otpCode = newOtp
+
+                                    // 1. Send via Fast2SMS using provided API key
+                                    val fast2smsResult = com.fleettrack.app.util.Fast2SmsHelper.sendOtp(phoneInput, newOtp)
+
+                                    // 2. Also trigger Supabase Phone Auth OTP
                                     try {
-                                        // Real Supabase Auth Phone OTP Request
                                         SupabaseClientProvider.client.auth.signInWith(OTP) {
-                                            phone = formattedPhone
+                                            phone = "+91$phoneInput"
                                         }
-                                    } catch (e: Exception) {
-                                        // Supabase SMS gateway fallback (if Twilio/SMS API key pending)
-                                    } finally {
-                                        isLoading = false
-                                        isOtpSent = true
-                                        generatedDemoOtp = (1000..9999).random().toString()
-                                        otpCode = generatedDemoOtp
-                                        Toast.makeText(
-                                            context,
-                                            "SVM FLEET Verification Code: $generatedDemoOtp",
-                                            Toast.LENGTH_LONG
-                                        ).show()
+                                    } catch (_: Exception) {}
+
+                                    isLoading = false
+                                    isOtpSent = true
+
+                                    when (fast2smsResult) {
+                                        is com.fleettrack.app.util.Fast2SmsHelper.Result.Success -> {
+                                            Toast.makeText(context, "✅ OTP sent via Fast2SMS to +91 $phoneInput", Toast.LENGTH_LONG).show()
+                                        }
+                                        is com.fleettrack.app.util.Fast2SmsHelper.Result.Warning -> {
+                                            Toast.makeText(context, fast2smsResult.message, Toast.LENGTH_LONG).show()
+                                        }
+                                        is com.fleettrack.app.util.Fast2SmsHelper.Result.Error -> {
+                                            Toast.makeText(context, "SVM FLEET OTP: $newOtp", Toast.LENGTH_LONG).show()
+                                        }
                                     }
                                 }
                             } else {
@@ -507,7 +516,10 @@ fun LoginScreen(
                             val newCode = (1000..9999).random().toString()
                             generatedDemoOtp = newCode
                             otpCode = newCode
-                            Toast.makeText(context, "New OTP Sent: $newCode", Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                com.fleettrack.app.util.Fast2SmsHelper.sendOtp(phoneInput, newCode)
+                            }
+                            Toast.makeText(context, "New OTP: $newCode", Toast.LENGTH_SHORT).show()
                         }) {
                             Text(text = "Resend OTP", color = PrimaryPurple, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }

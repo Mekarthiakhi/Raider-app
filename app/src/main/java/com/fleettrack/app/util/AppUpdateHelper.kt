@@ -190,10 +190,25 @@ object AppUpdateHelper {
         val authority = "${context.packageName}.fileprovider"
         val contentUri: Uri = FileProvider.getUriForFile(context, authority, apkFile)
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!context.packageManager.canRequestPackageInstalls()) {
+                val permissionIntent = Intent(
+                    android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:${context.packageName}")
+                ).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(permissionIntent)
+                Toast.makeText(context, "Please allow 'Install unknown apps' to complete SVM FLEET update", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+
         val installIntent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(contentUri, "application/vnd.android.package-archive")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
         }
 
         context.startActivity(installIntent)

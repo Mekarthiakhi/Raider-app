@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
 
                 val startScreen = when {
                     isLoggedIn && role == "OWNER" -> com.fleettrack.app.ui.navigation.Screen.Dashboard.route
-                    isLoggedIn && role == "DRIVER" && isShiftActive -> com.fleettrack.app.ui.navigation.Screen.DriverToday.route
+                    isLoggedIn && role == "DRIVER" -> com.fleettrack.app.ui.navigation.Screen.DriverToday.route
                     else -> com.fleettrack.app.ui.navigation.Screen.IntroSplash.route
                 }
 
