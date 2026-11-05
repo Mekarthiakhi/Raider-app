@@ -389,7 +389,7 @@ private fun SearchableVehicleDialog(
         if (searchQuery.isBlank()) vehicles
         else vehicles.filter {
             it.regNo.contains(searchQuery, ignoreCase = true) ||
-            it.nickname.contains(searchQuery, ignoreCase = true)
+            (it.nickname?.contains(searchQuery, ignoreCase = true) == true)
         }
     }
 
@@ -512,7 +512,7 @@ private fun SearchableVehicleDialog(
                                             color = if (isSelected) EmeraldAccent else TextPrimary
                                         )
                                         Text(
-                                            text = vehicle.nickname,
+                                            text = vehicle.nickname ?: "Cab",
                                             fontSize = 11.sp,
                                             color = TextSecondary,
                                             maxLines = 1
@@ -533,10 +533,9 @@ private fun SearchableVehicleDialog(
                 }
             }
         },
-        confirmButton = {},
-        dismissButton = {
+        confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextSecondary)
+                Text("Close", color = EmeraldAccent)
             }
         },
         containerColor = BackgroundDark,
@@ -629,9 +628,9 @@ private fun ShiftCheckInCard(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
                             )
-                            if (selectedVehicle != null) {
+                            if (selectedVehicle != null && !selectedVehicle?.nickname.isNullOrBlank()) {
                                 Text(
-                                    text = selectedVehicle!!.nickname,
+                                    text = selectedVehicle?.nickname ?: "",
                                     color = TextSecondary,
                                     fontSize = 11.sp,
                                     maxLines = 1
