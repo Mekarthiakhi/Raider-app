@@ -77,6 +77,7 @@ fun SettingsScreen(
     onNodeInspectorClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var isDarkTheme by remember { mutableStateOf(false) }
 
     LazyColumn(
@@ -161,7 +162,6 @@ fun SettingsScreen(
 
         // 2. Telemetry, Battery & Cloud Sync Card
         item {
-            val context = LocalContext.current
             GlassCard(modifier = Modifier.fillMaxWidth(), shape = CardShape) {
                 Column(
                     modifier = Modifier

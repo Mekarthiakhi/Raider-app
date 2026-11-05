@@ -168,3 +168,4 @@ object AppUpdateHelper {
         context.startActivity(installIntent)
     }
 }
+
