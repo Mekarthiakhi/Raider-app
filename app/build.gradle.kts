@@ -39,6 +39,11 @@ android {
             "SUPABASE_ANON_KEY",
             "\"${localProperties.getProperty("SUPABASE_ANON_KEY", "your-anon-key")}\""
         )
+        buildConfigField(
+            "long",
+            "BUILD_TIME",
+            "${System.currentTimeMillis()}L"
+        )
 
         ksp {
             arg("room.schemaLocation", "$projectDir/schemas")

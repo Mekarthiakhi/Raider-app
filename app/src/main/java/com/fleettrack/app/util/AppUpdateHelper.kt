@@ -67,6 +67,19 @@ object AppUpdateHelper {
         }
     }
 
+    private fun parseIsoToEpochMs(isoString: String?): Long {
+        if (isoString.isNullOrBlank()) return 0L
+        return try {
+            java.time.Instant.parse(isoString).toEpochMilli()
+        } catch (e: Exception) {
+            try {
+                kotlinx.datetime.Instant.parse(isoString).toEpochMilliseconds()
+            } catch (e2: Exception) {
+                0L
+            }
+        }
+    }
+
     suspend fun checkForUpdate(context: Context): AppUpdateInfo? = withContext(Dispatchers.IO) {
         try {
             val url = URL(LATEST_RELEASE_API)
@@ -82,16 +95,31 @@ object AppUpdateHelper {
                 val responseText = connection.inputStream.bufferedReader().use { it.readText() }
                 val release = json.decodeFromString<GitHubReleaseResponse>(responseText)
 
-                val publishedTime = release.published_at ?: release.tag_name
+                val apkAsset = release.assets.firstOrNull { it.name == "app-release.apk" }
+                    ?: release.assets.firstOrNull { it.name.endsWith(".apk") } ?: return@withContext null
+
+                val assetVersionId = apkAsset.updated_at.ifBlank { release.published_at ?: release.tag_name }
                 val prefs = context.getSharedPreferences("svm_fleet_updates", Context.MODE_PRIVATE)
                 val lastInstalled = prefs.getString("last_installed_time", "")
                 val dismissed = prefs.getString("dismissed_time", "")
 
-                if (publishedTime.isNotBlank() && (publishedTime == lastInstalled || publishedTime == dismissed)) {
+                // If user dismissed this version or installed it
+                if (assetVersionId.isNotBlank() && (assetVersionId == lastInstalled || assetVersionId == dismissed)) {
                     return@withContext null
                 }
 
-                // Check installed app's package update time to avoid showing update if user just installed this release
+                val assetEpoch = parseIsoToEpochMs(apkAsset.updated_at).let {
+                    if (it > 0L) it else parseIsoToEpochMs(release.published_at)
+                }
+
+                // 1. If currently running app was compiled after or within 3 mins of the release asset, it is already latest!
+                if (BuildConfig.BUILD_TIME > 0L && assetEpoch > 0L) {
+                    if (BuildConfig.BUILD_TIME >= (assetEpoch - 180_000L)) {
+                        return@withContext null
+                    }
+                }
+
+                // 2. If app was installed/updated after or within 3 mins of release, it is already up to date!
                 val packageInfo = try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.PackageInfoFlags.of(0))
@@ -103,33 +131,19 @@ object AppUpdateHelper {
                     null
                 }
 
-                val releaseEpoch = try {
-                    if (!release.published_at.isNullOrBlank()) {
-                        kotlinx.datetime.Instant.parse(release.published_at).toEpochMilliseconds()
-                    } else 0L
-                } catch (e: Exception) {
-                    0L
-                }
-
                 val installedAppTime = packageInfo?.lastUpdateTime ?: 0L
-                // If installed app is updated within 3 minutes of release or newer, app is already up to date!
-                if (releaseEpoch > 0L && installedAppTime >= (releaseEpoch - 180_000L)) {
+                if (assetEpoch > 0L && installedAppTime >= (assetEpoch - 180_000L)) {
                     return@withContext null
                 }
 
-                val apkAsset = release.assets.firstOrNull { it.name == "app-release.apk" }
-                    ?: release.assets.firstOrNull { it.name.endsWith(".apk") }
-
-                if (apkAsset != null) {
-                    val sizeMb = (apkAsset.size / (1024.0 * 1024.0) * 10).toInt() / 10.0
-                    return@withContext AppUpdateInfo(
-                        versionName = release.tag_name,
-                        downloadUrl = apkAsset.browser_download_url,
-                        sizeMb = sizeMb,
-                        releaseNotes = release.body ?: "Latest performance updates and SVM FLEET fixes.",
-                        publishedAt = publishedTime
-                    )
-                }
+                val sizeMb = (apkAsset.size / (1024.0 * 1024.0) * 10).toInt() / 10.0
+                return@withContext AppUpdateInfo(
+                    versionName = release.tag_name,
+                    downloadUrl = apkAsset.browser_download_url,
+                    sizeMb = sizeMb,
+                    releaseNotes = release.body ?: "Latest performance updates and SVM FLEET fixes.",
+                    publishedAt = assetVersionId
+                )
             }
         } catch (e: Exception) {
             // Offline or network error
