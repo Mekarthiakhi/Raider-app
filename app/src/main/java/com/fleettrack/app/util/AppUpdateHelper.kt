@@ -44,7 +44,7 @@ data class AppUpdateInfo(
 object AppUpdateHelper {
 
     private const val LATEST_RELEASE_API =
-        "https://api.github.com/repos/akki28924/svm-fleet/releases/tags/latest"
+        "https://api.github.com/repos/Mekarthiakhi/Raider-app/releases/tags/latest"
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
