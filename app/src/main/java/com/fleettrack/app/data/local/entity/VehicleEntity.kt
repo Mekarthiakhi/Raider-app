@@ -3,6 +3,7 @@ package com.fleettrack.app.data.local.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
 @Entity(tableName = "vehicles")
@@ -26,5 +27,5 @@ data class VehicleEntity(
     val supabaseId: String? = null,
 
     @ColumnInfo(name = "created_at")
-    val createdAt: Instant
+    val createdAt: Instant = Clock.System.now()
 )
