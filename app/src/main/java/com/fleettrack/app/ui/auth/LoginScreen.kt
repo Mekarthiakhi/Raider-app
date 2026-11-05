@@ -3,6 +3,8 @@ package com.fleettrack.app.ui.auth
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,10 +25,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.SystemUpdate
@@ -44,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,7 +64,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fleettrack.app.data.remote.SupabaseClientProvider
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.fleettrack.app.ui.theme.ActiveGreen
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.PillShape
@@ -73,40 +77,31 @@ import com.fleettrack.app.ui.theme.TextGray
 import com.fleettrack.app.ui.theme.TextMutedGray
 import com.fleettrack.app.util.AppUpdateHelper
 import com.fleettrack.app.util.AppUpdateInfo
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.providers.builtin.OTP
+import com.fleettrack.app.util.Fast2SmsHelper
+import com.fleettrack.app.util.WhatsAppHelper
 import kotlinx.coroutines.launch
-
-enum class UserRole {
-    FLEET_OWNER,
-    DRIVER
-}
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onDriverCompanionClick: () -> Unit,
+    viewModel: LoginViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
-    // 1. Role Selection (Fleet Owner vs Driver)
-    var selectedRole by remember { mutableStateOf(UserRole.FLEET_OWNER) }
+    // Drivers database state
+    val registeredDrivers by viewModel.registeredDrivers.collectAsState()
 
-    // Official SVM FLEET Owner Numbers (Moosapet Hyderabad)
-    val authorizedOwnerNumbers = remember {
-        listOf("9391915013", "9959859347", "+919391915013", "+919959859347", "9876543210")
-    }
-
-    // Registered Driver Mobile Numbers from paper register
-    val driverNumbers = remember {
-        listOf("9845122710", "9741227330", "9632133200", "9845244550", "9900155660")
-    }
-
-    // Dynamic Mobile Number (NO hardcoded static string!)
+    // Phone input (dynamic, max 10 digits)
     var phoneInput by remember { mutableStateOf("") }
+
+    // Evaluate live role & authorization
+    val authStatus = remember(phoneInput, registeredDrivers) {
+        viewModel.evaluatePhone(phoneInput)
+    }
 
     // OTP Flow State
     var otpCode by remember { mutableStateOf("") }
@@ -131,7 +126,7 @@ fun LoginScreen(
             .padding(horizontal = 20.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Direct In-App Update Banner (Dismissable & Only if new update exists)
+        // Direct In-App Update Banner (Dismissable & Only if new update genuinely exists)
         if (updateInfo != null && !isUpdateDismissed) {
             Card(
                 modifier = Modifier
@@ -210,7 +205,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // 1. App Logo & Brand Header
         Box(
@@ -250,9 +245,25 @@ fun LoginScreen(
             fontWeight = FontWeight.Medium
         )
 
-        Spacer(modifier = Modifier.height(22.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
-        // 2. Modern Floating Card Container for Login Modal
+        Box(
+            modifier = Modifier
+                .clip(PillShape)
+                .background(PrimaryPurpleContainer.copy(alpha = 0.4f))
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = "Commercial Fleet Partner Portal",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = PrimaryPurple
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 2. Modern Card Container for Login Modal
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -264,123 +275,39 @@ fun LoginScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Segmented Role Selector
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(PillShape)
-                        .background(Color(0xFFF1F3F9))
-                        .padding(4.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(PillShape)
-                            .background(if (selectedRole == UserRole.FLEET_OWNER) PrimaryPurple else Color.Transparent)
-                            .clickable {
-                                selectedRole = UserRole.FLEET_OWNER
-                                isOtpSent = false
-                                otpCode = ""
-                            }
-                            .padding(vertical = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Shield,
-                                contentDescription = null,
-                                tint = if (selectedRole == UserRole.FLEET_OWNER) Color.White else TextDark,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Fleet Owner",
-                                color = if (selectedRole == UserRole.FLEET_OWNER) Color.White else TextDark,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                Text(
+                    text = "Sign in with Mobile",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark
+                )
 
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(PillShape)
-                            .background(if (selectedRole == UserRole.DRIVER) PrimaryPurple else Color.Transparent)
-                            .clickable {
-                                selectedRole = UserRole.DRIVER
-                                isOtpSent = false
-                                otpCode = ""
-                            }
-                            .padding(vertical = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = null,
-                                tint = if (selectedRole == UserRole.DRIVER) Color.White else TextDark,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Driver Partner",
-                                color = if (selectedRole == UserRole.DRIVER) Color.White else TextDark,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Role Hint Badge
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(
-                            if (selectedRole == UserRole.FLEET_OWNER)
-                                PrimaryPurpleContainer.copy(alpha = 0.45f)
-                            else
-                                Color(0xFFF3F0FF)
-                        )
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = if (selectedRole == UserRole.FLEET_OWNER)
-                            "🛡️ Owner Mode: Access Office Duty Register, Commission Base & 30 Cabs"
-                        else
-                            "🚗 Driver Mode: View assigned vehicle, active shift timer & fare telemetry",
-                        fontSize = 11.sp,
-                        color = TextDark,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
+                Text(
+                    text = "Enter your registered mobile number to receive an instant verification code.",
+                    fontSize = 12.sp,
+                    color = TextGray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 18.dp)
+                )
 
                 // Phone Input Field with Indian Flag 🇮🇳 & +91 Prefix
                 OutlinedTextField(
                     value = phoneInput,
                     onValueChange = { input ->
-                        // Allow only digits up to 10 characters
                         val filtered = input.filter { it.isDigit() }
                         if (filtered.length <= 10) {
                             phoneInput = filtered
+                            if (isOtpSent) {
+                                isOtpSent = false
+                                otpCode = ""
+                            }
                         }
                     },
-                    label = {
-                        Text(if (selectedRole == UserRole.FLEET_OWNER) "Owner Mobile Number" else "Driver Mobile Number")
-                    },
-                    placeholder = {
-                        Text(if (selectedRole == UserRole.FLEET_OWNER) "e.g. 9391915013" else "e.g. 9845122710")
-                    },
+                    label = { Text("Registered Mobile Number") },
+                    placeholder = { Text("e.g. 9845122710") },
                     leadingIcon = {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -393,7 +320,11 @@ fun LoginScreen(
                     },
                     trailingIcon = {
                         if (phoneInput.isNotEmpty()) {
-                            IconButton(onClick = { phoneInput = "" }) {
+                            IconButton(onClick = {
+                                phoneInput = ""
+                                isOtpSent = false
+                                otpCode = ""
+                            }) {
                                 Icon(Icons.Default.Close, contentDescription = "Clear", tint = TextMutedGray, modifier = Modifier.size(18.dp))
                             }
                         }
@@ -410,118 +341,213 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                // Authorization Status Feedback Card
+                AnimatedVisibility(
+                    visible = phoneInput.length == 10,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    when (authStatus) {
+                        is AuthStatus.DriverAuthorized -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFFE8F5E9))
+                                    .border(1.dp, ActiveGreen.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = ActiveGreen,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = "Verified Driver Partner",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF1B5E20)
+                                        )
+                                        Text(
+                                            text = "Welcome, ${authStatus.driverName}! Ready for duty check-in.",
+                                            fontSize = 11.sp,
+                                            color = TextDark
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        is AuthStatus.OwnerAuthorized -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(PrimaryPurpleContainer.copy(alpha = 0.45f))
+                                    .border(1.dp, PrimaryPurple.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Shield,
+                                        contentDescription = null,
+                                        tint = PrimaryPurple,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = "SVM Fleet Management",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = PrimaryPurple
+                                        )
+                                        Text(
+                                            text = "Authorized Owner Access • Moosapet Central Hub",
+                                            fontSize = 11.sp,
+                                            color = TextDark
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        is AuthStatus.Unauthorized -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFFFFF3E0))
+                                    .border(1.dp, Color(0xFFFFB74D), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.Top) {
+                                    Icon(
+                                        imageVector = Icons.Default.ErrorOutline,
+                                        contentDescription = null,
+                                        tint = Color(0xFFE65100),
+                                        modifier = Modifier.size(20.dp).padding(top = 2.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = "Mobile Number Not Registered",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = Color(0xFFBF360C)
+                                        )
+                                        Text(
+                                            text = "Only drivers registered by SVM FLEET management can log in. Please contact Moosapet Office to onboard.",
+                                            fontSize = 11.sp,
+                                            color = TextDark,
+                                            lineHeight = 15.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val isAuthorized = authStatus is AuthStatus.OwnerAuthorized || authStatus is AuthStatus.DriverAuthorized
+
                 // OTP Trigger or Entry Box
                 if (!isOtpSent) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         // 1. Primary WhatsApp Verification Button (100% Free & Instant)
                         Button(
                             onClick = {
-                                if (phoneInput.length >= 10) {
-                                    // STRICT ROLE CHECK: Driver cannot login to Owner Portal!
-                                    if (selectedRole == UserRole.FLEET_OWNER) {
-                                        val isAuthorized = authorizedOwnerNumbers.any { it.endsWith(phoneInput) }
-                                        val isDriver = driverNumbers.any { it.endsWith(phoneInput) }
+                                if (!isAuthorized) {
+                                    Toast.makeText(
+                                        context,
+                                        "⛔ Unregistered Mobile: Contact SVM FLEET office to register.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    return@Button
+                                }
 
-                                        if (isDriver && !isAuthorized) {
-                                            Toast.makeText(
-                                                context,
-                                                "⛔ Access Denied: This number is assigned to a Driver. Drivers cannot log in to the Fleet Owner portal. Please switch to Driver Partner.",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@Button
-                                        }
-                                    }
+                                val newOtp = (1000..9999).random().toString()
+                                generatedDemoOtp = newOtp
+                                otpCode = newOtp
+                                isOtpSent = true
 
-                                    val newOtp = (1000..9999).random().toString()
-                                    generatedDemoOtp = newOtp
-                                    otpCode = newOtp
-                                    isOtpSent = true
+                                val isOwner = authStatus is AuthStatus.OwnerAuthorized
+                                val opened = WhatsAppHelper.sendOtpViaWhatsApp(
+                                    context = context,
+                                    recipientPhone = phoneInput,
+                                    otpCode = newOtp,
+                                    isOwner = isOwner
+                                )
 
-                                    // Launch WhatsApp with pre-filled OTP
-                                    val opened = com.fleettrack.app.util.WhatsAppHelper.sendOtpViaWhatsApp(
-                                        context = context,
-                                        recipientPhone = phoneInput,
-                                        otpCode = newOtp,
-                                        isOwner = selectedRole == UserRole.FLEET_OWNER
-                                    )
-
-                                    if (opened) {
-                                        Toast.makeText(context, "Opening WhatsApp with OTP: $newOtp", Toast.LENGTH_LONG).show()
-                                    } else {
-                                        Toast.makeText(context, "SVM FLEET OTP: $newOtp", Toast.LENGTH_LONG).show()
-                                    }
+                                if (opened) {
+                                    Toast.makeText(context, "Opening WhatsApp with OTP: $newOtp", Toast.LENGTH_LONG).show()
                                 } else {
-                                    Toast.makeText(context, "Please enter a valid 10-digit mobile number", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "SVM FLEET OTP: $newOtp", Toast.LENGTH_LONG).show()
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)), // WhatsApp Green
                             shape = PillShape,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp),
-                            enabled = !isLoading && phoneInput.length == 10
+                                .height(50.dp),
+                            enabled = !isLoading && phoneInput.length == 10 && isAuthorized
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "💬 Send OTP via WhatsApp (Free)",
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                            Text(
+                                text = "💬 Send OTP via WhatsApp (Free)",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         // 2. Secondary Fast2SMS / Direct Instant OTP option
                         TextButton(
                             onClick = {
-                                if (phoneInput.length >= 10) {
-                                    if (selectedRole == UserRole.FLEET_OWNER) {
-                                        val isAuthorized = authorizedOwnerNumbers.any { it.endsWith(phoneInput) }
-                                        val isDriver = driverNumbers.any { it.endsWith(phoneInput) }
+                                if (!isAuthorized) {
+                                    Toast.makeText(
+                                        context,
+                                        "⛔ Mobile number is not authorized by SVM FLEET management.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    return@TextButton
+                                }
 
-                                        if (isDriver && !isAuthorized) {
-                                            Toast.makeText(
-                                                context,
-                                                "⛔ Access Denied: Drivers cannot log in to Owner Portal.",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@TextButton
+                                isLoading = true
+                                scope.launch {
+                                    val newOtp = (1000..9999).random().toString()
+                                    generatedDemoOtp = newOtp
+                                    otpCode = newOtp
+
+                                    val fast2smsResult = Fast2SmsHelper.sendOtp(phoneInput, newOtp)
+                                    isLoading = false
+                                    isOtpSent = true
+
+                                    when (fast2smsResult) {
+                                        is Fast2SmsHelper.Result.Success -> {
+                                            Toast.makeText(context, "✅ SMS sent via Fast2SMS", Toast.LENGTH_LONG).show()
+                                        }
+                                        is Fast2SmsHelper.Result.Warning -> {
+                                            Toast.makeText(context, fast2smsResult.message, Toast.LENGTH_LONG).show()
+                                        }
+                                        is Fast2SmsHelper.Result.Error -> {
+                                            Toast.makeText(context, "SVM FLEET OTP: $newOtp", Toast.LENGTH_LONG).show()
                                         }
                                     }
-
-                                    isLoading = true
-                                    scope.launch {
-                                        val newOtp = (1000..9999).random().toString()
-                                        generatedDemoOtp = newOtp
-                                        otpCode = newOtp
-
-                                        val fast2smsResult = com.fleettrack.app.util.Fast2SmsHelper.sendOtp(phoneInput, newOtp)
-                                        isLoading = false
-                                        isOtpSent = true
-
-                                        when (fast2smsResult) {
-                                            is com.fleettrack.app.util.Fast2SmsHelper.Result.Success -> {
-                                                Toast.makeText(context, "✅ SMS sent via Fast2SMS", Toast.LENGTH_LONG).show()
-                                            }
-                                            is com.fleettrack.app.util.Fast2SmsHelper.Result.Warning -> {
-                                                Toast.makeText(context, fast2smsResult.message, Toast.LENGTH_LONG).show()
-                                            }
-                                            is com.fleettrack.app.util.Fast2SmsHelper.Result.Error -> {
-                                                Toast.makeText(context, "SVM FLEET OTP: $newOtp", Toast.LENGTH_LONG).show()
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    Toast.makeText(context, "Please enter 10-digit mobile number", Toast.LENGTH_SHORT).show()
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = phoneInput.length == 10 && isAuthorized
                         ) {
                             Text(
                                 text = "Or send via SMS / Instant Code",
-                                color = TextGray,
+                                color = if (isAuthorized) TextGray else TextMutedGray,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -561,11 +587,11 @@ fun LoginScreen(
                             val newCode = (1000..9999).random().toString()
                             generatedDemoOtp = newCode
                             otpCode = newCode
-                            com.fleettrack.app.util.WhatsAppHelper.sendOtpViaWhatsApp(
+                            WhatsAppHelper.sendOtpViaWhatsApp(
                                 context = context,
                                 recipientPhone = phoneInput,
                                 otpCode = newCode,
-                                isOwner = selectedRole == UserRole.FLEET_OWNER
+                                isOwner = authStatus is AuthStatus.OwnerAuthorized
                             )
                             Toast.makeText(context, "Resent via WhatsApp: $newCode", Toast.LENGTH_SHORT).show()
                         }) {
@@ -580,7 +606,7 @@ fun LoginScreen(
                 Button(
                     onClick = {
                         if (!isOtpSent) {
-                            Toast.makeText(context, "Please tap 'Send 4-Digit OTP' first", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Please send OTP first", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         if (otpCode.isBlank()) {
@@ -590,40 +616,39 @@ fun LoginScreen(
 
                         val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
 
-                        if (selectedRole == UserRole.FLEET_OWNER) {
-                            // STRICT CHECK: Driver cannot login to owner account
-                            val isDriver = driverNumbers.any { it.endsWith(phoneInput) }
-                            val isOwner = authorizedOwnerNumbers.any { it.endsWith(phoneInput) }
+                        when (authStatus) {
+                            is AuthStatus.OwnerAuthorized -> {
+                                // Save Persistent Owner Session
+                                sessionPrefs.edit()
+                                    .putBoolean("is_logged_in", true)
+                                    .putString("role", "OWNER")
+                                    .putString("phone", phoneInput)
+                                    .apply()
 
-                            if (isDriver && !isOwner) {
+                                Toast.makeText(context, "Welcome, Fleet Owner!", Toast.LENGTH_SHORT).show()
+                                onLoginSuccess()
+                            }
+                            is AuthStatus.DriverAuthorized -> {
+                                // Save Persistent Driver Shift Session
+                                sessionPrefs.edit()
+                                    .putBoolean("is_logged_in", true)
+                                    .putString("role", "DRIVER")
+                                    .putString("phone", phoneInput)
+                                    .putLong("driver_id", authStatus.driverId)
+                                    .putString("driver_name", authStatus.driverName)
+                                    .putBoolean("is_shift_active", true)
+                                    .apply()
+
+                                Toast.makeText(context, "Welcome, ${authStatus.driverName}! Opening Shift Mode...", Toast.LENGTH_SHORT).show()
+                                onDriverCompanionClick()
+                            }
+                            else -> {
                                 Toast.makeText(
                                     context,
-                                    "⛔ Access Restricted: Drivers are not allowed to access Owner Dashboard. Please switch to Driver Partner.",
+                                    "⛔ Unauthorized: Mobile number not registered by Fleet Owner.",
                                     Toast.LENGTH_LONG
                                 ).show()
-                                return@Button
                             }
-
-                            // Save Persistent Owner Session (Stays logged in on reopen!)
-                            sessionPrefs.edit()
-                                .putBoolean("is_logged_in", true)
-                                .putString("role", "OWNER")
-                                .putString("phone", phoneInput)
-                                .apply()
-
-                            Toast.makeText(context, "Welcome, Fleet Owner!", Toast.LENGTH_SHORT).show()
-                            onLoginSuccess()
-                        } else {
-                            // Save Persistent Driver Shift Session (Stays logged in until shift end!)
-                            sessionPrefs.edit()
-                                .putBoolean("is_logged_in", true)
-                                .putString("role", "DRIVER")
-                                .putString("phone", phoneInput)
-                                .putBoolean("is_shift_active", true)
-                                .apply()
-
-                            Toast.makeText(context, "Welcome Driver! Opening Shift Mode...", Toast.LENGTH_SHORT).show()
-                            onDriverCompanionClick()
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
@@ -634,7 +659,7 @@ fun LoginScreen(
                     enabled = isOtpSent && otpCode.isNotBlank()
                 ) {
                     Text(
-                        text = if (selectedRole == UserRole.FLEET_OWNER) "Verify & Access Owner Portal" else "Verify & Start Driver Shift",
+                        text = "Verify & Enter Portal",
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -650,7 +675,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(14.dp))
 
         Text(
-            text = "SVM FLEET • Moosapet, Hyderabad 500018\nSupport: +91 93919 15013, +91 99598 59347",
+            text = "SVM FLEET • Moosapet, Hyderabad 500018\nDriver Onboarding & Support: +91 93919 15013, +91 99598 59347",
             color = TextMutedGray,
             fontSize = 11.sp,
             textAlign = TextAlign.Center,

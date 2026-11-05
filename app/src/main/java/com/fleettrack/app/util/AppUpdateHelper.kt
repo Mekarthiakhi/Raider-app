@@ -91,6 +91,32 @@ object AppUpdateHelper {
                     return@withContext null
                 }
 
+                // Check installed app's package update time to avoid showing update if user just installed this release
+                val packageInfo = try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.PackageInfoFlags.of(0))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        context.packageManager.getPackageInfo(context.packageName, 0)
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+
+                val releaseEpoch = try {
+                    if (!release.published_at.isNullOrBlank()) {
+                        kotlinx.datetime.Instant.parse(release.published_at).toEpochMilliseconds()
+                    } else 0L
+                } catch (e: Exception) {
+                    0L
+                }
+
+                val installedAppTime = packageInfo?.lastUpdateTime ?: 0L
+                // If installed app is updated within 3 minutes of release or newer, app is already up to date!
+                if (releaseEpoch > 0L && installedAppTime >= (releaseEpoch - 180_000L)) {
+                    return@withContext null
+                }
+
                 val apkAsset = release.assets.firstOrNull { it.name == "app-release.apk" }
                     ?: release.assets.firstOrNull { it.name.endsWith(".apk") }
 

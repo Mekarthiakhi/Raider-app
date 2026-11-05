@@ -37,39 +37,41 @@ class FleetDataSeeder @Inject constructor(
         "Maruti Tour S", "Hyundai Grand i10", "Toyota Etios"
     )
 
-    // Drivers from the SVM FLEET office logbook
-    private val driverList = listOf(
-        Pair("Suman", "+91 93919 15013"),
-        Pair("Narendra", "+91 99598 59347"),
-        Pair("Pavan", "+91 98451 22710"),
-        Pair("Siva", "+91 97412 27330"),
-        Pair("Prasad", "+91 96321 33200"),
-        Pair("Baleru", "+91 98452 44550"),
-        Pair("Ramesh Kumar", "+91 99001 55660"),
-        Pair("Krishna Reddy", "+91 98450 66770"),
-        Pair("Naresh G", "+91 97312 77880"),
-        Pair("Mallesh Yadav", "+91 98860 88990"),
-        Pair("Srinivas Rao", "+91 99450 11220"),
-        Pair("Venkat Swamy", "+91 98456 22330"),
-        Pair("Mahesh Goud", "+91 97410 33440"),
-        Pair("Santosh V", "+91 96112 44550"),
-        Pair("Arun Teja", "+91 98801 55660"),
-        Pair("Raghavendra", "+91 99002 66770"),
-        Pair("Dinesh Chary", "+91 98453 77880"),
-        Pair("Chandrasekhar", "+91 97413 88990"),
-        Pair("Shiva Shankar", "+91 96324 99000"),
-        Pair("Anji Babu", "+91 98862 10100"),
-        Pair("Naveen Kumar", "+91 99452 20200"),
-        Pair("Pradeep Varma", "+91 98457 30300"),
-        Pair("Harish Naidu", "+91 97314 40400"),
-        Pair("Chetan Sai", "+91 96114 50500"),
-        Pair("Ravinder Reddy", "+91 98803 60600"),
-        Pair("Yadagiri", "+91 99004 70700"),
-        Pair("Manoj K", "+91 98458 80800"),
-        Pair("Giri Babu", "+91 97415 90900"),
-        Pair("Bhanu Prasad", "+91 96326 12120"),
-        Pair("Kiran Kumar", "+91 98864 13130")
-    )
+    companion object {
+        // Drivers from the SVM FLEET office logbook
+        val driverList = listOf(
+            Pair("Suman", "+91 93919 15013"),
+            Pair("Narendra", "+91 99598 59347"),
+            Pair("Pavan", "+91 98451 22710"),
+            Pair("Siva", "+91 97412 27330"),
+            Pair("Prasad", "+91 96321 33200"),
+            Pair("Baleru", "+91 98452 44550"),
+            Pair("Ramesh Kumar", "+91 99001 55660"),
+            Pair("Krishna Reddy", "+91 98450 66770"),
+            Pair("Naresh G", "+91 97312 77880"),
+            Pair("Mallesh Yadav", "+91 98860 88990"),
+            Pair("Srinivas Rao", "+91 99450 11220"),
+            Pair("Venkat Swamy", "+91 98456 22330"),
+            Pair("Mahesh Goud", "+91 97410 33440"),
+            Pair("Santosh V", "+91 96112 44550"),
+            Pair("Arun Teja", "+91 98801 55660"),
+            Pair("Raghavendra", "+91 99002 66770"),
+            Pair("Dinesh Chary", "+91 98453 77880"),
+            Pair("Chandrasekhar", "+91 97413 88990"),
+            Pair("Shiva Shankar", "+91 96324 99000"),
+            Pair("Anji Babu", "+91 98862 10100"),
+            Pair("Naveen Kumar", "+91 99452 20200"),
+            Pair("Pradeep Varma", "+91 98457 30300"),
+            Pair("Harish Naidu", "+91 97314 40400"),
+            Pair("Chetan Sai", "+91 96114 50500"),
+            Pair("Ravinder Reddy", "+91 98803 60600"),
+            Pair("Yadagiri", "+91 99004 70700"),
+            Pair("Manoj K", "+91 98458 80800"),
+            Pair("Giri Babu", "+91 97415 90900"),
+            Pair("Bhanu Prasad", "+91 96326 12120"),
+            Pair("Kiran Kumar", "+91 98864 13130")
+        )
+    }
 
     private val hyderabadLocations = listOf(
         "Moosapet Metro Station", "Kukatpally Y Junction", "Hitec City Cyber Towers",
