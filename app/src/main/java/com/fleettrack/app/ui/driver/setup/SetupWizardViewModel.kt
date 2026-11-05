@@ -32,21 +32,30 @@ class SetupWizardViewModel @Inject constructor(
     val state: StateFlow<SetupState> = _state.asStateFlow()
 
     fun checkPermissions() {
-        val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-        val enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-        val isA11yOn = enabledServices.any {
-            it.resolveInfo.serviceInfo.packageName == context.packageName
+        try {
+            val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
+            val enabledServices = am?.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK) ?: emptyList()
+            val isA11yOn = enabledServices.any {
+                it.resolveInfo?.serviceInfo?.packageName == context.packageName
+            }
+
+            val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+            val isBatteryIgnored = pm?.isIgnoringBatteryOptimizations(context.packageName) ?: false
+
+            _state.value = SetupState(
+                isAccessibilityEnabled = isA11yOn,
+                isBatteryOptimizationIgnored = isBatteryIgnored,
+                isRestrictedSettingsAllowed = true, // Requires user confirmation if prompted
+                isOemAutoStartConfigured = false
+            )
+        } catch (e: Exception) {
+            _state.value = SetupState(
+                isAccessibilityEnabled = false,
+                isBatteryOptimizationIgnored = false,
+                isRestrictedSettingsAllowed = true,
+                isOemAutoStartConfigured = false
+            )
         }
-
-        val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-        val isBatteryIgnored = pm.isIgnoringBatteryOptimizations(context.packageName)
-
-        _state.value = SetupState(
-            isAccessibilityEnabled = isA11yOn,
-            isBatteryOptimizationIgnored = isBatteryIgnored,
-            isRestrictedSettingsAllowed = true, // Requires user confirmation if prompted
-            isOemAutoStartConfigured = false
-        )
     }
 
     fun openAccessibilitySettings(context: Context) {

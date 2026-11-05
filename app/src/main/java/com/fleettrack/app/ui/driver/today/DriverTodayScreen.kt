@@ -20,7 +20,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -68,6 +70,8 @@ import java.util.Locale
 @Composable
 fun DriverTodayScreen(
     viewModel: DriverTodayViewModel,
+    onLogoutClick: () -> Unit = {},
+    onSetupClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val shiftSession by viewModel.shiftSession.collectAsState()
@@ -96,43 +100,65 @@ fun DriverTodayScreen(
         ) {
             Column {
                 Text(
-                    text = if (shiftSession.isShiftActive) (shiftSession.driverName ?: "Driver") else "Driver Companion",
+                    text = if (shiftSession.isShiftActive) (shiftSession.driverName ?: "Driver") else "SVM FLEET Driver",
                     color = TextPrimary,
-                    fontSize = 22.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = if (shiftSession.isShiftActive) "${shiftSession.vehicleRegNo} (${shiftSession.vehicleNickname})" else "Shift Telemetry",
+                    text = if (shiftSession.isShiftActive) "${shiftSession.vehicleRegNo} (${shiftSession.vehicleNickname})" else "Moosapet Shift Companion",
                     color = TextSecondary,
-                    fontSize = 13.sp
+                    fontSize = 12.sp
                 )
             }
 
-            // Tracking Active Status Pill
-            Box(
-                modifier = Modifier
-                    .background(
-                        color = if (isTrackingActive) EmeraldAccentContainer else AlertRed.copy(alpha = 0.2f),
-                        shape = ChipShape
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Tracking Active Status Pill
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = if (isTrackingActive) EmeraldAccentContainer else AlertRed.copy(alpha = 0.2f),
+                            shape = ChipShape
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (isTrackingActive) EmeraldAccent else AlertRed,
+                            shape = ChipShape
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        StatusDot(
+                            state = if (isTrackingActive) VehicleStatusState.ON_TRIP else VehicleStatusState.OFFLINE,
+                            size = 6.dp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (isTrackingActive) "Active" else "Paused",
+                            color = if (isTrackingActive) EmeraldAccent else AlertRed,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                // Setup / Permissions
+                IconButton(onClick = onSetupClick) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Setup",
+                        tint = TextSecondary
                     )
-                    .border(
-                        width = 1.dp,
-                        color = if (isTrackingActive) EmeraldAccent else AlertRed,
-                        shape = ChipShape
-                    )
-                    .padding(horizontal = 10.dp, vertical = 5.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    StatusDot(
-                        state = if (isTrackingActive) VehicleStatusState.ON_TRIP else VehicleStatusState.OFFLINE,
-                        size = 6.dp
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (isTrackingActive) "Telemetry Active" else "Paused",
-                        color = if (isTrackingActive) EmeraldAccent else AlertRed,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
+                }
+
+                // Logout / Exit Button
+                IconButton(onClick = onLogoutClick) {
+                    Icon(
+                        imageVector = Icons.Default.ExitToApp,
+                        contentDescription = "Exit to Login",
+                        tint = AlertRed
                     )
                 }
             }

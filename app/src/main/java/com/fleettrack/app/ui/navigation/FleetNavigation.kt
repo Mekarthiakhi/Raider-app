@@ -174,7 +174,9 @@ fun FleetNavigation(
                         }
                     },
                     onDriverCompanionClick = {
-                        navController.navigate(Screen.SetupWizard.route)
+                        navController.navigate(Screen.DriverToday.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
                     }
                 )
             }
@@ -184,7 +186,7 @@ fun FleetNavigation(
             // ==========================================
             composable(Screen.ModeSelect.route) {
                 ModeSelectionScreen(
-                    onSelectDriver = { navController.navigate(Screen.SetupWizard.route) },
+                    onSelectDriver = { navController.navigate(Screen.DriverToday.route) },
                     onSelectOwner = { navController.navigate(Screen.Login.route) }
                 )
             }
@@ -209,7 +211,17 @@ fun FleetNavigation(
 
             composable(Screen.DriverToday.route) {
                 val vm: DriverTodayViewModel = hiltViewModel()
-                DriverTodayScreen(viewModel = vm)
+                DriverTodayScreen(
+                    viewModel = vm,
+                    onLogoutClick = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    onSetupClick = {
+                        navController.navigate(Screen.SetupWizard.route)
+                    }
+                )
             }
 
             composable(Screen.PrivacyConsent.route) {
