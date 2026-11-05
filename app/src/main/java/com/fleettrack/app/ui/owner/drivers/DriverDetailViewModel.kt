@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.owner.drivers
+package com.fleettrack.app.ui.owner.drivers
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -79,8 +79,10 @@ class DriverDetailViewModel @Inject constructor(
     private val rideRepository: RideRepository
 ) : ViewModel() {
 
-    private val driverId: Long = savedStateHandle.get<Long>("driverId")
-        ?: savedStateHandle.get<String>("driverId")?.toLongOrNull()
+    private val driverId: Long = runCatching {
+        savedStateHandle.get<String>("driverId")?.toLongOrNull()
+    }.getOrNull()
+        ?: runCatching { savedStateHandle.get<Long>("driverId") }.getOrNull()
         ?: 1L
 
     private val now = Clock.System.now()

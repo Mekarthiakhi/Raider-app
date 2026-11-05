@@ -181,7 +181,12 @@ fun DriverTodayScreen(
                 driverName = shiftSession.driverName ?: "Unknown",
                 vehicleRegNo = shiftSession.vehicleRegNo ?: "Unassigned",
                 vehicleNickname = shiftSession.vehicleNickname ?: "",
-                onEndShift = { viewModel.endShift() }
+                onEndShift = {
+                    viewModel.endShift()
+                    val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
+                    sessionPrefs.edit().clear().apply()
+                    onLogoutClick()
+                }
             )
         }
 

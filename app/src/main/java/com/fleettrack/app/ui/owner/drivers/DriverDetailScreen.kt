@@ -602,7 +602,7 @@ fun DriverDetailScreen(
             )
         }
 
-        items(state.carBreakdown, key = { it.vehicleId }) { carSummary ->
+        items(state.carBreakdown) { carSummary ->
             GlassCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = TileShape
@@ -700,7 +700,7 @@ fun DriverDetailScreen(
                 )
             }
         } else {
-            items(state.trips, key = { it.id }) { trip ->
+            items(state.trips) { trip ->
                 DriverTripRowItem(
                     platform = trip.platform,
                     fare = trip.fare,

@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app
+package com.fleettrack.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -32,7 +32,21 @@ class MainActivity : ComponentActivity() {
         setContent {
             FleetTrackTheme {
                 val navController = rememberNavController()
-                FleetNavigation(navController = navController)
+                val sessionPrefs = getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
+                val isLoggedIn = sessionPrefs.getBoolean("is_logged_in", false)
+                val role = sessionPrefs.getString("role", null)
+                val isShiftActive = sessionPrefs.getBoolean("is_shift_active", false)
+
+                val startScreen = when {
+                    isLoggedIn && role == "OWNER" -> com.fleettrack.app.ui.navigation.Screen.Dashboard.route
+                    isLoggedIn && role == "DRIVER" && isShiftActive -> com.fleettrack.app.ui.navigation.Screen.DriverToday.route
+                    else -> com.fleettrack.app.ui.navigation.Screen.IntroSplash.route
+                }
+
+                FleetNavigation(
+                    navController = navController,
+                    startDestination = startScreen
+                )
             }
         }
     }

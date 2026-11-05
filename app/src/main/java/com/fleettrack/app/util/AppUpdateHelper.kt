@@ -38,7 +38,8 @@ data class AppUpdateInfo(
     val versionName: String,
     val downloadUrl: String,
     val sizeMb: Double,
-    val releaseNotes: String
+    val releaseNotes: String,
+    val publishedAt: String = ""
 )
 
 object AppUpdateHelper {
@@ -47,6 +48,24 @@ object AppUpdateHelper {
         "https://api.github.com/repos/Mekarthiakhi/Raider-app/releases/tags/latest"
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
+
+    fun dismissUpdate(context: Context, publishedAt: String) {
+        if (publishedAt.isNotBlank()) {
+            context.getSharedPreferences("svm_fleet_updates", Context.MODE_PRIVATE)
+                .edit()
+                .putString("dismissed_time", publishedAt)
+                .apply()
+        }
+    }
+
+    fun markUpdateInstalled(context: Context, publishedAt: String) {
+        if (publishedAt.isNotBlank()) {
+            context.getSharedPreferences("svm_fleet_updates", Context.MODE_PRIVATE)
+                .edit()
+                .putString("last_installed_time", publishedAt)
+                .apply()
+        }
+    }
 
     suspend fun checkForUpdate(context: Context): AppUpdateInfo? = withContext(Dispatchers.IO) {
         try {
@@ -63,6 +82,15 @@ object AppUpdateHelper {
                 val responseText = connection.inputStream.bufferedReader().use { it.readText() }
                 val release = json.decodeFromString<GitHubReleaseResponse>(responseText)
 
+                val publishedTime = release.published_at ?: release.tag_name
+                val prefs = context.getSharedPreferences("svm_fleet_updates", Context.MODE_PRIVATE)
+                val lastInstalled = prefs.getString("last_installed_time", "")
+                val dismissed = prefs.getString("dismissed_time", "")
+
+                if (publishedTime.isNotBlank() && (publishedTime == lastInstalled || publishedTime == dismissed)) {
+                    return@withContext null
+                }
+
                 val apkAsset = release.assets.firstOrNull { it.name == "app-release.apk" }
                     ?: release.assets.firstOrNull { it.name.endsWith(".apk") }
 
@@ -72,7 +100,8 @@ object AppUpdateHelper {
                         versionName = release.tag_name,
                         downloadUrl = apkAsset.browser_download_url,
                         sizeMb = sizeMb,
-                        releaseNotes = release.body ?: "Latest performance updates and SVM FLEET fixes."
+                        releaseNotes = release.body ?: "Latest performance updates and SVM FLEET fixes.",
+                        publishedAt = publishedTime
                     )
                 }
             }
@@ -85,6 +114,7 @@ object AppUpdateHelper {
     suspend fun downloadAndInstall(
         context: Context,
         downloadUrl: String,
+        publishedAt: String = "",
         onProgress: (String) -> Unit
     ) = withContext(Dispatchers.IO) {
         try {
@@ -144,6 +174,7 @@ object AppUpdateHelper {
             }
 
             withContext(Dispatchers.Main) {
+                markUpdateInstalled(context, publishedAt)
                 onProgress("Installing update...")
                 launchInstallIntent(context, outputFile)
             }

@@ -37,9 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
 import com.fleettrack.app.ui.auth.LoginScreen
 import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.debug.NodeInspectorScreen
@@ -211,9 +213,12 @@ fun FleetNavigation(
 
             composable(Screen.DriverToday.route) {
                 val vm: DriverTodayViewModel = hiltViewModel()
+                val context = LocalContext.current
                 DriverTodayScreen(
                     viewModel = vm,
                     onLogoutClick = {
+                        val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
+                        sessionPrefs.edit().clear().apply()
                         navController.navigate(Screen.Login.route) {
                             popUpTo(0) { inclusive = true }
                         }
@@ -318,7 +323,15 @@ fun FleetNavigation(
                 )
             }
 
-            composable(Screen.DriverDetail.route) {
+            composable(
+                route = Screen.DriverDetail.route,
+                arguments = listOf(
+                    navArgument("driverId") {
+                        type = NavType.StringType
+                        defaultValue = "1"
+                    }
+                )
+            ) {
                 val vm: DriverDetailViewModel = hiltViewModel()
                 DriverDetailScreen(
                     viewModel = vm,
@@ -376,9 +389,12 @@ fun FleetNavigation(
             }
 
             composable(Screen.Settings.route) {
+                val context = LocalContext.current
                 SettingsScreen(
                     onBackClick = { navController.popBackStack() },
                     onLogoutClick = {
+                        val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
+                        sessionPrefs.edit().clear().apply()
                         navController.navigate(Screen.Login.route) {
                             popUpTo(0) { inclusive = true }
                         }
