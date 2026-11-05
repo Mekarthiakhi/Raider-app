@@ -22,7 +22,19 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
+import android.content.Context
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -85,6 +97,28 @@ fun DriverTodayScreen(
 
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
 
+    val context = LocalContext.current
+    val sessionPrefs = remember { context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE) }
+    val loggedInDriverName = remember { sessionPrefs.getString("driver_name", null) ?: shiftSession.driverName ?: "Driver Partner" }
+    val loggedInDriverPhone = remember { sessionPrefs.getString("phone", null) ?: "" }
+    val loggedInDriverId = remember { sessionPrefs.getLong("driver_id", 0L) }
+
+    // Lock identity to the authenticated driver - cannot be changed by user
+    val currentDriver = remember(availableDrivers, loggedInDriverId, loggedInDriverPhone, loggedInDriverName) {
+        availableDrivers.firstOrNull { it.id == loggedInDriverId }
+            ?: availableDrivers.firstOrNull { 
+                val p = it.phone.filter { ch -> ch.isDigit() }
+                val lp = loggedInDriverPhone.filter { ch -> ch.isDigit() }
+                p.isNotEmpty() && lp.isNotEmpty() && (p.endsWith(lp) || lp.endsWith(p))
+            }
+            ?: DriverEntity(
+                id = if (loggedInDriverId > 0) loggedInDriverId else 1L,
+                fleetId = "svm_fleet_hyderabad",
+                name = loggedInDriverName,
+                phone = loggedInDriverPhone
+            )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -93,23 +127,28 @@ fun DriverTodayScreen(
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Screen Top Bar
+        // Screen Top Bar: Greet the driver directly & display locked driver credentials
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f, fill = false)) {
                 Text(
-                    text = if (shiftSession.isShiftActive) (shiftSession.driverName ?: "Driver") else "SVM FLEET Driver",
+                    text = "Hi, $loggedInDriverName 👋",
                     color = TextPrimary,
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
                 )
                 Text(
-                    text = if (shiftSession.isShiftActive) "${shiftSession.vehicleRegNo} (${shiftSession.vehicleNickname})" else "Moosapet Shift Companion",
+                    text = if (shiftSession.isShiftActive) 
+                        "On Duty • ${shiftSession.vehicleRegNo} (${shiftSession.vehicleNickname})" 
+                    else 
+                        "SVM Driver Partner • ${if (loggedInDriverPhone.isNotBlank()) "+91 $loggedInDriverPhone" else "Moosapet Hub"}",
                     color = TextSecondary,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    maxLines = 1
                 )
             }
 
@@ -165,12 +204,12 @@ fun DriverTodayScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // 1. Shift Check-In / Active Session Card
         if (!shiftSession.isShiftActive) {
             ShiftCheckInCard(
-                drivers = availableDrivers,
+                assignedDriver = currentDriver,
                 vehicles = availableVehicles,
                 onStartShift = { driver, vehicle ->
                     viewModel.startShift(driver, vehicle)
@@ -178,7 +217,7 @@ fun DriverTodayScreen(
             )
         } else {
             ActiveShiftCard(
-                driverName = shiftSession.driverName ?: "Unknown",
+                driverName = shiftSession.driverName ?: currentDriver.name,
                 vehicleRegNo = shiftSession.vehicleRegNo ?: "Unassigned",
                 vehicleNickname = shiftSession.vehicleNickname ?: "",
                 onEndShift = {
@@ -338,74 +377,288 @@ fun DriverTodayScreen(
 }
 
 @Composable
+private fun SearchableVehicleDialog(
+    vehicles: List<VehicleEntity>,
+    selectedVehicle: VehicleEntity?,
+    onSelectVehicle: (VehicleEntity) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredVehicles = remember(vehicles, searchQuery) {
+        if (searchQuery.isBlank()) vehicles
+        else vehicles.filter {
+            it.regNo.contains(searchQuery, ignoreCase = true) ||
+            it.nickname.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.DirectionsCar,
+                    contentDescription = null,
+                    tint = EmeraldAccent,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Select Assigned Cab",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    color = TextPrimary
+                )
+            }
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth().height(360.dp)) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search plate e.g. 1840, Dzire, Aura...", fontSize = 12.sp, color = TextMuted) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = TextMuted,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = null,
+                                    tint = TextMuted,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = EmeraldAccent,
+                        unfocusedBorderColor = SurfaceBorderDark,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "${filteredVehicles.size} cabs available in Moosapet Fleet",
+                    fontSize = 11.sp,
+                    color = TextMuted,
+                    modifier = Modifier.padding(start = 2.dp, bottom = 6.dp)
+                )
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(filteredVehicles, key = { it.id }) { vehicle ->
+                        val isSelected = vehicle.id == selectedVehicle?.id
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isSelected) EmeraldAccent.copy(alpha = 0.15f) else SurfaceDark)
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isSelected) EmeraldAccent else SurfaceBorderDark,
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .clickable {
+                                    onSelectVehicle(vehicle)
+                                    onDismiss()
+                                }
+                                .padding(horizontal = 12.dp, vertical = 10.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isSelected) EmeraldAccent.copy(alpha = 0.25f) else BackgroundDark),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.DirectionsCar,
+                                            contentDescription = null,
+                                            tint = if (isSelected) EmeraldAccent else TextMuted,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f, fill = false)) {
+                                        Text(
+                                            text = vehicle.regNo,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = if (isSelected) EmeraldAccent else TextPrimary
+                                        )
+                                        Text(
+                                            text = vehicle.nickname,
+                                            fontSize = 11.sp,
+                                            color = TextSecondary,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = EmeraldAccent,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = TextSecondary)
+            }
+        },
+        containerColor = BackgroundDark,
+        shape = RoundedCornerShape(18.dp)
+    )
+}
+
+@Composable
 private fun ShiftCheckInCard(
-    drivers: List<DriverEntity>,
+    assignedDriver: DriverEntity,
     vehicles: List<VehicleEntity>,
     onStartShift: (DriverEntity, VehicleEntity) -> Unit
 ) {
-    var selectedDriver by remember(drivers) { mutableStateOf(drivers.firstOrNull()) }
-    var selectedVehicle by remember(vehicles) { mutableStateOf(vehicles.firstOrNull()) }
+    var selectedVehicle by remember { mutableStateOf<VehicleEntity?>(null) }
+    var showVehicleSearchDialog by remember { mutableStateOf(false) }
 
-    var driverDropdownExpanded by remember { mutableStateOf(false) }
-    var vehicleDropdownExpanded by remember { mutableStateOf(false) }
+    LaunchedEffect(vehicles) {
+        if (selectedVehicle == null && vehicles.isNotEmpty()) {
+            selectedVehicle = vehicles.first()
+        }
+    }
+
+    if (showVehicleSearchDialog) {
+        SearchableVehicleDialog(
+            vehicles = vehicles,
+            selectedVehicle = selectedVehicle,
+            onSelectVehicle = { selectedVehicle = it },
+            onDismiss = { showVehicleSearchDialog = false }
+        )
+    }
 
     GlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
-            Text(
-                text = "Shift Check-In",
-                color = TextPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Select your employee profile and assigned cab to start tracking",
-                color = TextSecondary,
-                fontSize = 12.sp
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "ASSIGNED SHIFT CAB",
+                    color = TextSecondary,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.8.sp
+                )
+                Text(
+                    text = "Tap to search 30 cabs",
+                    color = EmeraldAccent,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Driver Selector
+            // Vehicle Selector with Search Icon
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(SurfaceDark, shape = TileShape)
-                    .border(1.dp, SurfaceBorderDark, TileShape)
-                    .clickable { driverDropdownExpanded = true }
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(SurfaceDark)
+                    .border(1.dp, SurfaceBorderDark, RoundedCornerShape(12.dp))
+                    .clickable { showVehicleSearchDialog = true }
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Person, contentDescription = null, tint = EmeraldAccent)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = selectedDriver?.name ?: "Select Driver / Employee",
-                            color = TextPrimary,
-                            fontSize = 14.sp
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DirectionsCar,
+                            contentDescription = null,
+                            tint = EarningsGold,
+                            modifier = Modifier.size(20.dp)
                         )
-                    }
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = TextMuted)
-                }
-
-                DropdownMenu(
-                    expanded = driverDropdownExpanded,
-                    onDismissRequest = { driverDropdownExpanded = false }
-                ) {
-                    drivers.forEach { driver ->
-                        DropdownMenuItem(
-                            text = { Text("${driver.name} (${driver.phone})") },
-                            onClick = {
-                                selectedDriver = driver
-                                driverDropdownExpanded = false
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = selectedVehicle?.regNo ?: "Select Assigned Cab",
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            if (selectedVehicle != null) {
+                                Text(
+                                    text = selectedVehicle!!.nickname,
+                                    color = TextSecondary,
+                                    fontSize = 11.sp,
+                                    maxLines = 1
+                                )
                             }
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(EmeraldAccent.copy(alpha = 0.15f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = EmeraldAccent,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Search",
+                            color = EmeraldAccent,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -413,68 +666,32 @@ private fun ShiftCheckInCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Vehicle Selector
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(SurfaceDark, shape = TileShape)
-                    .border(1.dp, SurfaceBorderDark, TileShape)
-                    .clickable { vehicleDropdownExpanded = true }
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = EarningsGold)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = selectedVehicle?.let { "${it.regNo} (${it.nickname})" } ?: "Select Assigned Cab",
-                            color = TextPrimary,
-                            fontSize = 14.sp
-                        )
-                    }
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = TextMuted)
-                }
-
-                DropdownMenu(
-                    expanded = vehicleDropdownExpanded,
-                    onDismissRequest = { vehicleDropdownExpanded = false }
-                ) {
-                    vehicles.forEach { vehicle ->
-                        DropdownMenuItem(
-                            text = { Text("${vehicle.regNo} - ${vehicle.nickname}") },
-                            onClick = {
-                                selectedVehicle = vehicle
-                                vehicleDropdownExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
             Button(
                 onClick = {
-                    val d = selectedDriver
                     val v = selectedVehicle
-                    if (d != null && v != null) {
-                        onStartShift(d, v)
+                    if (v != null) {
+                        onStartShift(assignedDriver, v)
                     }
                 },
-                enabled = selectedDriver != null && selectedVehicle != null,
+                enabled = selectedVehicle != null,
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldAccent),
-                modifier = Modifier.fillMaxWidth()
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
             ) {
-                Icon(Icons.Default.Check, contentDescription = null, tint = BackgroundDark)
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = BackgroundDark,
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Start Shift & Begin Tracking",
+                    text = if (selectedVehicle != null) "Start Shift with ${selectedVehicle!!.regNo}" else "Start Shift & Begin Tracking",
                     color = BackgroundDark,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
                 )
             }
         }
