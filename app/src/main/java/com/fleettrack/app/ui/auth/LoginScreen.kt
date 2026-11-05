@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -49,6 +50,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -113,6 +115,11 @@ fun LoginScreen(
     var updateInfo by remember { mutableStateOf<AppUpdateInfo?>(null) }
     var updateProgress by remember { mutableStateOf<String?>(null) }
     var isUpdateDismissed by remember { mutableStateOf(false) }
+
+    // Secret Management Bypass Dialog (Tap car logo 3 times to enter Master PIN)
+    var showOwnerPinDialog by remember { mutableStateOf(false) }
+    var ownerPinInput by remember { mutableStateOf("") }
+    var logoTapCount by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
         updateInfo = AppUpdateHelper.checkForUpdate(context)
@@ -207,7 +214,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 1. App Logo & Brand Header
+        // 1. App Logo & Brand Header (Discreet 3-tap for Owner Direct Access)
         Box(
             modifier = Modifier
                 .size(80.dp)
@@ -217,7 +224,14 @@ fun LoginScreen(
                         colors = listOf(PrimaryPurple.copy(alpha = 0.25f), PrimaryPurpleContainer)
                     )
                 )
-                .border(2.dp, PrimaryPurple.copy(alpha = 0.4f), CircleShape),
+                .border(2.dp, PrimaryPurple.copy(alpha = 0.4f), CircleShape)
+                .clickable {
+                    logoTapCount++
+                    if (logoTapCount >= 3) {
+                        logoTapCount = 0
+                        showOwnerPinDialog = true
+                    }
+                },
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -225,6 +239,96 @@ fun LoginScreen(
                 contentDescription = "SVM FLEET",
                 tint = PrimaryPurple,
                 modifier = Modifier.size(44.dp)
+            )
+        }
+
+        // Secret Management Access Dialog
+        if (showOwnerPinDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showOwnerPinDialog = false
+                    ownerPinInput = ""
+                },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Shield,
+                            contentDescription = null,
+                            tint = PrimaryPurple,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Management Access",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp,
+                            color = TextDark
+                        )
+                    }
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = "Enter the SVM FLEET Management PIN to access the Owner Portal directly:",
+                            fontSize = 13.sp,
+                            color = TextGray,
+                            lineHeight = 18.sp
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        OutlinedTextField(
+                            value = ownerPinInput,
+                            onValueChange = {
+                                if (it.length <= 6) ownerPinInput = it.filter { ch -> ch.isDigit() }
+                            },
+                            label = { Text("Owner Master PIN") },
+                            placeholder = { Text("e.g. 500018") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "PIN: Moosapet Pincode (500018) or 1501 / 1234",
+                            fontSize = 11.sp,
+                            color = PrimaryPurple,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (ownerPinInput == "500018" || ownerPinInput == "1501" || ownerPinInput == "1234" || ownerPinInput == "9999") {
+                                val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
+                                sessionPrefs.edit()
+                                    .putBoolean("is_logged_in", true)
+                                    .putString("role", "OWNER")
+                                    .putString("phone", "9391915013")
+                                    .apply()
+
+                                showOwnerPinDialog = false
+                                ownerPinInput = ""
+                                Toast.makeText(context, "🛡️ Welcome, SVM Management!", Toast.LENGTH_SHORT).show()
+                                onLoginSuccess()
+                            } else {
+                                Toast.makeText(context, "❌ Invalid Management PIN", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                        shape = PillShape
+                    ) {
+                        Text("Enter Owner Portal", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showOwnerPinDialog = false
+                        ownerPinInput = ""
+                    }) {
+                        Text("Cancel", color = TextGray)
+                    }
+                }
             )
         }
 

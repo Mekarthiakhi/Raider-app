@@ -24,8 +24,8 @@ class LoginViewModel @Inject constructor(
     private val driverRepository: DriverRepository
 ) : ViewModel() {
 
-    // Authorized Fleet Owner Numbers (Moosapet Hyderabad Office)
-    val authorizedOwnerNumbers = listOf("9391915013", "9959859347", "9876543210")
+    // Authorized Fleet Owner Numbers (Moosapet Hyderabad Office & Demo Test Numbers)
+    val authorizedOwnerNumbers = listOf("9391915013", "9959859347", "9876543210", "9999999999", "1111111111", "0000000000")
 
     val registeredDrivers: StateFlow<List<DriverEntity>> = driverRepository.getAllDrivers()
         .stateIn(
@@ -75,3 +75,4 @@ class LoginViewModel @Inject constructor(
         return AuthStatus.Unauthorized(last10)
     }
 }
+
