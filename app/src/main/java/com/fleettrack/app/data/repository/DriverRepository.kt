@@ -1,14 +1,28 @@
-﻿package com.fleettrack.app.data.repository
+package com.fleettrack.app.data.repository
 
 import com.fleettrack.app.data.local.dao.DriverDao
 import com.fleettrack.app.data.local.entity.DriverEntity
+import com.fleettrack.app.data.remote.SupabaseClientProvider
 import com.fleettrack.app.di.IoDispatcher
+import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+
+@Serializable
+data class SupabaseDriverDto(
+    @SerialName("id") val id: String? = null,
+    @SerialName("name") val name: String,
+    @SerialName("phone") val phone: String,
+    @SerialName("fleet_id") val fleetId: String? = null
+)
 
 interface DriverRepository {
     fun getAllDrivers(): Flow<List<DriverEntity>>
@@ -19,6 +33,7 @@ interface DriverRepository {
     suspend fun updateDriver(driver: DriverEntity)
     suspend fun updateConsent(id: Long, consentAt: Instant?)
     suspend fun deleteDriver(driver: DriverEntity)
+    suspend fun syncDriversFromSupabase(): List<DriverEntity>
 }
 
 @Singleton
@@ -40,7 +55,20 @@ class DriverRepositoryImpl @Inject constructor(
 
     override suspend fun insertDriver(driver: DriverEntity): Long =
         withContext(ioDispatcher) {
-            driverDao.insert(driver)
+            val id = driverDao.insert(driver)
+            // Push to Supabase cloud database
+            try {
+                val dto = SupabaseDriverDto(
+                    name = driver.name,
+                    phone = driver.phone,
+                    fleetId = "a0000000-0000-0000-0000-000000000001"
+                )
+                SupabaseClientProvider.client.from("drivers").insert(dto)
+                Timber.d("Pushed new driver to Supabase: ${driver.name} (${driver.phone})")
+            } catch (e: Exception) {
+                Timber.w(e, "Supabase driver sync fallback for ${driver.name}")
+            }
+            id
         }
 
     override suspend fun insertAll(drivers: List<DriverEntity>) =
@@ -61,5 +89,46 @@ class DriverRepositoryImpl @Inject constructor(
     override suspend fun deleteDriver(driver: DriverEntity) =
         withContext(ioDispatcher) {
             driverDao.delete(driver)
+        }
+
+    override suspend fun syncDriversFromSupabase(): List<DriverEntity> =
+        withContext(ioDispatcher) {
+            try {
+                val remoteList = SupabaseClientProvider.client.from("drivers")
+                    .select()
+                    .decodeList<SupabaseDriverDto>()
+
+                if (remoteList.isNotEmpty()) {
+                    val currentLocal = driverDao.getAll().first()
+                    val toInsert = mutableListOf<DriverEntity>()
+
+                    for (remote in remoteList) {
+                        val cleanRemotePhone = remote.phone.filter { it.isDigit() }.takeLast(10)
+                        val exists = currentLocal.any { local ->
+                            val cleanLocalPhone = local.phone.filter { it.isDigit() }.takeLast(10)
+                            cleanLocalPhone == cleanRemotePhone || (local.name.equals(remote.name, ignoreCase = true) && cleanRemotePhone.isNotEmpty())
+                        }
+                        if (!exists) {
+                            toInsert.add(
+                                DriverEntity(
+                                    fleetId = remote.fleetId ?: "a0000000-0000-0000-0000-000000000001",
+                                    name = remote.name,
+                                    phone = remote.phone,
+                                    supabaseId = remote.id
+                                )
+                            )
+                        }
+                    }
+
+                    if (toInsert.isNotEmpty()) {
+                        driverDao.insertAll(toInsert)
+                        Timber.d("Synced ${toInsert.size} new drivers from Supabase to local Room DB")
+                    }
+                }
+                driverDao.getAll().first()
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to sync drivers from Supabase, using local DB")
+                driverDao.getAll().first()
+            }
         }
 }

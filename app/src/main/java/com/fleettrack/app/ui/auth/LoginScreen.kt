@@ -97,12 +97,15 @@ fun LoginScreen(
     // Drivers database state
     val registeredDrivers by viewModel.registeredDrivers.collectAsState()
 
+    // Login Role Selection (Driver Shift vs Fleet Owner)
+    var selectedRole by remember { mutableStateOf(LoginRole.DRIVER) }
+
     // Phone input (dynamic, max 10 digits)
     var phoneInput by remember { mutableStateOf("") }
 
     // Evaluate live role & authorization
-    val authStatus = remember(phoneInput, registeredDrivers) {
-        viewModel.evaluatePhone(phoneInput)
+    val authStatus = remember(phoneInput, registeredDrivers, selectedRole) {
+        viewModel.evaluatePhone(phoneInput, selectedRole)
     }
 
     // OTP Flow State
@@ -382,15 +385,78 @@ fun LoginScreen(
                     .padding(22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Role Selection Tabs (Driver Shift vs Fleet Owner)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFFF1F3F5))
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // Driver Tab
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (selectedRole == LoginRole.DRIVER) PrimaryPurple else Color.Transparent)
+                            .clickable {
+                                if (selectedRole != LoginRole.DRIVER) {
+                                    selectedRole = LoginRole.DRIVER
+                                    isOtpSent = false
+                                    otpCode = ""
+                                }
+                            }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "🚗 Driver Shift",
+                            color = if (selectedRole == LoginRole.DRIVER) Color.White else TextDark,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+
+                    // Owner Tab
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (selectedRole == LoginRole.OWNER) PrimaryPurple else Color.Transparent)
+                            .clickable {
+                                if (selectedRole != LoginRole.OWNER) {
+                                    selectedRole = LoginRole.OWNER
+                                    isOtpSent = false
+                                    otpCode = ""
+                                }
+                            }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "🛡️ Fleet Owner",
+                            color = if (selectedRole == LoginRole.OWNER) Color.White else TextDark,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Text(
-                    text = "Sign in with Mobile",
+                    text = if (selectedRole == LoginRole.DRIVER) "Driver Shift Sign-In" else "Fleet Owner Portal",
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextDark
                 )
 
                 Text(
-                    text = "Enter your registered mobile number to receive an instant verification code.",
+                    text = if (selectedRole == LoginRole.DRIVER)
+                        "Enter your registered driver mobile number to start shift & vehicle tracking."
+                    else
+                        "Moosapet Hub Management • Access 30 Cabs, Duty Register & Settlements.",
                     fontSize = 12.sp,
                     color = TextGray,
                     textAlign = TextAlign.Center,
@@ -747,11 +813,12 @@ fun LoginScreen(
                                 onDriverCompanionClick()
                             }
                             else -> {
-                                Toast.makeText(
-                                    context,
-                                    "⛔ Unauthorized: Mobile number not registered by Fleet Owner.",
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                val errorMsg = if (selectedRole == LoginRole.DRIVER) {
+                                    "⛔ Driver Not Found: +91 $phoneInput is not registered by SVM FLEET management. Please contact office."
+                                } else {
+                                    "⛔ Management Access Denied: +91 $phoneInput is not an authorized owner number."
+                                }
+                                Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
                             }
                         }
                     },
@@ -763,7 +830,7 @@ fun LoginScreen(
                     enabled = isOtpSent && otpCode.isNotBlank()
                 ) {
                     Text(
-                        text = "Verify & Enter Portal",
+                        text = if (selectedRole == LoginRole.DRIVER) "Verify & Start Driver Shift" else "Verify & Access Owner Portal",
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold

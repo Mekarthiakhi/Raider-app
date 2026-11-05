@@ -1,13 +1,28 @@
-﻿package com.fleettrack.app.data.repository
+package com.fleettrack.app.data.repository
 
 import com.fleettrack.app.data.local.dao.VehicleDao
 import com.fleettrack.app.data.local.entity.VehicleEntity
+import com.fleettrack.app.data.remote.SupabaseClientProvider
 import com.fleettrack.app.di.IoDispatcher
+import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+
+@Serializable
+data class SupabaseVehicleDto(
+    @SerialName("id") val id: String? = null,
+    @SerialName("reg_no") val regNo: String,
+    @SerialName("nickname") val nickname: String? = null,
+    @SerialName("status") val status: String = "active",
+    @SerialName("fleet_id") val fleetId: String? = null
+)
 
 interface VehicleRepository {
     fun getAllVehicles(): Flow<List<VehicleEntity>>
@@ -19,6 +34,7 @@ interface VehicleRepository {
     suspend fun insertAll(vehicles: List<VehicleEntity>)
     suspend fun updateVehicle(vehicle: VehicleEntity)
     suspend fun deleteVehicle(vehicle: VehicleEntity)
+    suspend fun syncVehiclesFromSupabase(): List<VehicleEntity>
 }
 
 @Singleton
@@ -48,7 +64,20 @@ class VehicleRepositoryImpl @Inject constructor(
 
     override suspend fun insertVehicle(vehicle: VehicleEntity): Long =
         withContext(ioDispatcher) {
-            vehicleDao.insert(vehicle)
+            val id = vehicleDao.insert(vehicle)
+            try {
+                val dto = SupabaseVehicleDto(
+                    regNo = vehicle.regNo,
+                    nickname = vehicle.nickname,
+                    status = vehicle.status,
+                    fleetId = "a0000000-0000-0000-0000-000000000001"
+                )
+                SupabaseClientProvider.client.from("vehicles").upsert(dto)
+                Timber.d("Pushed vehicle to Supabase: ${vehicle.regNo}")
+            } catch (e: Exception) {
+                Timber.w(e, "Supabase vehicle sync fallback for ${vehicle.regNo}")
+            }
+            id
         }
 
     override suspend fun insertAll(vehicles: List<VehicleEntity>) =
@@ -64,5 +93,43 @@ class VehicleRepositoryImpl @Inject constructor(
     override suspend fun deleteVehicle(vehicle: VehicleEntity) =
         withContext(ioDispatcher) {
             vehicleDao.delete(vehicle)
+        }
+
+    override suspend fun syncVehiclesFromSupabase(): List<VehicleEntity> =
+        withContext(ioDispatcher) {
+            try {
+                val remoteList = SupabaseClientProvider.client.from("vehicles")
+                    .select()
+                    .decodeList<SupabaseVehicleDto>()
+
+                if (remoteList.isNotEmpty()) {
+                    val currentLocal = vehicleDao.getAll().first()
+                    val toInsert = mutableListOf<VehicleEntity>()
+
+                    for (remote in remoteList) {
+                        val exists = currentLocal.any { it.regNo.equals(remote.regNo, ignoreCase = true) }
+                        if (!exists) {
+                            toInsert.add(
+                                VehicleEntity(
+                                    fleetId = remote.fleetId ?: "a0000000-0000-0000-0000-000000000001",
+                                    regNo = remote.regNo,
+                                    nickname = remote.nickname ?: "Cab",
+                                    status = remote.status,
+                                    supabaseId = remote.id
+                                )
+                            )
+                        }
+                    }
+
+                    if (toInsert.isNotEmpty()) {
+                        vehicleDao.insertAll(toInsert)
+                        Timber.d("Synced ${toInsert.size} new vehicles from Supabase")
+                    }
+                }
+                vehicleDao.getAll().first()
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to sync vehicles from Supabase")
+                vehicleDao.getAll().first()
+            }
         }
 }

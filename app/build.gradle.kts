@@ -32,12 +32,12 @@ android {
         buildConfigField(
             "String",
             "SUPABASE_URL",
-            "\"${localProperties.getProperty("SUPABASE_URL", "https://your-project.supabase.co")}\""
+            "\"${localProperties.getProperty("SUPABASE_URL", "https://nwcfwqiymqzzgrzgegty.supabase.co")}\""
         )
         buildConfigField(
             "String",
             "SUPABASE_ANON_KEY",
-            "\"${localProperties.getProperty("SUPABASE_ANON_KEY", "your-anon-key")}\""
+            "\"${localProperties.getProperty("SUPABASE_ANON_KEY", "sb_publishable_G8TpWzVVtBJko71y93p-hQ_7psM2SMV")}\""
         )
         buildConfigField(
             "long",
