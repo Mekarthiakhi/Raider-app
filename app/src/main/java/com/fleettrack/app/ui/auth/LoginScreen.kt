@@ -412,74 +412,118 @@ fun LoginScreen(
 
                 // OTP Trigger or Entry Box
                 if (!isOtpSent) {
-                    Button(
-                        onClick = {
-                            if (phoneInput.length >= 10) {
-                                // STRICT ROLE CHECK: Driver cannot login to Owner Portal!
-                                if (selectedRole == UserRole.FLEET_OWNER) {
-                                    val isAuthorized = authorizedOwnerNumbers.any { it.endsWith(phoneInput) }
-                                    val isDriver = driverNumbers.any { it.endsWith(phoneInput) }
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // 1. Primary WhatsApp Verification Button (100% Free & Instant)
+                        Button(
+                            onClick = {
+                                if (phoneInput.length >= 10) {
+                                    // STRICT ROLE CHECK: Driver cannot login to Owner Portal!
+                                    if (selectedRole == UserRole.FLEET_OWNER) {
+                                        val isAuthorized = authorizedOwnerNumbers.any { it.endsWith(phoneInput) }
+                                        val isDriver = driverNumbers.any { it.endsWith(phoneInput) }
 
-                                    if (isDriver && !isAuthorized) {
-                                        Toast.makeText(
-                                            context,
-                                            "⛔ Access Denied: This number is assigned to a Driver. Drivers cannot log in to the Fleet Owner portal. Please switch to Driver Login.",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                        return@Button
+                                        if (isDriver && !isAuthorized) {
+                                            Toast.makeText(
+                                                context,
+                                                "⛔ Access Denied: This number is assigned to a Driver. Drivers cannot log in to the Fleet Owner portal. Please switch to Driver Partner.",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            return@Button
+                                        }
                                     }
-                                }
 
-                                isLoading = true
-                                scope.launch {
                                     val newOtp = (1000..9999).random().toString()
                                     generatedDemoOtp = newOtp
                                     otpCode = newOtp
-
-                                    // 1. Send via Fast2SMS using provided API key
-                                    val fast2smsResult = com.fleettrack.app.util.Fast2SmsHelper.sendOtp(phoneInput, newOtp)
-
-                                    // 2. Also trigger Supabase Phone Auth OTP
-                                    try {
-                                        SupabaseClientProvider.client.auth.signInWith(OTP) {
-                                            phone = "+91$phoneInput"
-                                        }
-                                    } catch (_: Exception) {}
-
-                                    isLoading = false
                                     isOtpSent = true
 
-                                    when (fast2smsResult) {
-                                        is com.fleettrack.app.util.Fast2SmsHelper.Result.Success -> {
-                                            Toast.makeText(context, "✅ OTP sent via Fast2SMS to +91 $phoneInput", Toast.LENGTH_LONG).show()
-                                        }
-                                        is com.fleettrack.app.util.Fast2SmsHelper.Result.Warning -> {
-                                            Toast.makeText(context, fast2smsResult.message, Toast.LENGTH_LONG).show()
-                                        }
-                                        is com.fleettrack.app.util.Fast2SmsHelper.Result.Error -> {
-                                            Toast.makeText(context, "SVM FLEET OTP: $newOtp", Toast.LENGTH_LONG).show()
+                                    // Launch WhatsApp with pre-filled OTP
+                                    val opened = com.fleettrack.app.util.WhatsAppHelper.sendOtpViaWhatsApp(
+                                        context = context,
+                                        recipientPhone = phoneInput,
+                                        otpCode = newOtp,
+                                        isOwner = selectedRole == UserRole.FLEET_OWNER
+                                    )
+
+                                    if (opened) {
+                                        Toast.makeText(context, "Opening WhatsApp with OTP: $newOtp", Toast.LENGTH_LONG).show()
+                                    } else {
+                                        Toast.makeText(context, "SVM FLEET OTP: $newOtp", Toast.LENGTH_LONG).show()
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Please enter a valid 10-digit mobile number", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)), // WhatsApp Green
+                            shape = PillShape,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            enabled = !isLoading && phoneInput.length == 10
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "💬 Send OTP via WhatsApp (Free)",
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // 2. Secondary Fast2SMS / Direct Instant OTP option
+                        TextButton(
+                            onClick = {
+                                if (phoneInput.length >= 10) {
+                                    if (selectedRole == UserRole.FLEET_OWNER) {
+                                        val isAuthorized = authorizedOwnerNumbers.any { it.endsWith(phoneInput) }
+                                        val isDriver = driverNumbers.any { it.endsWith(phoneInput) }
+
+                                        if (isDriver && !isAuthorized) {
+                                            Toast.makeText(
+                                                context,
+                                                "⛔ Access Denied: Drivers cannot log in to Owner Portal.",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            return@TextButton
                                         }
                                     }
+
+                                    isLoading = true
+                                    scope.launch {
+                                        val newOtp = (1000..9999).random().toString()
+                                        generatedDemoOtp = newOtp
+                                        otpCode = newOtp
+
+                                        val fast2smsResult = com.fleettrack.app.util.Fast2SmsHelper.sendOtp(phoneInput, newOtp)
+                                        isLoading = false
+                                        isOtpSent = true
+
+                                        when (fast2smsResult) {
+                                            is com.fleettrack.app.util.Fast2SmsHelper.Result.Success -> {
+                                                Toast.makeText(context, "✅ SMS sent via Fast2SMS", Toast.LENGTH_LONG).show()
+                                            }
+                                            is com.fleettrack.app.util.Fast2SmsHelper.Result.Warning -> {
+                                                Toast.makeText(context, fast2smsResult.message, Toast.LENGTH_LONG).show()
+                                            }
+                                            is com.fleettrack.app.util.Fast2SmsHelper.Result.Error -> {
+                                                Toast.makeText(context, "SVM FLEET OTP: $newOtp", Toast.LENGTH_LONG).show()
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Please enter 10-digit mobile number", Toast.LENGTH_SHORT).show()
                                 }
-                            } else {
-                                Toast.makeText(context, "Please enter a valid 10-digit mobile number", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurpleContainer),
-                        shape = PillShape,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        enabled = !isLoading && phoneInput.length == 10
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = PrimaryPurple, strokeWidth = 2.dp)
-                        } else {
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Text(
-                                text = "Send 4-Digit OTP",
-                                color = if (phoneInput.length == 10) PrimaryPurple else TextMutedGray,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
+                                text = "Or send via SMS / Instant Code",
+                                color = TextGray,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
@@ -508,20 +552,24 @@ fun LoginScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "OTP sent to +91 $phoneInput",
-                            color = TextGray,
-                            fontSize = 11.sp
+                            text = "OTP: $generatedDemoOtp",
+                            color = PrimaryPurple,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
                         )
                         TextButton(onClick = {
                             val newCode = (1000..9999).random().toString()
                             generatedDemoOtp = newCode
                             otpCode = newCode
-                            scope.launch {
-                                com.fleettrack.app.util.Fast2SmsHelper.sendOtp(phoneInput, newCode)
-                            }
-                            Toast.makeText(context, "New OTP: $newCode", Toast.LENGTH_SHORT).show()
+                            com.fleettrack.app.util.WhatsAppHelper.sendOtpViaWhatsApp(
+                                context = context,
+                                recipientPhone = phoneInput,
+                                otpCode = newCode,
+                                isOwner = selectedRole == UserRole.FLEET_OWNER
+                            )
+                            Toast.makeText(context, "Resent via WhatsApp: $newCode", Toast.LENGTH_SHORT).show()
                         }) {
-                            Text(text = "Resend OTP", color = PrimaryPurple, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "Resend WhatsApp", color = Color(0xFF25D366), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
