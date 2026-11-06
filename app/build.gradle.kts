@@ -24,10 +24,8 @@ android {
         applicationId = "com.fleettrack.app"
         minSdk = 26
         targetSdk = 34
-        val ciVersionCode = project.findProperty("appVersionCode")?.toString()?.toIntOrNull() ?: 36
-        val ciVersionName = project.findProperty("appVersionName")?.toString() ?: "1.0.36"
-        versionCode = ciVersionCode
-        versionName = ciVersionName
+        versionCode = 36
+        versionName = "1.0.36"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
