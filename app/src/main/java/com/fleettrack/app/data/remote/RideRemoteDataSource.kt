@@ -1,5 +1,7 @@
-﻿package com.fleettrack.app.data.remote
+package com.fleettrack.app.data.remote
 
+import com.fleettrack.app.data.local.dao.DriverDao
+import com.fleettrack.app.data.local.dao.VehicleDao
 import com.fleettrack.app.data.local.entity.RideEntity
 import com.fleettrack.app.data.local.entity.RideEventEntity
 import io.github.jan.supabase.postgrest.from
@@ -43,12 +45,30 @@ interface RideRemoteDataSource {
     suspend fun syncPendingRides(rides: List<RideEntity>): Result<Int>
 }
 
-class RideRemoteDataSourceImpl @Inject constructor() : RideRemoteDataSource {
+class RideRemoteDataSourceImpl @Inject constructor(
+    private val vehicleDao: VehicleDao,
+    private val driverDao: DriverDao
+) : RideRemoteDataSource {
     override suspend fun uploadRide(ride: RideEntity): Result<String> {
         return try {
+            // Resolve Supabase UUIDs
+            val localVehicle = vehicleDao.getById(ride.vehicleId)
+            val remoteVehicleId = if (localVehicle?.supabaseId != null && localVehicle.supabaseId.length == 36) {
+                localVehicle.supabaseId
+            } else {
+                "c7aa0193-dce7-4e2e-b696-6f34acd15681" // TS09 UB 1840 Hyundai Aura fallback
+            }
+
+            val localDriver = driverDao.getById(ride.driverId)
+            val remoteDriverId = if (localDriver?.supabaseId != null && localDriver.supabaseId.length == 36) {
+                localDriver.supabaseId
+            } else {
+                "c7b64a9a-13d4-479d-9187-4efff761a788" // Suman fallback
+            }
+
             val dto = RideDto(
-                vehicleId = ride.vehicleId.toString(),
-                driverId = ride.driverId.toString(),
+                vehicleId = remoteVehicleId,
+                driverId = remoteDriverId,
                 deviceId = ride.deviceId?.toString(),
                 platform = ride.platform.name.lowercase(),
                 rideKey = ride.rideKey,

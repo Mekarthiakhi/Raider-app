@@ -107,8 +107,12 @@ class VehicleRepositoryImpl @Inject constructor(
                     val toInsert = mutableListOf<VehicleEntity>()
 
                     for (remote in remoteList) {
-                        val exists = currentLocal.any { it.regNo.equals(remote.regNo, ignoreCase = true) }
-                        if (!exists) {
+                        val existing = currentLocal.firstOrNull { it.regNo.equals(remote.regNo, ignoreCase = true) }
+                        if (existing != null) {
+                            if (existing.supabaseId != remote.id) {
+                                vehicleDao.update(existing.copy(supabaseId = remote.id))
+                            }
+                        } else {
                             toInsert.add(
                                 VehicleEntity(
                                     fleetId = remote.fleetId ?: "a0000000-0000-0000-0000-000000000001",

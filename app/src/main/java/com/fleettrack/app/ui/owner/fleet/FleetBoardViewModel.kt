@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.owner.fleet
+package com.fleettrack.app.ui.owner.fleet
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -250,12 +250,24 @@ class FleetBoardViewModel @Inject constructor(
         assignedCarReg: String = "",
         shift: String = ""
     ) {
+        val clean = phone.filter { it.isDigit() }
+        val last10 = if (clean.length >= 10) clean.takeLast(10) else clean
         viewModelScope.launch {
+            val currentList = allDrivers.value
+            val alreadyExists = currentList.any { d ->
+                val dClean = d.phone.filter { it.isDigit() }
+                dClean.endsWith(last10) || last10.endsWith(dClean.takeLast(10))
+            }
+            if (alreadyExists) {
+                timber.log.Timber.w("Driver with mobile $last10 already registered. Skipping duplicate creation.")
+                return@launch
+            }
+
             driverRepository.insertDriver(
                 DriverEntity(
                     fleetId = "fleet_blr_central",
-                    name = name,
-                    phone = phone,
+                    name = name.trim(),
+                    phone = phone.trim(),
                     consentAt = Clock.System.now(),
                     supabaseId = if (licenseNo.isNotBlank()) "DL:$licenseNo" else null
                 )

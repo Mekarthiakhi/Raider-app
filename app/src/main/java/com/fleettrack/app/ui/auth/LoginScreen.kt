@@ -528,7 +528,7 @@ fun LoginScreen(
                             Triple("Anji Babu", "9886210100", 20L),
                             Triple("Pavan", "9845122710", 3L),
                             Triple("Siva", "9741227330", 4L),
-                            Triple("Owner", "9391915013", 1L)
+                            Triple("Prasad", "9632133200", 5L)
                         ).forEach { (name, phone, _) ->
                             val isChosen = phoneInput == phone
                             Box(

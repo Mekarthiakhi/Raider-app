@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -249,6 +250,7 @@ fun DriversScreen(
 
     if (showAddDriverDialog) {
         AddDriverDialog(
+            existingDrivers = drivers,
             onDismiss = { showAddDriverDialog = false },
             onSave = { name, phone, licenseNo, assignedCar, shift, target ->
                 viewModel.addDriver(
@@ -400,6 +402,7 @@ private fun DriverCardItem(
 
 @Composable
 private fun AddDriverDialog(
+    existingDrivers: List<DriverPerformance> = emptyList(),
     onDismiss: () -> Unit,
     onSave: (
         name: String,
@@ -418,6 +421,18 @@ private fun AddDriverDialog(
     var target by remember { mutableStateOf("₹3,500") }
     var assignedCar by remember { mutableStateOf("TS09 AB 1234") }
     var shift by remember { mutableStateOf("Day Shift (6 AM - 6 PM)") }
+
+    // Duplicate Phone Validation Guard
+    val cleanDigits = phone.filter { it.isDigit() }
+    val duplicateDriver = remember(cleanDigits, existingDrivers) {
+        if (cleanDigits.length >= 10) {
+            val last10 = cleanDigits.takeLast(10)
+            existingDrivers.firstOrNull { d ->
+                val dClean = d.phone.filter { ch -> ch.isDigit() }
+                dClean.endsWith(last10) || last10.endsWith(dClean.takeLast(10))
+            }
+        } else null
+    }
 
     val carOptions = listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "TS09 IJ 7890", "Unassigned")
     val shiftOptions = listOf("Day Shift (6 AM - 6 PM)", "Night Shift (6 PM - 6 AM)", "Full Day (24 Hrs)")
@@ -454,10 +469,39 @@ private fun AddDriverDialog(
                     onValueChange = { phone = it },
                     label = { Text("Mobile Number *") },
                     placeholder = { Text("+91 98765 43210") },
+                    isError = duplicateDriver != null,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
                     singleLine = true
                 )
+
+                // Inline Duplicate Error Banner
+                if (duplicateDriver != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFFFEBEE))
+                            .border(1.dp, InactiveRed.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = InactiveRed,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "⚠️ Mobile already registered for ${duplicateDriver.driverName} (${duplicateDriver.phone})",
+                                color = InactiveRed,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
 
                 OutlinedTextField(
                     value = licenseNo,
@@ -548,13 +592,15 @@ private fun AddDriverDialog(
             }
         },
         confirmButton = {
+            val canSave = name.isNotBlank() && phone.isNotBlank() && duplicateDriver == null
             Button(
                 onClick = {
-                    if (name.isNotBlank() && phone.isNotBlank()) {
+                    if (canSave) {
                         val validDl = if (licenseNo.isBlank()) "DL-${name.take(3).uppercase()}-2024" else licenseNo
                         onSave(name, phone, validDl, assignedCar, shift, target)
                     }
                 },
+                enabled = canSave,
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
                 shape = PillShape
             ) {

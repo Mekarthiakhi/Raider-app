@@ -49,7 +49,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.fleettrack.app.util.BatteryOptimizationHelper
 import androidx.compose.ui.unit.sp
 import com.fleettrack.app.data.model.Platform
 import com.fleettrack.app.ui.components.GlassCard
@@ -248,79 +247,6 @@ fun DashboardScreen(
             }
         }
 
-        // Driver Shift Mode Quick Switch Banner (Instant Access to Driver Companion)
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFFE8F5E9))
-                    .border(1.dp, ActiveGreen.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
-                    .clickable(onClick = onNavigateToDriverShift)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(ActiveGreen),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DirectionsCar,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column(modifier = Modifier.weight(1f, fill = false)) {
-                            Text(
-                                text = "Driver Shift Companion",
-                                color = Color(0xFF1B5E20),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1
-                            )
-                            Text(
-                                text = "Start duty, test live tracking & cab meter",
-                                color = TextDark.copy(alpha = 0.8f),
-                                fontSize = 11.sp,
-                                maxLines = 1
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .clip(PillShape)
-                            .background(ActiveGreen)
-                            .padding(horizontal = 14.dp, vertical = 7.dp)
-                    ) {
-                        Text(
-                            text = "Open Shift",
-                            color = Color.White,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    }
-                }
-            }
-        }
-
         // 2. Three Metric Cards in a Row: Total Cars, Active, Inactive
         item {
             Row(
@@ -356,99 +282,6 @@ fun DashboardScreen(
                     containerColor = InactiveRedBg,
                     onClick = onNavigateToCars
                 )
-            }
-        }
-
-        // 2.5 Battery Optimization Exemption Banner
-        item {
-            val context = LocalContext.current
-            var isBatteryIgnored by remember {
-                mutableStateOf(BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context))
-            }
-
-            if (!isBatteryIgnored) {
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = CardShape
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(PrimaryPurpleContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Bolt,
-                                    contentDescription = null,
-                                    tint = PrimaryPurple,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "24/7 Background Sync",
-                                    color = TextDark,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Allow unkilled Uber & Rapido telemetry.",
-                                    color = TextGray,
-                                    fontSize = 11.sp
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Button(
-                            onClick = {
-                                BatteryOptimizationHelper.requestIgnoreBatteryOptimizations(context)
-                                isBatteryIgnored = BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context)
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
-                            shape = PillShape,
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                        ) {
-                            Text("Enable", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            } else {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(ActiveGreenBg)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = ActiveGreen,
-                        modifier = Modifier.size(15.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "24/7 Background Telemetry Active • Unrestricted Sync",
-                        color = ActiveGreen,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
             }
         }
 

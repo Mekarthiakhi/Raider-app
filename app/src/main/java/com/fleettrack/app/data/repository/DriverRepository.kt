@@ -104,11 +104,15 @@ class DriverRepositoryImpl @Inject constructor(
 
                     for (remote in remoteList) {
                         val cleanRemotePhone = remote.phone.filter { it.isDigit() }.takeLast(10)
-                        val exists = currentLocal.any { local ->
+                        val existing = currentLocal.firstOrNull { local ->
                             val cleanLocalPhone = local.phone.filter { it.isDigit() }.takeLast(10)
                             cleanLocalPhone == cleanRemotePhone || (local.name.equals(remote.name, ignoreCase = true) && cleanRemotePhone.isNotEmpty())
                         }
-                        if (!exists) {
+                        if (existing != null) {
+                            if (existing.supabaseId != remote.id) {
+                                driverDao.update(existing.copy(supabaseId = remote.id))
+                            }
+                        } else {
                             toInsert.add(
                                 DriverEntity(
                                     fleetId = remote.fleetId ?: "a0000000-0000-0000-0000-000000000001",
