@@ -53,6 +53,17 @@ jobs:
           name: gradle-build-failure-log
           path: build.log
 
+      - name: Publish Failure Log to Release
+        uses: softprops/action-gh-release@v2
+        if: failure()
+        with:
+          tag_name: latest
+          name: "Build Failed"
+          body: "Build failed for commit ${{ github.sha }}"
+          files: build.log
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         if: success()
