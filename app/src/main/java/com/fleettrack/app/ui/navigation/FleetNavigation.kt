@@ -241,6 +241,7 @@ fun FleetNavigation(
             // ==========================================
             composable(Screen.Dashboard.route) {
                 val vm: FleetBoardViewModel = hiltViewModel()
+                val context = LocalContext.current
                 DashboardScreen(
                     viewModel = vm,
                     onNavigateToCars = { navController.navigate(Screen.Cars.route) },
@@ -252,7 +253,14 @@ fun FleetNavigation(
                     onNavigateToMaintenance = { navController.navigate(Screen.Maintenance.route) },
                     onNavigateToLiveTracking = { navController.navigate(Screen.LiveTracking.route) },
                     onNavigateToOfficeRegister = { navController.navigate(Screen.OfficeRegister.route) },
-                    onNavigateToDriverShift = { navController.navigate(Screen.DriverToday.route) }
+                    onNavigateToDriverShift = { navController.navigate(Screen.DriverToday.route) },
+                    onLogoutClick = {
+                        val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
+                        sessionPrefs.edit().clear().apply()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
 
@@ -289,6 +297,7 @@ fun FleetNavigation(
             }
 
             composable(Screen.More.route) {
+                val context = LocalContext.current
                 MoreScreen(
                     onNavigateToReports = { navController.navigate(Screen.Earnings.route) },
                     onNavigateToMaintenance = { navController.navigate(Screen.Maintenance.route) },
@@ -299,7 +308,14 @@ fun FleetNavigation(
                     onNavigateToLiveTracking = { navController.navigate(Screen.LiveTracking.route) },
                     onNavigateToDocumentVault = { navController.navigate(Screen.DocumentVault.route) },
                     onNavigateToOfficeRegister = { navController.navigate(Screen.OfficeRegister.route) },
-                    onNavigateToDriverShift = { navController.navigate(Screen.DriverToday.route) }
+                    onNavigateToDriverShift = { navController.navigate(Screen.DriverToday.route) },
+                    onLogoutClick = {
+                        val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
+                        sessionPrefs.edit().clear().apply()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
 

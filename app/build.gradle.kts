@@ -24,8 +24,8 @@ android {
         applicationId = "com.fleettrack.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 36
-        versionName = "1.0.36"
+        versionCode = 39
+        versionName = "1.0.39"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

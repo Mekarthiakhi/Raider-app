@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.ReceiptLong
@@ -88,6 +89,7 @@ fun DashboardScreen(
     onNavigateToLiveTracking: () -> Unit = onNavigateToCars,
     onNavigateToOfficeRegister: () -> Unit = {},
     onNavigateToDriverShift: () -> Unit = {},
+    onLogoutClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val overview by viewModel.overview.collectAsState()
@@ -126,29 +128,49 @@ fun DashboardScreen(
                     )
                 }
 
-                // Notification Bell with Badge
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .background(SurfaceWhite, CircleShape)
-                        .border(1.dp, SurfaceBorder, CircleShape)
-                        .clickable { onNavigateToAlerts() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notifications",
-                        tint = TextDark,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    // Notification dot
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Notification Bell with Badge
                     Box(
                         modifier = Modifier
-                            .size(8.dp)
-                            .align(Alignment.TopEnd)
-                            .padding(end = 2.dp, top = 2.dp)
-                            .background(InactiveRed, CircleShape)
-                    )
+                            .size(42.dp)
+                            .background(SurfaceWhite, CircleShape)
+                            .border(1.dp, SurfaceBorder, CircleShape)
+                            .clickable { onNavigateToAlerts() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notifications",
+                            tint = TextDark,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        // Notification dot
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .align(Alignment.TopEnd)
+                                .padding(end = 2.dp, top = 2.dp)
+                                .background(InactiveRed, CircleShape)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // Direct Logout / Exit Button (Same as Driver Portal!)
+                    IconButton(
+                        onClick = onLogoutClick,
+                        modifier = Modifier
+                            .size(42.dp)
+                            .background(SurfaceWhite, CircleShape)
+                            .border(1.dp, SurfaceBorder, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ExitToApp,
+                            contentDescription = "Logout & Exit to Login",
+                            tint = InactiveRed,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }

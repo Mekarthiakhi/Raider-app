@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
@@ -42,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.theme.BackgroundLight
+import com.fleettrack.app.ui.theme.InactiveRed
+import com.fleettrack.app.ui.theme.InactiveRedBg
 import com.fleettrack.app.ui.theme.PrimaryPurple
 import com.fleettrack.app.ui.theme.PrimaryPurpleContainer
 import com.fleettrack.app.ui.theme.PurpleGradient
@@ -64,6 +67,7 @@ fun MoreScreen(
     onNavigateToDocumentVault: () -> Unit = {},
     onNavigateToOfficeRegister: () -> Unit = {},
     onNavigateToDriverShift: () -> Unit = {},
+    onLogoutClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -232,6 +236,16 @@ fun MoreScreen(
                     subtitle = "Team roles, Uber integration, theme",
                     onClick = onNavigateToSettings
                 )
+
+                // Direct Logout from SVM FLEET Owner Portal
+                MoreMenuItem(
+                    icon = Icons.Default.ExitToApp,
+                    title = "Logout",
+                    subtitle = "Sign out from SVM FLEET Owner Portal",
+                    iconTint = InactiveRed,
+                    iconContainer = InactiveRedBg,
+                    onClick = onLogoutClick
+                )
             }
         }
     }
@@ -242,6 +256,8 @@ private fun MoreMenuItem(
     icon: ImageVector,
     title: String,
     subtitle: String,
+    iconTint: Color = PrimaryPurple,
+    iconContainer: Color = PrimaryPurpleContainer,
     onClick: () -> Unit
 ) {
     GlassCard(
@@ -264,13 +280,13 @@ private fun MoreMenuItem(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
-                        .background(PrimaryPurpleContainer),
+                        .background(iconContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = PrimaryPurple,
+                        tint = iconTint,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -280,7 +296,7 @@ private fun MoreMenuItem(
                 Column {
                     Text(
                         text = title,
-                        color = TextDark,
+                        color = if (iconTint == InactiveRed) InactiveRed else TextDark,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -297,7 +313,7 @@ private fun MoreMenuItem(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = "Open $title",
-                tint = TextMutedGray,
+                tint = if (iconTint == InactiveRed) InactiveRed.copy(alpha = 0.6f) else TextMutedGray,
                 modifier = Modifier.size(20.dp)
             )
         }
