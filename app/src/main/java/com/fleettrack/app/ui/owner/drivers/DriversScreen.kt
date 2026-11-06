@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.owner.drivers
+package com.fleettrack.app.ui.owner.drivers
 
 import android.content.Intent
 import android.net.Uri
@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -367,10 +368,10 @@ private fun DriverCardItem(
                 }
             }
 
-            // Right: Status Badge & Call Button
+            // Right: Status Badge & Chevron indicator
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -386,20 +387,12 @@ private fun DriverCardItem(
                     )
                 }
 
-                IconButton(
-                    onClick = onCall,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(PrimaryPurpleContainer)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Call,
-                        contentDescription = "Call ${driver.driverName}",
-                        tint = PrimaryPurple,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "View Driver Details",
+                    tint = TextGray,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

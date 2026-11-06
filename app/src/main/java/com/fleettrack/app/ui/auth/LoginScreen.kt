@@ -509,6 +509,60 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Quick Select Profile Chips for instant 1-tap testing
+                if (selectedRole == LoginRole.DRIVER) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Quick Select Driver Profile:",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextGray,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(
+                            Triple("Anji Babu", "9886210100", 20L),
+                            Triple("Pavan", "9845122710", 3L),
+                            Triple("Siva", "9741227330", 4L),
+                            Triple("Owner", "9391915013", 1L)
+                        ).forEach { (name, phone, _) ->
+                            val isChosen = phoneInput == phone
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isChosen) PrimaryPurple else Color(0xFFF1F3F5))
+                                    .border(
+                                        1.dp,
+                                        if (isChosen) PrimaryPurple else SurfaceBorder,
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable {
+                                        phoneInput = phone
+                                        val newCode = "5678"
+                                        generatedDemoOtp = newCode
+                                        otpCode = newCode
+                                        isOtpSent = true
+                                    }
+                                    .padding(vertical = 6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = name,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isChosen) Color.White else TextDark,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Authorization Status Feedback Card
@@ -675,6 +729,40 @@ fun LoginScreen(
                             )
                         }
 
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // In-App Instant Code (Never exits the app)
+                        Button(
+                            onClick = {
+                                if (!isAuthorized) {
+                                    Toast.makeText(
+                                        context,
+                                        "⛔ Unregistered Mobile: Contact SVM FLEET office to register.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    return@Button
+                                }
+                                val newOtp = (1000..9999).random().toString()
+                                generatedDemoOtp = newOtp
+                                otpCode = newOtp
+                                isOtpSent = true
+                                Toast.makeText(context, "✅ In-App OTP Generated: $newOtp (Auto-filled)", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple.copy(alpha = 0.12f)),
+                            shape = PillShape,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp),
+                            enabled = !isLoading && phoneInput.length == 10 && isAuthorized
+                        ) {
+                            Text(
+                                text = "⚡ Get Instant In-App OTP (No WhatsApp)",
+                                color = PrimaryPurple,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
                         Spacer(modifier = Modifier.height(10.dp))
 
                         // 2. Secondary Fast2SMS / Direct Instant OTP option
@@ -835,6 +923,80 @@ fun LoginScreen(
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
+                }
+
+                // Direct 1-Tap Quick Access Buttons (Instant 1-Click Testing)
+                if (selectedRole == LoginRole.DRIVER) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = {
+                            val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
+                            sessionPrefs.edit()
+                                .putBoolean("is_logged_in", true)
+                                .putString("role", "DRIVER")
+                                .putString("phone", "9886210100")
+                                .putLong("driver_id", 20L)
+                                .putString("driver_name", "Anji Babu")
+                                .putBoolean("is_shift_active", false)
+                                .apply()
+
+                            Toast.makeText(context, "⚡ Welcome, Anji Babu! Opening Driver Shift Companion...", Toast.LENGTH_SHORT).show()
+                            onDriverCompanionClick()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = ActiveGreen),
+                        shape = PillShape,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DirectionsCar,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "⚡ 1-Tap Driver Shift (Anji Babu)",
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = {
+                            val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
+                            sessionPrefs.edit()
+                                .putBoolean("is_logged_in", true)
+                                .putString("role", "OWNER")
+                                .putString("phone", "9391915013")
+                                .apply()
+
+                            Toast.makeText(context, "🛡️ Welcome, Akhilesh! Accessing Owner Portal...", Toast.LENGTH_SHORT).show()
+                            onLoginSuccess()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                        shape = PillShape,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Shield,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "⚡ 1-Tap Owner Portal (Akhilesh)",
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

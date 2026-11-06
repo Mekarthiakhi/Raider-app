@@ -37,7 +37,7 @@ jobs:
       - name: Build Debug and Release APKs
         run: |
           set +e
-          ./gradlew assembleDebug assembleRelease --stacktrace --no-daemon > build.log 2>&1
+          ./gradlew assembleDebug assembleRelease -PappVersionCode=${{ github.run_number }} -PappVersionName="1.0.${{ github.run_number }}" --stacktrace --no-daemon > build.log 2>&1
           EXIT_CODE=$?
           echo "### Gradle Build Output (Exit Code: $EXIT_CODE)" >> $GITHUB_STEP_SUMMARY
           echo '```text' >> $GITHUB_STEP_SUMMARY

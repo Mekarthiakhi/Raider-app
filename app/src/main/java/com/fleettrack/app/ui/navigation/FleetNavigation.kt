@@ -225,6 +225,9 @@ fun FleetNavigation(
                     },
                     onSetupClick = {
                         navController.navigate(Screen.SetupWizard.route)
+                    },
+                    onSwitchToOwner = {
+                        navController.navigate(Screen.Dashboard.route)
                     }
                 )
             }
@@ -248,7 +251,8 @@ fun FleetNavigation(
                     onNavigateToExpenses = { navController.navigate(Screen.Expenses.route) },
                     onNavigateToMaintenance = { navController.navigate(Screen.Maintenance.route) },
                     onNavigateToLiveTracking = { navController.navigate(Screen.LiveTracking.route) },
-                    onNavigateToOfficeRegister = { navController.navigate(Screen.OfficeRegister.route) }
+                    onNavigateToOfficeRegister = { navController.navigate(Screen.OfficeRegister.route) },
+                    onNavigateToDriverShift = { navController.navigate(Screen.DriverToday.route) }
                 )
             }
 
@@ -294,7 +298,8 @@ fun FleetNavigation(
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToLiveTracking = { navController.navigate(Screen.LiveTracking.route) },
                     onNavigateToDocumentVault = { navController.navigate(Screen.DocumentVault.route) },
-                    onNavigateToOfficeRegister = { navController.navigate(Screen.OfficeRegister.route) }
+                    onNavigateToOfficeRegister = { navController.navigate(Screen.OfficeRegister.route) },
+                    onNavigateToDriverShift = { navController.navigate(Screen.DriverToday.route) }
                 )
             }
 

@@ -62,6 +62,7 @@ fun MoreScreen(
     onNavigateToLiveTracking: () -> Unit = {},
     onNavigateToDocumentVault: () -> Unit = {},
     onNavigateToOfficeRegister: () -> Unit = {},
+    onNavigateToDriverShift: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -157,6 +158,14 @@ fun MoreScreen(
             Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                // Driver Shift Companion (Quick Switch for Owner)
+                MoreMenuItem(
+                    icon = Icons.Default.DirectionsCar,
+                    title = "Driver Shift Companion",
+                    subtitle = "Open driver shift mode, test live tracking & meter",
+                    onClick = onNavigateToDriverShift
+                )
+
                 // Office Duty Register (SVM Commission Base)
                 MoreMenuItem(
                     icon = Icons.Default.Description,

@@ -112,14 +112,15 @@ object AppUpdateHelper {
                     if (it > 0L) it else parseIsoToEpochMs(release.published_at)
                 }
 
-                // 1. If currently running app was compiled after or within 3 mins of the release asset, it is already latest!
+                // 1. If GitHub asset was published within 45 mins of build time, it is part of this exact CI build!
+                // A new update only exists if GitHub release was uploaded MORE than 45 mins after this app was built.
                 if (BuildConfig.BUILD_TIME > 0L && assetEpoch > 0L) {
-                    if (BuildConfig.BUILD_TIME >= (assetEpoch - 180_000L)) {
+                    if (assetEpoch <= (BuildConfig.BUILD_TIME + 2_700_000L)) {
                         return@withContext null
                     }
                 }
 
-                // 2. If app was installed/updated after or within 3 mins of release, it is already up to date!
+                // 2. If app was installed/updated within 30 mins of release, it is already up to date!
                 val packageInfo = try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.PackageInfoFlags.of(0))
@@ -132,7 +133,7 @@ object AppUpdateHelper {
                 }
 
                 val installedAppTime = packageInfo?.lastUpdateTime ?: 0L
-                if (assetEpoch > 0L && installedAppTime >= (assetEpoch - 180_000L)) {
+                if (assetEpoch > 0L && installedAppTime >= (assetEpoch - 1_800_000L)) {
                     return@withContext null
                 }
 

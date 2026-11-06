@@ -73,7 +73,21 @@ class LoginViewModel @Inject constructor(
             }
             return AuthStatus.Unauthorized(last10)
         } else {
-            // Check Driver Numbers (Both Database and Seeded Drivers)
+            // 1. If an authorized owner is logging in on Driver Tab, allow them to test Driver Mode!
+            if (authorizedOwnerNumbers.any { it.endsWith(last10) }) {
+                val seedOwnerDriver = FleetDataSeeder.driverList.firstOrNull { pair ->
+                    val p = pair.second.filter { it.isDigit() }
+                    p.endsWith(last10) || last10.endsWith(p.takeLast(10))
+                }
+                val driverName = seedOwnerDriver?.first ?: "Fleet Owner (Driver Mode)"
+                return AuthStatus.DriverAuthorized(
+                    driverName = driverName,
+                    phone = last10,
+                    driverId = 1L
+                )
+            }
+
+            // 2. Check Database Drivers (created by Owner via DriversScreen or Seed)
             val inDb = registeredDrivers.value.firstOrNull { d ->
                 val p = d.phone.filter { it.isDigit() }
                 p.endsWith(last10) || last10.endsWith(p.takeLast(10))
@@ -86,7 +100,7 @@ class LoginViewModel @Inject constructor(
                 )
             }
 
-            // Fallback check on seeded drivers list
+            // 3. Fallback check on seeded drivers list
             val seedIndex = FleetDataSeeder.driverList.indexOfFirst { pair ->
                 val p = pair.second.filter { it.isDigit() }
                 p.endsWith(last10) || last10.endsWith(p.takeLast(10))

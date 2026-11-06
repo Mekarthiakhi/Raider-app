@@ -87,6 +87,7 @@ fun DashboardScreen(
     onNavigateToMaintenance: () -> Unit = {},
     onNavigateToLiveTracking: () -> Unit = onNavigateToCars,
     onNavigateToOfficeRegister: () -> Unit = {},
+    onNavigateToDriverShift: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val overview by viewModel.overview.collectAsState()
@@ -214,6 +215,79 @@ fun DashboardScreen(
                     ) {
                         Text(
                             text = "Open Register",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
+                }
+            }
+        }
+
+        // Driver Shift Mode Quick Switch Banner (Instant Access to Driver Companion)
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFFE8F5E9))
+                    .border(1.dp, ActiveGreen.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                    .clickable(onClick = onNavigateToDriverShift)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(ActiveGreen),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DirectionsCar,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f, fill = false)) {
+                            Text(
+                                text = "Driver Shift Companion",
+                                color = Color(0xFF1B5E20),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = "Start duty, test live tracking & cab meter",
+                                color = TextDark.copy(alpha = 0.8f),
+                                fontSize = 11.sp,
+                                maxLines = 1
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .clip(PillShape)
+                            .background(ActiveGreen)
+                            .padding(horizontal = 14.dp, vertical = 7.dp)
+                    ) {
+                        Text(
+                            text = "Open Shift",
                             color = Color.White,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,

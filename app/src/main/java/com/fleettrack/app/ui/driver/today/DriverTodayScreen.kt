@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -86,6 +87,7 @@ fun DriverTodayScreen(
     viewModel: DriverTodayViewModel,
     onLogoutClick: () -> Unit = {},
     onSetupClick: () -> Unit = {},
+    onSwitchToOwner: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val shiftSession by viewModel.shiftSession.collectAsState()
@@ -184,6 +186,15 @@ fun DriverTodayScreen(
                 }
 
                 Spacer(modifier = Modifier.width(6.dp))
+
+                // Switch to Fleet Owner Portal
+                IconButton(onClick = onSwitchToOwner) {
+                    Icon(
+                        imageVector = Icons.Default.Shield,
+                        contentDescription = "Switch to Owner Portal",
+                        tint = EmeraldAccent
+                    )
+                }
 
                 // Setup / Permissions
                 IconButton(onClick = onSetupClick) {
