@@ -5,7 +5,10 @@ import com.fleettrack.app.data.local.entity.DutyLogEntity
 import com.fleettrack.app.data.remote.SupabaseClientProvider
 import com.fleettrack.app.util.SvmCommissionCalculator
 import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import timber.log.Timber
 import javax.inject.Inject
@@ -71,6 +74,62 @@ class DutyLogRepository @Inject constructor(
 
     suspend fun deleteDutyLog(id: Long) {
         dutyLogDao.deleteById(id)
+    }
+
+    suspend fun syncFromSupabase(): List<DutyLogEntity> = withContext(Dispatchers.IO) {
+        try {
+            val remoteLogs = SupabaseClientProvider.client.from("office_duty_logs")
+                .select()
+                .decodeList<SupabaseDutyLogDto>()
+
+            if (remoteLogs.isNotEmpty()) {
+                val currentLogs = dutyLogDao.getAllDutyLogs().firstOrNull() ?: emptyList()
+                val toInsert = mutableListOf<DutyLogEntity>()
+
+                for (remote in remoteLogs) {
+                    val exists = currentLogs.any {
+                        it.loginDate == remote.login_date && it.driverName.equals(remote.driver_name, ignoreCase = true)
+                    }
+                    if (!exists) {
+                        toInsert.add(
+                            DutyLogEntity(
+                                fleetId = remote.fleet_id,
+                                shiftType = remote.shift_type,
+                                loginDate = remote.login_date,
+                                loginTime = remote.login_time,
+                                logoutDate = remote.logout_date,
+                                logoutTime = remote.logout_time,
+                                vehicleNo = remote.vehicle_no,
+                                driverName = remote.driver_name,
+                                driverPhone = remote.driver_phone,
+                                trips = remote.trips,
+                                earnings = remote.earnings,
+                                cashCollection = remote.cash_collection,
+                                expenditure = remote.expenditure,
+                                commissionRent = remote.commission_rent,
+                                drivePass = remote.drive_pass,
+                                advance = remote.advance,
+                                paymentCash = remote.payment_cash,
+                                paymentOnline = remote.payment_online,
+                                netBalance = remote.net_balance,
+                                status = remote.status,
+                                remarks = remote.remarks,
+                                supabaseId = remote.id
+                            )
+                        )
+                    }
+                }
+
+                if (toInsert.isNotEmpty()) {
+                    dutyLogDao.insertAll(toInsert)
+                    Timber.d("Synced %d duty logs from Supabase", toInsert.size)
+                }
+            }
+            dutyLogDao.getAllDutyLogs().firstOrNull() ?: emptyList()
+        } catch (e: Exception) {
+            Timber.w(e, "DutyLogRepository: syncFromSupabase fallback")
+            dutyLogDao.getAllDutyLogs().firstOrNull() ?: emptyList()
+        }
     }
 
     private suspend fun syncToSupabase(log: DutyLogEntity) {

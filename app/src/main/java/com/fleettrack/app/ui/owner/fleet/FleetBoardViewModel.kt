@@ -252,17 +252,18 @@ class FleetBoardViewModel @Inject constructor(
     ) {
         val clean = phone.filter { it.isDigit() }
         val last10 = if (clean.length >= 10) clean.takeLast(10) else clean
-        viewModelScope.launch {
-            val currentList = allDrivers.value
-            val alreadyExists = currentList.any { d ->
-                val dClean = d.phone.filter { it.isDigit() }
-                dClean.endsWith(last10) || last10.endsWith(dClean.takeLast(10))
-            }
-            if (alreadyExists) {
-                timber.log.Timber.w("Driver with mobile $last10 already registered. Skipping duplicate creation.")
-                return@launch
-            }
+        val currentList = drivers.value
+        val alreadyExists = currentList.any { d ->
+            val dClean = d.phone.filter { ch -> ch.isDigit() }
+            val dLast10 = if (dClean.length >= 10) dClean.takeLast(10) else dClean
+            dLast10 == last10
+        }
+        if (alreadyExists) {
+            timber.log.Timber.w("Driver with mobile %s already registered. Skipping duplicate creation.", last10)
+            return
+        }
 
+        viewModelScope.launch {
             driverRepository.insertDriver(
                 DriverEntity(
                     fleetId = "fleet_blr_central",
