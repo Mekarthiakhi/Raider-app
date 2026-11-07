@@ -1,5 +1,6 @@
 package com.fleettrack.app.ui.owner.drivers
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,6 +12,7 @@ import com.fleettrack.app.data.repository.DriverRepository
 import com.fleettrack.app.data.repository.RideRepository
 import com.fleettrack.app.data.repository.VehicleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -73,11 +75,16 @@ data class DriverReportUiState(
 
 @HiltViewModel
 class DriverDetailViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
     private val driverRepository: DriverRepository,
     private val vehicleRepository: VehicleRepository,
     private val rideRepository: RideRepository
 ) : ViewModel() {
+
+    private val isDemoMode: Boolean
+        get() = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
+            .getBoolean("is_demo_mode", false)
 
     private val driverId: Long = runCatching {
         savedStateHandle.get<String>("driverId")?.toLongOrNull()
@@ -180,22 +187,24 @@ class DriverDetailViewModel @Inject constructor(
         val totalDriverPayout = totalGross * 0.70
         val totalOwnerMargin = totalGross * 0.30
 
+        val showDemoDefaults = isDemoMode && rides.isEmpty()
+
         DriverReportUiState(
             driver = driver,
-            currentCarRegNo = assignedVeh?.regNo ?: "TS09 AB 1234",
-            activeShift = if (rides.isNotEmpty()) "Day Shift (6 AM - 6 PM)" else "Idle",
-            todayEarnings = if (todayFare > 0) todayFare else 2840.0,
-            weeklyEarnings = if (weekFare > 0) weekFare else 18450.0,
-            monthlyEarnings = if (monthFare > 0) monthFare else 74200.0,
-            totalRides = if (rides.isNotEmpty()) rides.size else 14,
-            totalKm = if (totalKm > 0) totalKm else 182.4,
-            uberEarnings = if (uFare > 0) uFare else 1640.0,
-            uberRidesCount = if (uCount > 0) uCount else 8,
-            rapidoEarnings = if (rFare > 0) rFare else 1200.0,
-            rapidoRidesCount = if (rCount > 0) rCount else 6,
-            driverPayout = if (totalDriverPayout > 0) totalDriverPayout else 1988.0,
-            ownerNetProfit = if (totalOwnerMargin > 0) totalOwnerMargin else 852.0,
-            carBreakdown = if (carBreakdown.isNotEmpty()) carBreakdown else listOf(
+            currentCarRegNo = assignedVeh?.regNo ?: if (showDemoDefaults) "TS09 AB 1234" else "Unassigned",
+            activeShift = if (rides.isNotEmpty()) "Day Shift (6 AM - 6 PM)" else if (showDemoDefaults) "Day Shift (6 AM - 6 PM)" else "Idle",
+            todayEarnings = if (todayFare > 0) todayFare else if (showDemoDefaults) 2840.0 else 0.0,
+            weeklyEarnings = if (weekFare > 0) weekFare else if (showDemoDefaults) 18450.0 else 0.0,
+            monthlyEarnings = if (monthFare > 0) monthFare else if (showDemoDefaults) 74200.0 else 0.0,
+            totalRides = if (rides.isNotEmpty()) rides.size else if (showDemoDefaults) 14 else 0,
+            totalKm = if (totalKm > 0) totalKm else if (showDemoDefaults) 182.4 else 0.0,
+            uberEarnings = if (uFare > 0) uFare else if (showDemoDefaults) 1640.0 else 0.0,
+            uberRidesCount = if (uCount > 0) uCount else if (showDemoDefaults) 8 else 0,
+            rapidoEarnings = if (rFare > 0) rFare else if (showDemoDefaults) 1200.0 else 0.0,
+            rapidoRidesCount = if (rCount > 0) rCount else if (showDemoDefaults) 6 else 0,
+            driverPayout = if (totalDriverPayout > 0) totalDriverPayout else if (showDemoDefaults) 1988.0 else 0.0,
+            ownerNetProfit = if (totalOwnerMargin > 0) totalOwnerMargin else if (showDemoDefaults) 852.0 else 0.0,
+            carBreakdown = if (carBreakdown.isNotEmpty()) carBreakdown else if (showDemoDefaults) listOf(
                 CarPerformanceSummary(
                     vehicleId = 1L,
                     regNo = "TS09 AB 1234",
@@ -206,7 +215,7 @@ class DriverDetailViewModel @Inject constructor(
                     uberRides = 8,
                     rapidoRides = 6
                 )
-            ),
+            ) else emptyList(),
             trips = tripItems,
             isLoading = false
         )

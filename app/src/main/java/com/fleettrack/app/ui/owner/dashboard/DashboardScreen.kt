@@ -256,7 +256,7 @@ fun DashboardScreen(
                 // Total Cars
                 MetricPillCard(
                     modifier = Modifier.weight(1f),
-                    count = 30,
+                    count = overview.totalVehiclesCount,
                     label = "Total Cars",
                     iconColor = MetricPurple,
                     containerColor = MetricPurpleBg,
@@ -266,7 +266,7 @@ fun DashboardScreen(
                 // Active
                 MetricPillCard(
                     modifier = Modifier.weight(1f),
-                    count = overview.activeVehicles.coerceAtLeast(28),
+                    count = overview.activeVehicles,
                     label = "Active",
                     iconColor = ActiveGreen,
                     containerColor = ActiveGreenBg,
@@ -276,7 +276,7 @@ fun DashboardScreen(
                 // Inactive
                 MetricPillCard(
                     modifier = Modifier.weight(1f),
-                    count = (30 - overview.activeVehicles).coerceAtLeast(2),
+                    count = overview.offlineVehicles,
                     label = "Inactive",
                     iconColor = InactiveRed,
                     containerColor = InactiveRedBg,
@@ -322,9 +322,8 @@ fun DashboardScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val displayFare = if (overview.totalEarningsToday > 0) overview.totalEarningsToday else 18420.0
                         Text(
-                            text = currencyFormat.format(displayFare),
+                            text = currencyFormat.format(overview.totalEarningsToday),
                             color = Color.White,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold
@@ -364,7 +363,7 @@ fun DashboardScreen(
                                 fontSize = 11.sp
                             )
                             Text(
-                                text = "₹5,42,180",
+                                text = currencyFormat.format(overview.thisMonthEarnings),
                                 color = Color.White,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
@@ -378,7 +377,7 @@ fun DashboardScreen(
                                 fontSize = 11.sp
                             )
                             Text(
-                                text = "₹3,21,460",
+                                text = currencyFormat.format(overview.thisMonthNetProfit),
                                 color = Color(0xFF67E8B9), // Emerald light
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
@@ -439,15 +438,12 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Bottom
                     ) {
-                        val weeklyValues = listOf(
-                            Pair("Mon", 0.65f),
-                            Pair("Tue", 0.45f),
-                            Pair("Wed", 0.60f),
-                            Pair("Thu", 0.52f),
-                            Pair("Fri", 0.78f),
-                            Pair("Sat", 0.95f),
-                            Pair("Sun", 0.85f)
-                        )
+                        val weeklyValues = overview.weeklyChartBars.ifEmpty {
+                            listOf(
+                                Pair("Mon", 0.1f), Pair("Tue", 0.1f), Pair("Wed", 0.1f),
+                                Pair("Thu", 0.1f), Pair("Fri", 0.1f), Pair("Sat", 0.1f), Pair("Sun", 0.1f)
+                            )
+                        }
 
                         weeklyValues.forEach { (day, fraction) ->
                             Column(
@@ -458,9 +454,9 @@ fun DashboardScreen(
                                 Box(
                                     modifier = Modifier
                                         .width(22.dp)
-                                        .height((115 * fraction).dp)
+                                        .height((115 * fraction).dp.coerceAtLeast(8.dp))
                                         .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                                        .background(PrimaryPurple.copy(alpha = if (day == "Sat") 1.0f else 0.45f + fraction * 0.4f))
+                                        .background(PrimaryPurple.copy(alpha = if (day == "Sat") 1.0f else (0.45f + fraction * 0.4f).coerceIn(0.3f, 1f)))
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
@@ -497,16 +493,14 @@ fun DashboardScreen(
                         PlatformChip(platform = Platform.UBER)
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
-                            val uFare = if (overview.uberEarnings > 0) overview.uberEarnings else 10240.0
-                            val uTrips = if (overview.uberRides > 0) overview.uberRides else 58
                             Text(
-                                text = currencyFormat.format(uFare),
+                                text = currencyFormat.format(overview.uberEarnings),
                                 color = TextDark,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "$uTrips trips",
+                                text = "${overview.uberRides} trips",
                                 color = TextGray,
                                 fontSize = 11.sp
                             )
@@ -531,16 +525,14 @@ fun DashboardScreen(
                         PlatformChip(platform = Platform.RAPIDO)
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
-                            val rFare = if (overview.rapidoEarnings > 0) overview.rapidoEarnings else 8180.0
-                            val rTrips = if (overview.rapidoRides > 0) overview.rapidoRides else 68
                             Text(
-                                text = currencyFormat.format(rFare),
+                                text = currencyFormat.format(overview.rapidoEarnings),
                                 color = TextDark,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "$rTrips trips",
+                                text = "${overview.rapidoRides} trips",
                                 color = TextGray,
                                 fontSize = 11.sp
                             )

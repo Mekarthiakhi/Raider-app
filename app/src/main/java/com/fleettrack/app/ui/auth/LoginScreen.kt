@@ -79,8 +79,6 @@ import com.fleettrack.app.ui.theme.TextGray
 import com.fleettrack.app.ui.theme.TextMutedGray
 import com.fleettrack.app.util.AppUpdateHelper
 import com.fleettrack.app.util.AppUpdateInfo
-import com.fleettrack.app.util.Fast2SmsHelper
-import com.fleettrack.app.util.WhatsAppHelper
 import kotlinx.coroutines.launch
 
 @Composable
@@ -509,60 +507,6 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Quick Select Profile Chips for instant 1-tap testing
-                if (selectedRole == LoginRole.DRIVER) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = "Quick Select Driver Profile:",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextGray,
-                        modifier = Modifier.align(Alignment.Start)
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        listOf(
-                            Triple("Anji Babu", "9886210100", 20L),
-                            Triple("Pavan", "9845122710", 3L),
-                            Triple("Siva", "9741227330", 4L),
-                            Triple("Prasad", "9632133200", 5L)
-                        ).forEach { (name, phone, _) ->
-                            val isChosen = phoneInput == phone
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isChosen) PrimaryPurple else Color(0xFFF1F3F5))
-                                    .border(
-                                        1.dp,
-                                        if (isChosen) PrimaryPurple else SurfaceBorder,
-                                        RoundedCornerShape(8.dp)
-                                    )
-                                    .clickable {
-                                        phoneInput = phone
-                                        val newCode = "5678"
-                                        generatedDemoOtp = newCode
-                                        otpCode = newCode
-                                        isOtpSent = true
-                                    }
-                                    .padding(vertical = 6.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = name,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isChosen) Color.White else TextDark,
-                                    maxLines = 1
-                                )
-                            }
-                        }
-                    }
-                }
-
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Authorization Status Feedback Card
@@ -683,7 +627,6 @@ fun LoginScreen(
                 // OTP Trigger or Entry Box
                 if (!isOtpSent) {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        // 1. Primary WhatsApp Verification Button (100% Free & Instant)
                         Button(
                             onClick = {
                                 if (!isAuthorized) {
@@ -699,119 +642,66 @@ fun LoginScreen(
                                 generatedDemoOtp = newOtp
                                 otpCode = newOtp
                                 isOtpSent = true
-
-                                val isOwner = authStatus is AuthStatus.OwnerAuthorized
-                                val opened = WhatsAppHelper.sendOtpViaWhatsApp(
-                                    context = context,
-                                    recipientPhone = phoneInput,
-                                    otpCode = newOtp,
-                                    isOwner = isOwner
-                                )
-
-                                if (opened) {
-                                    Toast.makeText(context, "Opening WhatsApp with OTP: $newOtp", Toast.LENGTH_LONG).show()
-                                } else {
-                                    Toast.makeText(context, "SVM FLEET OTP: $newOtp", Toast.LENGTH_LONG).show()
-                                }
+                                Toast.makeText(context, "✅ SVM FLEET OTP: $newOtp (Auto-filled)", Toast.LENGTH_SHORT).show()
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)), // WhatsApp Green
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
                             shape = PillShape,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
                             enabled = !isLoading && phoneInput.length == 10 && isAuthorized
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.Shield,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "💬 Send OTP via WhatsApp (Free)",
+                                text = "🛡️ Get SVM FLEET Secure OTP",
                                 color = Color.White,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // In-App Instant Code (Never exits the app)
-                        Button(
-                            onClick = {
-                                if (!isAuthorized) {
-                                    Toast.makeText(
-                                        context,
-                                        "⛔ Unregistered Mobile: Contact SVM FLEET office to register.",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                    return@Button
-                                }
-                                val newOtp = (1000..9999).random().toString()
-                                generatedDemoOtp = newOtp
-                                otpCode = newOtp
-                                isOtpSent = true
-                                Toast.makeText(context, "✅ In-App OTP Generated: $newOtp (Auto-filled)", Toast.LENGTH_SHORT).show()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple.copy(alpha = 0.12f)),
-                            shape = PillShape,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(46.dp),
-                            enabled = !isLoading && phoneInput.length == 10 && isAuthorized
-                        ) {
-                            Text(
-                                text = "⚡ Get Instant In-App OTP (No WhatsApp)",
-                                color = PrimaryPurple,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // 2. Secondary Fast2SMS / Direct Instant OTP option
-                        TextButton(
-                            onClick = {
-                                if (!isAuthorized) {
-                                    Toast.makeText(
-                                        context,
-                                        "⛔ Mobile number is not authorized by SVM FLEET management.",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                    return@TextButton
-                                }
-
-                                isLoading = true
-                                scope.launch {
-                                    val newOtp = (1000..9999).random().toString()
-                                    generatedDemoOtp = newOtp
-                                    otpCode = newOtp
-
-                                    val fast2smsResult = Fast2SmsHelper.sendOtp(phoneInput, newOtp)
-                                    isLoading = false
-                                    isOtpSent = true
-
-                                    when (fast2smsResult) {
-                                        is Fast2SmsHelper.Result.Success -> {
-                                            Toast.makeText(context, "✅ SMS sent via Fast2SMS", Toast.LENGTH_LONG).show()
-                                        }
-                                        is Fast2SmsHelper.Result.Warning -> {
-                                            Toast.makeText(context, fast2smsResult.message, Toast.LENGTH_LONG).show()
-                                        }
-                                        is Fast2SmsHelper.Result.Error -> {
-                                            Toast.makeText(context, "SVM FLEET OTP: $newOtp", Toast.LENGTH_LONG).show()
-                                        }
-                                    }
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = phoneInput.length == 10 && isAuthorized
-                        ) {
-                            Text(
-                                text = "Or send via SMS / Instant Code",
-                                color = if (isAuthorized) TextGray else TextMutedGray,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
                     }
                 } else {
+                    // Official In-App SVM FLEET OTP Card
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFEDE7F6))
+                            .border(1.dp, PrimaryPurple.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 14.dp, vertical = 12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = PrimaryPurple,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "SVM FLEET OTP: $generatedDemoOtp",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = PrimaryPurple
+                                )
+                                Text(
+                                    text = "Secure in-app code • Auto-filled below for instant verification",
+                                    fontSize = 11.sp,
+                                    color = TextDark.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     // OTP Input & Resend
                     OutlinedTextField(
                         value = otpCode,
@@ -836,7 +726,7 @@ fun LoginScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "OTP: $generatedDemoOtp",
+                            text = "Code: $generatedDemoOtp",
                             color = PrimaryPurple,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -845,22 +735,16 @@ fun LoginScreen(
                             val newCode = (1000..9999).random().toString()
                             generatedDemoOtp = newCode
                             otpCode = newCode
-                            WhatsAppHelper.sendOtpViaWhatsApp(
-                                context = context,
-                                recipientPhone = phoneInput,
-                                otpCode = newCode,
-                                isOwner = authStatus is AuthStatus.OwnerAuthorized
-                            )
-                            Toast.makeText(context, "Resent via WhatsApp: $newCode", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "✅ New SVM FLEET OTP: $newCode", Toast.LENGTH_SHORT).show()
                         }) {
-                            Text(text = "Resend WhatsApp", color = Color(0xFF25D366), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "🔄 Resend OTP", color = PrimaryPurple, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                // Primary Verify & Access Button
+                // Primary Verify & Access Button (Live Production Mode: is_demo_mode = false)
                 Button(
                     onClick = {
                         if (!isOtpSent) {
@@ -876,9 +760,10 @@ fun LoginScreen(
 
                         when (authStatus) {
                             is AuthStatus.OwnerAuthorized -> {
-                                // Save Persistent Owner Session
+                                // Save Persistent Owner Session (Live DB Dynamic Mode)
                                 sessionPrefs.edit()
                                     .putBoolean("is_logged_in", true)
+                                    .putBoolean("is_demo_mode", false)
                                     .putString("role", "OWNER")
                                     .putString("phone", phoneInput)
                                     .apply()
@@ -887,9 +772,10 @@ fun LoginScreen(
                                 onLoginSuccess()
                             }
                             is AuthStatus.DriverAuthorized -> {
-                                // Save Persistent Driver Shift Session
+                                // Save Persistent Driver Shift Session (Live DB Dynamic Mode)
                                 sessionPrefs.edit()
                                     .putBoolean("is_logged_in", true)
+                                    .putBoolean("is_demo_mode", false)
                                     .putString("role", "DRIVER")
                                     .putString("phone", phoneInput)
                                     .putLong("driver_id", authStatus.driverId)
@@ -925,7 +811,7 @@ fun LoginScreen(
                     )
                 }
 
-                // Direct 1-Tap Quick Access Buttons (Instant 1-Click Testing)
+                // Direct 1-Tap Quick Access Demo Buttons (Showcase Static Mode: is_demo_mode = true)
                 if (selectedRole == LoginRole.DRIVER) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Button(
@@ -933,6 +819,7 @@ fun LoginScreen(
                             val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
                             sessionPrefs.edit()
                                 .putBoolean("is_logged_in", true)
+                                .putBoolean("is_demo_mode", true)
                                 .putString("role", "DRIVER")
                                 .putString("phone", "9886210100")
                                 .putLong("driver_id", 20L)
@@ -940,7 +827,7 @@ fun LoginScreen(
                                 .putBoolean("is_shift_active", false)
                                 .apply()
 
-                            Toast.makeText(context, "⚡ Welcome, Anji Babu! Opening Driver Shift Companion...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "⚡ Welcome, Anji Babu! Opening Driver Shift Demo...", Toast.LENGTH_SHORT).show()
                             onDriverCompanionClick()
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = ActiveGreen),
@@ -957,7 +844,7 @@ fun LoginScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "⚡ 1-Tap Driver Shift (Anji Babu)",
+                            text = "⚡ 1-Tap Driver Demo (Anji Babu)",
                             color = Color.White,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
@@ -970,11 +857,12 @@ fun LoginScreen(
                             val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
                             sessionPrefs.edit()
                                 .putBoolean("is_logged_in", true)
+                                .putBoolean("is_demo_mode", true)
                                 .putString("role", "OWNER")
                                 .putString("phone", "9391915013")
                                 .apply()
 
-                            Toast.makeText(context, "🛡️ Welcome, Akhilesh! Accessing Owner Portal...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "🛡️ Welcome, Akhilesh! Accessing Owner Demo...", Toast.LENGTH_SHORT).show()
                             onLoginSuccess()
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
@@ -991,7 +879,7 @@ fun LoginScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "⚡ 1-Tap Owner Portal (Akhilesh)",
+                            text = "⚡ 1-Tap Owner Demo (Showcase)",
                             color = Color.White,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold

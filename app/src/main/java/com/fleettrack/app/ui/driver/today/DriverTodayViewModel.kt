@@ -1,5 +1,6 @@
 package com.fleettrack.app.ui.driver.today
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fleettrack.app.data.local.entity.DriverEntity
@@ -13,12 +14,14 @@ import com.fleettrack.app.data.repository.VehicleRepository
 import com.fleettrack.app.data.session.ShiftManager
 import com.fleettrack.app.data.session.ShiftSession
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -39,11 +42,16 @@ data class DriverPlatformSummary(
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class DriverTodayViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val rideRepository: RideRepository,
     private val driverRepository: DriverRepository,
     private val vehicleRepository: VehicleRepository,
     private val shiftManager: ShiftManager
 ) : ViewModel() {
+
+    private val isDemoMode: Boolean
+        get() = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
+            .getBoolean("is_demo_mode", false)
 
     private val startOfDay: Instant = Clock.System.now() - 14.hours
 
@@ -74,8 +82,10 @@ class DriverTodayViewModel @Inject constructor(
     val todayRides: StateFlow<List<RideEntity>> = shiftSession.flatMapLatest { session ->
         if (session.isShiftActive && session.vehicleId != null) {
             rideRepository.getTodayRidesForVehicle(session.vehicleId, startOfDay)
-        } else {
+        } else if (isDemoMode) {
             rideRepository.getTodayRides(startOfDay)
+        } else {
+            flowOf(emptyList())
         }
     }.stateIn(
         scope = viewModelScope,
@@ -86,8 +96,10 @@ class DriverTodayViewModel @Inject constructor(
     val todaySummary: StateFlow<RideSummary> = shiftSession.flatMapLatest { session ->
         if (session.isShiftActive && session.vehicleId != null) {
             rideRepository.getTodaySummaryForVehicle(session.vehicleId, startOfDay)
-        } else {
+        } else if (isDemoMode) {
             rideRepository.getTodaySummary(startOfDay)
+        } else {
+            flowOf(RideSummary())
         }
     }.stateIn(
         scope = viewModelScope,
