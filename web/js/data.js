@@ -323,20 +323,28 @@ class FleetDataRepository {
     }
 
     updateCloudStatusIndicator(connected) {
-        const el = document.getElementById("db-cloud-indicator");
-        if (!el) return;
-        if (connected) {
-            el.innerHTML = `
-                <span class="pulse-dot"></span>
-                <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Cloud DB Synced</span>
-            `;
-            el.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30";
-        } else {
-            el.innerHTML = `
-                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Offline Cache</span>
-            `;
-            el.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-950/40 border border-amber-500/30";
+        const mobileEl = document.getElementById("db-cloud-indicator");
+        const desktopEl = document.getElementById("db-cloud-indicator-desktop");
+        
+        const html = connected
+            ? `<span class="pulse-dot"></span><span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Cloud DB Live</span>`
+            : `<span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Offline Cache</span>`;
+            
+        const mobileClass = connected
+            ? "flex md:hidden items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 shadow-sm"
+            : "flex md:hidden items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-950/40 border border-amber-500/30";
+
+        const desktopClass = connected
+            ? "hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 shadow-sm"
+            : "hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-950/40 border border-amber-500/30";
+
+        if (mobileEl) {
+            mobileEl.innerHTML = html;
+            mobileEl.className = mobileClass;
+        }
+        if (desktopEl) {
+            desktopEl.innerHTML = html;
+            desktopEl.className = desktopClass;
         }
     }
 

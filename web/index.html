@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>SVM FLEET | Commercial Fleet Operating System</title>
     
     <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
@@ -23,8 +26,59 @@
     <!-- Supabase JS Client (v2 CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Custom Glassmorphism Stylesheet -->
-    <link rel="stylesheet" href="css/styles.css">
+    <!-- Critical Modal & Glassmorphism Inline Failsafe Styles (Immune to Cache) -->
+    <style>
+        .modal-overlay {
+            display: none !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            inset: 0 !important;
+            z-index: 999999 !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: rgba(3, 5, 12, 0.88) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            padding: 1.25rem !important;
+            overflow-y: auto !important;
+            margin: 0 !important;
+        }
+        .modal-overlay.open {
+            display: flex !important;
+        }
+        body.modal-open {
+            overflow: hidden !important;
+            touch-action: none !important;
+        }
+        .modal-dialog-box {
+            width: 100% !important;
+            max-height: calc(100vh - 2.5rem) !important;
+            overflow-y: auto !important;
+            margin: auto !important;
+            position: relative !important;
+            transform: translateY(0) scale(1) !important;
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease !important;
+        }
+        .modal-overlay:not(.open) .modal-dialog-box {
+            transform: translateY(16px) scale(0.96) !important;
+            opacity: 0 !important;
+        }
+        .modal-overlay.open .modal-dialog-box {
+            animation: modalSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        }
+        @keyframes modalSlideIn {
+            0% { opacity: 0; transform: translateY(16px) scale(0.96); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
+
+    <!-- Custom Glassmorphism Stylesheet (with Cache-Busting Query String) -->
+    <link rel="stylesheet" href="css/styles.css?v=20261109_v2_executive">
 </head>
 <body class="bg-[#080A0F] text-slate-100 min-h-screen flex flex-col font-sans selection:bg-[#6366F1] selection:text-white">
 
@@ -35,18 +89,18 @@
             <!-- Brand & Hub Status -->
             <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6366F1] to-purple-600 flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-500/25 border border-white/20">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6366F1] via-indigo-600 to-purple-600 flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-500/30 border border-white/20">
                         🚕
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="font-extrabold text-lg tracking-wider text-white">SVM FLEET</span>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-900/60 text-indigo-300 border border-indigo-500/30 font-mono">
-                                v1.0.43
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-900/60 text-indigo-300 border border-indigo-500/40 font-mono shadow-sm">
+                                v2.0 PRO
                             </span>
                         </div>
                         <p class="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-                            <span class="pulse-dot"></span> Moosapet • Kukatpally • Madhapur
+                            <span class="pulse-dot"></span> Moosapet Central • Kukatpally • Madhapur
                         </p>
                     </div>
                 </div>
@@ -67,15 +121,15 @@
                 </div>
 
                 <!-- Custom Styled Role Switcher -->
-                <div class="flex items-center gap-2 bg-[#0E121C] border border-white/10 rounded-xl px-3 py-1.5">
+                <div class="flex items-center gap-2 bg-[#0E121C] border border-white/10 rounded-xl px-3 py-1.5 shadow-sm">
                     <i data-lucide="shield" class="w-4 h-4 text-indigo-400"></i>
                     <select id="role-selector" class="bg-transparent text-xs font-bold text-slate-200 outline-none cursor-pointer">
                         <!-- Populated by JS -->
                     </select>
                 </div>
 
-                <!-- Direct Open Manual Shift Entry Button -->
-                <button id="btn-open-manual-entry" class="px-4 py-2 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-500/30 transition-all border border-indigo-400/30">
+                <!-- Direct Open Manual Shift Entry Button (Double bound with inline onclick + JS listener) -->
+                <button id="btn-open-manual-entry" type="button" onclick="window.SVM_APP.openManualEntryModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-500/30 transition-all border border-indigo-400/30 active:scale-95 cursor-pointer">
                     <i data-lucide="plus-circle" class="w-4 h-4"></i>
                     <span>+ Manual Shift Entry</span>
                 </button>
@@ -430,15 +484,16 @@
     <!-- MODAL 1: MANUAL SHIFT ENTRY (Guaranteed Pop-up via .modal-overlay)     -->
     <!-- ---------------------------------------------------------------------- -->
     <div id="manual-entry-modal" class="modal-overlay">
-        <div class="glass-panel-elevated max-w-2xl w-full p-6 border border-white/15 relative my-8 shadow-2xl">
+        <div class="modal-dialog-box glass-panel-elevated max-w-2xl w-full p-6 border border-white/15 relative shadow-2xl">
             <div class="flex justify-between items-start pb-4 border-b border-white/10">
                 <div>
                     <h3 class="font-extrabold text-lg text-white flex items-center gap-2">
-                        <span>📝</span> Manual Duty Register Entry
+                        <span class="w-7 h-7 rounded-lg bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center text-sm">📝</span>
+                        <span>Manual Duty Register Entry</span>
                     </h3>
                     <p class="text-xs text-slate-400 mt-0.5">Moosapet Hub paper logbook digital entry with live commission & fuel calculation</p>
                 </div>
-                <button onclick="window.SVM_APP.closeManualEntryModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800">
+                <button type="button" onclick="window.SVM_APP.closeManualEntryModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -555,7 +610,7 @@
                     </div>
                     <div class="flex justify-between items-center text-xs">
                         <span class="text-slate-400">Commission Amount:</span>
-                        <span id="calc-preview-comm-amt" class="font-bold text-white">--</span>
+                        <span id="calc-preview-comm-amt" class="font-bold text-white font-mono">--</span>
                     </div>
                     <div class="flex justify-between items-center text-xs">
                         <span class="text-slate-400">Total Driver Credit (Commission + Fuel):</span>
@@ -572,10 +627,10 @@
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" onclick="window.SVM_APP.closeManualEntryModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700">
+                    <button type="button" onclick="window.SVM_APP.closeManualEntryModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-colors">
                         Cancel
                     </button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-bold shadow-lg shadow-indigo-500/25">
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-xs font-bold shadow-lg shadow-indigo-500/30 transition-all">
                         Save & Settle Shift Log
                     </button>
                 </div>
@@ -587,31 +642,39 @@
     <!-- MODAL 2: TRANSFER CAR / DRIVER TO ANOTHER HUB                          -->
     <!-- ---------------------------------------------------------------------- -->
     <div id="reassign-hub-modal" class="modal-overlay">
-        <div class="glass-panel-elevated max-w-md w-full p-6 border border-white/15 relative shadow-2xl">
-            <h3 class="font-bold text-base text-white mb-1 flex items-center gap-2">
-                <span>🔄</span> Transfer Vehicle & Driver Hub
-            </h3>
-            <p class="text-xs text-slate-400 mb-4">Reassign operational hub and supervising manager</p>
+        <div class="modal-dialog-box glass-panel-elevated max-w-md w-full p-6 border border-white/15 relative shadow-2xl">
+            <div class="flex justify-between items-start pb-3 border-b border-white/10 mb-4">
+                <div>
+                    <h3 class="font-bold text-base text-white flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center text-xs">🔄</span>
+                        <span>Transfer Vehicle & Driver Hub</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Reassign operational hub and supervising manager</p>
+                </div>
+                <button type="button" onclick="window.SVM_APP.closeReassignModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
 
             <form onsubmit="window.SVM_APP.submitReassignment(event)" class="space-y-4">
                 <input type="hidden" id="reassign-vehicle-id" />
-                <div class="p-3 rounded-lg bg-[#0E121C] border border-white/10 text-xs">
+                <div class="p-3.5 rounded-xl bg-[#0E121C] border border-white/10 text-xs">
                     <span class="text-slate-400">Target Vehicle:</span>
-                    <strong id="reassign-vehicle-title" class="text-white block font-mono text-sm mt-0.5">--</strong>
+                    <strong id="reassign-vehicle-title" class="text-white block font-mono text-sm mt-1">--</strong>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Select New Destination Hub</label>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5">Select New Destination Hub</label>
                     <select id="reassign-target-hub" class="w-full bg-[#0E121C] border border-white/15 rounded-xl px-3 py-2 text-xs text-white">
                         <!-- Populated by JS -->
                     </select>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" onclick="window.SVM_APP.closeReassignModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+                    <button type="button" onclick="window.SVM_APP.closeReassignModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-colors">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-[#6366F1] text-white text-xs font-bold">
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 transition-all">
                         Confirm Transfer
                     </button>
                 </div>
@@ -620,15 +683,15 @@
     </div>
 
     <!-- Floating Action Button for Quick Shift Entry (Mobile & Desktop) -->
-    <button onclick="window.SVM_APP.openManualEntryModal()" class="fixed bottom-6 right-6 md:hidden w-14 h-14 rounded-full bg-[#6366F1] hover:bg-[#4F46E5] text-white flex items-center justify-center shadow-2xl shadow-indigo-500/50 z-40 border border-white/20 active:scale-95 transition-all" title="Add Shift">
+    <button type="button" onclick="window.SVM_APP.openManualEntryModal()" class="fixed bottom-6 right-6 md:hidden w-14 h-14 rounded-full bg-[#6366F1] hover:bg-[#4F46E5] text-white flex items-center justify-center shadow-2xl shadow-indigo-500/50 z-40 border border-white/20 active:scale-95 transition-all" title="Add Shift">
         <i data-lucide="plus" class="w-6 h-6"></i>
     </button>
 
-    <!-- Application Core Scripts -->
-    <script src="js/config.js"></script>
-    <script src="js/calculator.js"></script>
-    <script src="js/data.js"></script>
-    <script src="js/map.js"></script>
-    <script src="js/app.js"></script>
+    <!-- Application Core Scripts with Cache-Busting Version Query Strings -->
+    <script src="js/config.js?v=20261109_v2_executive"></script>
+    <script src="js/calculator.js?v=20261109_v2_executive"></script>
+    <script src="js/data.js?v=20261109_v2_executive"></script>
+    <script src="js/map.js?v=20261109_v2_executive"></script>
+    <script src="js/app.js?v=20261109_v2_executive"></script>
 </body>
 </html>

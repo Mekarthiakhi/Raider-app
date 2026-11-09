@@ -67,6 +67,29 @@ class SvmFleetApp {
                 el.addEventListener("change", () => this.updateModalCalculation());
             }
         });
+
+        // Backdrop click dismissal for modals
+        const manualModal = document.getElementById("manual-entry-modal");
+        if (manualModal) {
+            manualModal.addEventListener("click", (e) => {
+                if (e.target === manualModal) this.closeManualEntryModal();
+            });
+        }
+
+        const reassignModal = document.getElementById("reassign-hub-modal");
+        if (reassignModal) {
+            reassignModal.addEventListener("click", (e) => {
+                if (e.target === reassignModal) this.closeReassignModal();
+            });
+        }
+
+        // Escape key to dismiss modals
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                this.closeManualEntryModal();
+                this.closeReassignModal();
+            }
+        });
     }
 
     renderRoleSelector() {
@@ -783,15 +806,22 @@ class SvmFleetApp {
             console.warn("Error setting modal values:", e);
         }
 
-        // Guaranteed display via .open class on modal-overlay
+        // Guaranteed display via inline style and .open class on modal-overlay
+        modal.style.setProperty("display", "flex", "important");
         modal.classList.add("open");
+        modal.scrollTop = 0;
+        document.body.classList.add("modal-open");
+        document.body.style.overflow = "hidden";
     }
 
     closeManualEntryModal() {
         const modal = document.getElementById("manual-entry-modal");
         if (modal) {
+            modal.style.display = "none";
             modal.classList.remove("open");
         }
+        document.body.classList.remove("modal-open");
+        document.body.style.overflow = "";
     }
 
     updateModalCalculation() {
@@ -912,12 +942,21 @@ class SvmFleetApp {
             <option value="${h.id}" ${v.managerId === h.id ? 'selected' : ''}>${h.name} (${h.managerName})</option>
         `).join("");
 
+        modal.style.setProperty("display", "flex", "important");
         modal.classList.add("open");
+        modal.scrollTop = 0;
+        document.body.classList.add("modal-open");
+        document.body.style.overflow = "hidden";
     }
 
     closeReassignModal() {
         const modal = document.getElementById("reassign-hub-modal");
-        if (modal) modal.classList.remove("open");
+        if (modal) {
+            modal.style.display = "none";
+            modal.classList.remove("open");
+        }
+        document.body.classList.remove("modal-open");
+        document.body.style.overflow = "";
     }
 
     submitReassignment(e) {

@@ -5,7 +5,7 @@
 
 const APP_CONFIG = {
     appName: "SVM FLEET Operating System",
-    version: "v1.0.43 (Enterprise Web Edition)",
+    version: "v2.0 PRO (Executive Glassmorphism Edition)",
     city: "Hyderabad, Telangana",
     masterPin: "7777",
     
