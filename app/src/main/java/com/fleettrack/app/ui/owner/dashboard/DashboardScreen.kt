@@ -3,6 +3,8 @@ package com.fleettrack.app.ui.owner.dashboard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -169,6 +171,49 @@ fun DashboardScreen(
                             tint = InactiveRed,
                             modifier = Modifier.size(20.dp)
                         )
+                    }
+                }
+            }
+        }
+
+        // 2. Hub Filter & Multi-Manager Quick Strip
+        item {
+            var selectedHub by remember { mutableStateOf("All Hubs") }
+            val hubs = listOf(
+                Pair("All Hubs", "30 Cabs • Master"),
+                Pair("Moosapet Hub", "12 Cabs • Srinivas"),
+                Pair("Kukatpally Hub", "10 Cabs • Venkatesh"),
+                Pair("Madhapur Hub", "8 Cabs • Farooq")
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                hubs.forEach { hub ->
+                    val isSelected = selectedHub == hub.first
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (isSelected) PrimaryPurple else SurfaceWhite)
+                            .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, RoundedCornerShape(10.dp))
+                            .clickable { selectedHub = hub.first }
+                            .padding(horizontal = 12.dp, vertical = 7.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = hub.first,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSelected) Color.White else TextDark
+                            )
+                            Text(
+                                text = hub.second,
+                                fontSize = 10.sp,
+                                color = if (isSelected) Color.White.copy(alpha = 0.85f) else TextMutedGray
+                            )
+                        }
                     }
                 }
             }

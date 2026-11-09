@@ -37,7 +37,9 @@ data class SupabaseDutyLogDto(
     val payment_online: Double,
     val net_balance: Double,
     val status: String,
-    val remarks: String? = null
+    val remarks: String? = null,
+    val manager_id: String? = null,
+    val logged_by_role: String = "MANAGER"
 )
 
 @Singleton
@@ -48,13 +50,24 @@ class DutyLogRepository @Inject constructor(
 
     fun searchDutyLogs(query: String): Flow<List<DutyLogEntity>> = dutyLogDao.searchDutyLogs(query)
 
+    fun getDutyLogsByManager(managerId: String): Flow<List<DutyLogEntity>> = dutyLogDao.getDutyLogsByManager(managerId)
+
+    fun searchDutyLogsByManager(managerId: String, query: String): Flow<List<DutyLogEntity>> =
+        dutyLogDao.searchDutyLogsByManager(managerId, query)
+
     suspend fun getDutyLogById(id: Long): DutyLogEntity? = dutyLogDao.getDutyLogById(id)
 
     fun getTotalEarnings(): Flow<Double> = dutyLogDao.getTotalEarnings()
 
+    fun getTotalEarningsByManager(managerId: String): Flow<Double> = dutyLogDao.getTotalEarningsByManager(managerId)
+
     fun getTotalCashCollection(): Flow<Double> = dutyLogDao.getTotalCashCollection()
 
+    fun getTotalCashCollectionByManager(managerId: String): Flow<Double> = dutyLogDao.getTotalCashCollectionByManager(managerId)
+
     fun getTotalTrips(): Flow<Int> = dutyLogDao.getTotalTrips()
+
+    fun getTotalTripsByManager(managerId: String): Flow<Int> = dutyLogDao.getTotalTripsByManager(managerId)
 
     suspend fun saveDutyLog(entity: DutyLogEntity): Long {
         val id = dutyLogDao.insert(entity)
@@ -114,7 +127,9 @@ class DutyLogRepository @Inject constructor(
                                 netBalance = remote.net_balance,
                                 status = remote.status,
                                 remarks = remote.remarks,
-                                supabaseId = remote.id
+                                supabaseId = remote.id,
+                                managerId = remote.manager_id,
+                                loggedByRole = remote.logged_by_role ?: "MANAGER"
                             )
                         )
                     }
@@ -155,7 +170,9 @@ class DutyLogRepository @Inject constructor(
                 payment_online = log.paymentOnline,
                 net_balance = log.netBalance,
                 status = log.status,
-                remarks = log.remarks
+                remarks = log.remarks,
+                manager_id = log.managerId,
+                logged_by_role = log.loggedByRole
             )
             SupabaseClientProvider.client.from("office_duty_logs").upsert(dto)
             Timber.d("Successfully synced duty log to Supabase: %s", log.driverName)

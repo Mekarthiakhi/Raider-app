@@ -1,0 +1,168 @@
+/* SVM FLEET Web Operating System - Design System & Styles */
+:root {
+    --bg-dark: #0B0D12;
+    --surface-dark: #12151C;
+    --surface-card: #181C26;
+    --surface-border: #232836;
+    --primary-purple: #5B36F5;
+    --primary-purple-hover: #4a2ae0;
+    --primary-purple-glow: rgba(91, 54, 245, 0.25);
+    --active-green: #2ED3A0;
+    --active-green-glow: rgba(46, 211, 160, 0.2);
+    --earnings-gold: #E9B949;
+    --alert-coral: #FF5C6C;
+    --info-blue: #38BDF8;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+    background: rgba(24, 28, 38, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--surface-border);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+    border-color: rgba(91, 54, 245, 0.4);
+    box-shadow: 0 10px 40px 0 rgba(91, 54, 245, 0.15);
+}
+
+.glass-panel {
+    background: rgba(18, 21, 28, 0.95);
+    border: 1px solid var(--surface-border);
+    border-radius: 14px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--surface-dark);
+}
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-purple);
+}
+
+/* Leaflet Dark Theme Overrides */
+.leaflet-container {
+    background-color: #0b0d12 !important;
+    font-family: inherit;
+}
+.leaflet-bar a {
+    background-color: var(--surface-card) !important;
+    border-color: var(--surface-border) !important;
+    color: var(--text-primary) !important;
+}
+.leaflet-bar a:hover {
+    background-color: var(--primary-purple) !important;
+    color: #fff !important;
+}
+.leaflet-popup-content-wrapper {
+    background: var(--surface-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+}
+.leaflet-popup-tip {
+    background: var(--surface-card) !important;
+}
+
+/* Custom Vehicle Map Markers */
+.cab-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--surface-card);
+    border: 2px solid var(--primary-purple);
+    box-shadow: 0 0 12px var(--primary-purple-glow);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.cab-marker.active {
+    border-color: var(--active-green);
+    box-shadow: 0 0 14px var(--active-green-glow);
+}
+.cab-marker.idle {
+    border-color: var(--earnings-gold);
+}
+.cab-marker:hover {
+    transform: scale(1.18);
+    z-index: 9999 !important;
+}
+
+/* Pulsing Online Dot */
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--active-green);
+    box-shadow: 0 0 0 0 rgba(46, 211, 160, 0.7);
+    animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 211, 160, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(46, 211, 160, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 211, 160, 0);
+    }
+}
+
+/* Print Styles for A4 Statement Export */
+@media print {
+    body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+    .no-print, header, aside, .map-container, .role-selector, .quick-actions {
+        display: none !important;
+    }
+    .print-area {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .glass-card {
+        border: 1px solid #ddd !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        color: #000 !important;
+    }
+}

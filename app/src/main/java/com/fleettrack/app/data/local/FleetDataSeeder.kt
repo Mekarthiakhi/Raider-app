@@ -2,6 +2,7 @@ package com.fleettrack.app.data.local
 
 import com.fleettrack.app.data.local.entity.DriverEntity
 import com.fleettrack.app.data.local.entity.DutyLogEntity
+import com.fleettrack.app.data.local.entity.ManagerEntity
 import com.fleettrack.app.data.local.entity.RideEntity
 import com.fleettrack.app.data.local.entity.VehicleEntity
 import com.fleettrack.app.data.model.Platform
@@ -9,6 +10,7 @@ import com.fleettrack.app.data.model.RideStatus
 import com.fleettrack.app.data.model.SyncStatus
 import com.fleettrack.app.data.repository.DriverRepository
 import com.fleettrack.app.data.repository.DutyLogRepository
+import com.fleettrack.app.data.repository.ManagerRepository
 import com.fleettrack.app.data.repository.RideRepository
 import com.fleettrack.app.data.repository.VehicleRepository
 import com.fleettrack.app.util.SvmCommissionCalculator
@@ -30,7 +32,8 @@ class FleetDataSeeder @Inject constructor(
     private val vehicleRepository: VehicleRepository,
     private val driverRepository: DriverRepository,
     private val rideRepository: RideRepository,
-    private val dutyLogRepository: DutyLogRepository
+    private val dutyLogRepository: DutyLogRepository,
+    private val managerRepository: ManagerRepository
 ) {
     private val carModels = listOf(
         "Hyundai Aura", "Maruti Dzire", "Honda Amaze", "Tata Tigor",
@@ -81,12 +84,74 @@ class FleetDataSeeder @Inject constructor(
         "Miyapur Allwyn X Road", "Panjagutta Central Mall", "KPHB Colony Phase 3"
     )
 
-    suspend fun seedIfEmpty() {
-        val existingVehicles = vehicleRepository.getAllVehicles().first()
-        if (existingVehicles.isNotEmpty()) return
+    private fun getManagerForIndex(index: Int): String {
+        return when {
+            index <= 12 -> "mgr_moosapet_01"
+            index <= 22 -> "mgr_kukatpally_02"
+            else -> "mgr_madhapur_03"
+        }
+    }
 
+    suspend fun seedIfEmpty() {
         val now = Clock.System.now()
         val fleetId = "svm_fleet_hyderabad"
+
+        // Seed Managers if empty
+        val existingManagers = managerRepository.getAllManagers().first()
+        if (existingManagers.isEmpty()) {
+            val managersToInsert = listOf(
+                ManagerEntity(
+                    id = "mgr_moosapet_01",
+                    name = "Srinivas Rao",
+                    phone = "9849012345",
+                    hubName = "Moosapet Central Hub",
+                    pinCode = "1234",
+                    isActive = true,
+                    ownerId = "owner_akhilesh",
+                    createdAt = now - 60.hours
+                ),
+                ManagerEntity(
+                    id = "mgr_kukatpally_02",
+                    name = "Venkatesh Naidu",
+                    phone = "9701234567",
+                    hubName = "Kukatpally Y-Junction Hub",
+                    pinCode = "2345",
+                    isActive = true,
+                    ownerId = "owner_akhilesh",
+                    createdAt = now - 60.hours
+                ),
+                ManagerEntity(
+                    id = "mgr_madhapur_03",
+                    name = "Mohammed Farooq",
+                    phone = "9989056789",
+                    hubName = "Madhapur / Hitec City Hub",
+                    pinCode = "3456",
+                    isActive = true,
+                    ownerId = "owner_akhilesh",
+                    createdAt = now - 60.hours
+                )
+            )
+            managerRepository.insertManagers(managersToInsert)
+
+            // If vehicles exist, retroactively assign managers to drivers & vehicles
+            val existingVehicles = vehicleRepository.getAllVehicles().first()
+            if (existingVehicles.isNotEmpty()) {
+                val drivers = driverRepository.getAllDrivers().first()
+                drivers.forEachIndexed { idx, d ->
+                    if (d.managerId == null) {
+                        driverRepository.assignDriverToManager(d.id, getManagerForIndex(idx + 1))
+                    }
+                }
+                existingVehicles.forEachIndexed { idx, v ->
+                    if (v.managerId == null) {
+                        vehicleRepository.assignVehicleToManager(v.id, getManagerForIndex(idx + 1))
+                    }
+                }
+            }
+        }
+
+        val existingVehicles = vehicleRepository.getAllVehicles().first()
+        if (existingVehicles.isNotEmpty()) return
 
         // 1. Create 30 Drivers (SVM Fleet)
         val driversToInsert = driverList.mapIndexed { index, pair ->
@@ -96,7 +161,8 @@ class FleetDataSeeder @Inject constructor(
                 name = pair.first,
                 phone = pair.second,
                 consentAt = now - 10.hours,
-                supabaseId = "drv_${index + 1}"
+                supabaseId = "drv_${index + 1}",
+                managerId = getManagerForIndex(index + 1)
             )
         }
         driverRepository.insertAll(driversToInsert)
@@ -119,7 +185,8 @@ class FleetDataSeeder @Inject constructor(
                 nickname = model,
                 status = if (index <= 28) "active" else "idle",
                 supabaseId = "veh_$index",
-                createdAt = now - 30.hours
+                createdAt = now - 30.hours,
+                managerId = getManagerForIndex(index)
             )
         }
         vehicleRepository.insertAll(vehiclesToInsert)
@@ -147,7 +214,8 @@ class FleetDataSeeder @Inject constructor(
                 paymentOnline = 278.0,
                 netBalance = 0.0,
                 status = "SETTLED",
-                remarks = "Settled online via UPI. Good performance."
+                remarks = "Settled online via UPI. Good performance.",
+                managerId = "mgr_moosapet_01"
             ),
             DutyLogEntity(
                 fleetId = fleetId,
@@ -170,7 +238,8 @@ class FleetDataSeeder @Inject constructor(
                 paymentOnline = 0.0,
                 netBalance = 0.0,
                 status = "SETTLED",
-                remarks = "Trips below 10 min threshold. Flat vehicle rent settled."
+                remarks = "Trips below 10 min threshold. Flat vehicle rent settled.",
+                managerId = "mgr_moosapet_01"
             ),
             DutyLogEntity(
                 fleetId = fleetId,
@@ -193,7 +262,8 @@ class FleetDataSeeder @Inject constructor(
                 paymentOnline = 450.0,
                 netBalance = 0.0,
                 status = "SETTLED",
-                remarks = "35% commission applied. On time."
+                remarks = "35% commission applied. On time.",
+                managerId = "mgr_moosapet_01"
             ),
             DutyLogEntity(
                 fleetId = fleetId,
@@ -216,7 +286,8 @@ class FleetDataSeeder @Inject constructor(
                 paymentOnline = 350.0,
                 netBalance = 0.0,
                 status = "SETTLED",
-                remarks = "High collection day."
+                remarks = "High collection day.",
+                managerId = "mgr_moosapet_01"
             ),
             DutyLogEntity(
                 fleetId = fleetId,
@@ -239,7 +310,8 @@ class FleetDataSeeder @Inject constructor(
                 paymentOnline = 0.0,
                 netBalance = -1300.0,
                 status = "OPEN",
-                remarks = "Active shift. Evening settlement pending."
+                remarks = "Active shift. Evening settlement pending.",
+                managerId = "mgr_moosapet_01"
             ),
             DutyLogEntity(
                 fleetId = fleetId,
@@ -262,7 +334,8 @@ class FleetDataSeeder @Inject constructor(
                 paymentOnline = 1200.0,
                 netBalance = 0.0,
                 status = "SETTLED",
-                remarks = "24hr shift completed. 40% highest commission tier earned."
+                remarks = "24hr shift completed. 40% highest commission tier earned.",
+                managerId = "mgr_moosapet_01"
             )
         )
         dutyLogRepository.insertAll(officeDutyLogs)
@@ -315,7 +388,8 @@ class FleetDataSeeder @Inject constructor(
                         confidence = 1.0,
                         needsReview = false,
                         syncStatus = SyncStatus.SYNCED,
-                        createdAt = completedAt
+                        createdAt = completedAt,
+                        managerId = getManagerForIndex(cabIndex)
                     )
                 )
             }

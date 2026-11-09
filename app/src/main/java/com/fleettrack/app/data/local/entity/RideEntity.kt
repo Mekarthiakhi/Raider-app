@@ -32,7 +32,8 @@ import kotlinx.datetime.Instant
         Index(value = ["driver_id"]),
         Index(value = ["platform"]),
         Index(value = ["sync_status"]),
-        Index(value = ["needs_review"])
+        Index(value = ["needs_review"]),
+        Index(value = ["manager_id"])
     ]
 )
 data class RideEntity(
@@ -44,6 +45,9 @@ data class RideEntity(
 
     @ColumnInfo(name = "driver_id")
     val driverId: Long,
+
+    @ColumnInfo(name = "manager_id")
+    val managerId: String? = null,
 
     @ColumnInfo(name = "device_id")
     val deviceId: Long? = null,
@@ -99,4 +103,3 @@ data class RideEntity(
     @ColumnInfo(name = "created_at")
     val createdAt: Instant
 )
-

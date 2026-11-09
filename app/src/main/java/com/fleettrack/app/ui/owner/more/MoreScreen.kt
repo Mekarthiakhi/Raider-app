@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,6 +68,7 @@ fun MoreScreen(
     onNavigateToDocumentVault: () -> Unit = {},
     onNavigateToOfficeRegister: () -> Unit = {},
     onNavigateToDriverShift: () -> Unit = {},
+    onNavigateToManagers: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -169,6 +171,14 @@ fun MoreScreen(
                     title = "Driver Shift Companion",
                     subtitle = "Open driver shift mode, test live tracking & meter",
                     onClick = onNavigateToDriverShift
+                )
+
+                // Hub Fleet Managers (3-Tier Hierarchy)
+                MoreMenuItem(
+                    icon = Icons.Default.Shield,
+                    title = "Hub Fleet Managers",
+                    subtitle = "3 Hubs • Moosapet, Kukatpally, Madhapur • Driver Allocation",
+                    onClick = onNavigateToManagers
                 )
 
                 // Office Duty Register (SVM Commission Base)

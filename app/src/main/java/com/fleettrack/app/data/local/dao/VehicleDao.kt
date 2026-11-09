@@ -38,5 +38,19 @@ interface VehicleDao {
 
     @Query("SELECT COUNT(*) FROM vehicles WHERE status = 'active'")
     fun getActiveVehicleCount(): Flow<Int>
-}
 
+    @Query("SELECT * FROM vehicles WHERE manager_id = :managerId ORDER BY reg_no ASC")
+    fun getVehiclesByManager(managerId: String): Flow<List<VehicleEntity>>
+
+    @Query("SELECT * FROM vehicles WHERE manager_id = :managerId ORDER BY reg_no ASC")
+    suspend fun getVehiclesListByManager(managerId: String): List<VehicleEntity>
+
+    @Query("SELECT * FROM vehicles WHERE manager_id IS NULL OR manager_id = '' ORDER BY reg_no ASC")
+    fun getUnassignedVehicles(): Flow<List<VehicleEntity>>
+
+    @Query("UPDATE vehicles SET manager_id = :managerId WHERE id = :vehicleId")
+    suspend fun assignVehicleToManager(vehicleId: Long, managerId: String?)
+
+    @Query("SELECT COUNT(*) FROM vehicles WHERE manager_id = :managerId AND status = 'active'")
+    fun getActiveVehicleCountByManager(managerId: String): Flow<Int>
+}

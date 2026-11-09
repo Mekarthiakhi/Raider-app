@@ -1,11 +1,14 @@
-﻿package com.fleettrack.app.ui.navigation
+package com.fleettrack.app.ui.navigation
 
 import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Settings
@@ -41,6 +44,13 @@ sealed class NavItem(val screen: Screen, val label: String, val icon: ImageVecto
     data object Today : NavItem(Screen.DriverToday, "Today", Icons.Default.Today)
     data object Setup : NavItem(Screen.SetupWizard, "Setup", Icons.Default.Settings)
     data object Privacy : NavItem(Screen.PrivacyConsent, "Consent", Icons.Default.PrivacyTip)
+
+    // Manager 5 Tabs (Scoped Hub Management)
+    data object ManagerHome : NavItem(Screen.ManagerDashboard, "Overview", Icons.Default.Home)
+    data object ManagerDriversTab : NavItem(Screen.ManagerDrivers, "Drivers", Icons.Default.People)
+    data object ManagerCarsTab : NavItem(Screen.ManagerCars, "Cars", Icons.Default.DirectionsCar)
+    data object ManagerRegisterTab : NavItem(Screen.ManagerRegister, "Register", Icons.Default.Description)
+    data object ManagerLiveMapTab : NavItem(Screen.ManagerLiveTracking, "Live Map", Icons.Default.Navigation)
 }
 
 @Composable
@@ -131,6 +141,56 @@ fun DriverBottomBar(
                     unselectedIconColor = TextMutedGray,
                     unselectedTextColor = TextMutedGray,
                     indicatorColor = PrimaryPurpleContainer
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun ManagerBottomBar(
+    currentRoute: String?,
+    onNavigate: (Screen) -> Unit
+) {
+    val items = listOf(
+        NavItem.ManagerHome,
+        NavItem.ManagerDriversTab,
+        NavItem.ManagerCarsTab,
+        NavItem.ManagerRegisterTab,
+        NavItem.ManagerLiveMapTab
+    )
+
+    NavigationBar(
+        containerColor = SurfaceWhite,
+        tonalElevation = 4.dp,
+        modifier = Modifier.border(width = 1.dp, color = SurfaceBorder)
+    ) {
+        items.forEach { item ->
+            val isSelected = currentRoute == item.screen.route
+            NavigationBarItem(
+                selected = isSelected,
+                onClick = { onNavigate(item.screen) },
+                icon = {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.label,
+                        tint = if (isSelected) Color(0xFF0284C7) else TextMutedGray
+                    )
+                },
+                label = {
+                    Text(
+                        text = item.label,
+                        color = if (isSelected) Color(0xFF0284C7) else TextMutedGray,
+                        fontSize = 11.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                    )
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color(0xFF0284C7),
+                    selectedTextColor = Color(0xFF0284C7),
+                    unselectedIconColor = TextMutedGray,
+                    unselectedTextColor = TextMutedGray,
+                    indicatorColor = Color(0xFFE0F2FE)
                 )
             )
         }

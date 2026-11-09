@@ -79,6 +79,13 @@ import com.fleettrack.app.ui.owner.review.ReviewQueueViewModel
 import com.fleettrack.app.ui.owner.settings.SettingsScreen
 import com.fleettrack.app.ui.owner.tracking.LiveTrackingScreen
 import com.fleettrack.app.ui.owner.vault.DocumentVaultScreen
+import com.fleettrack.app.ui.managers.ManagersListScreen
+import com.fleettrack.app.ui.managers.ManagerDetailScreen
+import com.fleettrack.app.ui.manager.ManagerDashboardScreen
+import com.fleettrack.app.ui.manager.ManagerDriversScreen
+import com.fleettrack.app.ui.manager.ManagerCarsScreen
+import com.fleettrack.app.ui.manager.ManagerRegisterScreen
+import com.fleettrack.app.ui.manager.ManagerLiveTrackingScreen
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.CardShape
 import com.fleettrack.app.ui.theme.PillShape
@@ -107,6 +114,14 @@ fun FleetNavigation(
         Screen.More.route
     )
 
+    val isManagerRoute = currentRoute in listOf(
+        Screen.ManagerDashboard.route,
+        Screen.ManagerDrivers.route,
+        Screen.ManagerCars.route,
+        Screen.ManagerRegister.route,
+        Screen.ManagerLiveTracking.route
+    )
+
     val isDriverRoute = currentRoute in listOf(
         Screen.DriverToday.route,
         Screen.SetupWizard.route,
@@ -127,6 +142,24 @@ fun FleetNavigation(
                         } else {
                             navController.navigate(screen.route) {
                                 popUpTo(Screen.Dashboard.route) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
+                )
+            } else if (isManagerRoute) {
+                ManagerBottomBar(
+                    currentRoute = currentRoute,
+                    onNavigate = { screen ->
+                        if (screen.route == Screen.ManagerDashboard.route) {
+                            navController.navigate(Screen.ManagerDashboard.route) {
+                                popUpTo(Screen.ManagerDashboard.route) { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        } else {
+                            navController.navigate(screen.route) {
+                                popUpTo(Screen.ManagerDashboard.route) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
@@ -172,6 +205,11 @@ fun FleetNavigation(
                 LoginScreen(
                     onLoginSuccess = {
                         navController.navigate(Screen.Dashboard.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    },
+                    onManagerLoginSuccess = { managerId ->
+                        navController.navigate(Screen.ManagerDashboard.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     },
@@ -309,6 +347,7 @@ fun FleetNavigation(
                     onNavigateToDocumentVault = { navController.navigate(Screen.DocumentVault.route) },
                     onNavigateToOfficeRegister = { navController.navigate(Screen.OfficeRegister.route) },
                     onNavigateToDriverShift = { navController.navigate(Screen.DriverToday.route) },
+                    onNavigateToManagers = { navController.navigate(Screen.ManagersList.route) },
                     onLogoutClick = {
                         val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
                         sessionPrefs.edit().clear().apply()
@@ -462,6 +501,78 @@ fun FleetNavigation(
                 NodeInspectorScreen(
                     viewModel = vm,
                     onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            // ==========================================
+            // Owner's Hub Managers Control Center
+            // ==========================================
+            composable(Screen.ManagersList.route) {
+                ManagersListScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToManagerDetail = { managerId ->
+                        navController.navigate(Screen.ManagerDetail.createRoute(managerId))
+                    }
+                )
+            }
+
+            composable(
+                route = Screen.ManagerDetail.route,
+                arguments = listOf(
+                    navArgument("managerId") {
+                        type = NavType.StringType
+                        defaultValue = "mgr_moosapet_01"
+                    }
+                )
+            ) { backStackEntry ->
+                val managerId = backStackEntry.arguments?.getString("managerId") ?: "mgr_moosapet_01"
+                ManagerDetailScreen(
+                    managerId = managerId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ==========================================
+            // Manager Portal Dedicated Scoped Routes
+            // ==========================================
+            composable(Screen.ManagerDashboard.route) {
+                val context = LocalContext.current
+                ManagerDashboardScreen(
+                    onNavigateToDrivers = { navController.navigate(Screen.ManagerDrivers.route) },
+                    onNavigateToCars = { navController.navigate(Screen.ManagerCars.route) },
+                    onNavigateToRegister = { navController.navigate(Screen.ManagerRegister.route) },
+                    onNavigateToLiveTracking = { navController.navigate(Screen.ManagerLiveTracking.route) },
+                    onLogoutClick = {
+                        val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
+                        sessionPrefs.edit().clear().apply()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.ManagerDrivers.route) {
+                ManagerDriversScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.ManagerCars.route) {
+                ManagerCarsScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.ManagerRegister.route) {
+                ManagerRegisterScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.ManagerLiveTracking.route) {
+                ManagerLiveTrackingScreen(
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
         }

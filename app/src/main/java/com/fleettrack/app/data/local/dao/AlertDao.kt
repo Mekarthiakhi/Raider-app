@@ -19,11 +19,20 @@ interface AlertDao {
     @Query("SELECT * FROM alerts WHERE fleet_id = :fleetId ORDER BY created_at DESC")
     fun getByFleetId(fleetId: String): Flow<List<AlertEntity>>
 
+    @Query("SELECT * FROM alerts WHERE manager_id = :managerId ORDER BY created_at DESC")
+    fun getAlertsByManager(managerId: String): Flow<List<AlertEntity>>
+
     @Query("SELECT * FROM alerts WHERE is_read = 0 ORDER BY created_at DESC")
     fun getUnreadAlerts(): Flow<List<AlertEntity>>
 
+    @Query("SELECT * FROM alerts WHERE manager_id = :managerId AND is_read = 0 ORDER BY created_at DESC")
+    fun getUnreadAlertsByManager(managerId: String): Flow<List<AlertEntity>>
+
     @Query("SELECT COUNT(*) FROM alerts WHERE is_read = 0")
     fun getUnreadCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM alerts WHERE manager_id = :managerId AND is_read = 0")
+    fun getUnreadCountByManager(managerId: String): Flow<Int>
 
     @Query("UPDATE alerts SET is_read = 1 WHERE id = :id")
     suspend fun markAsRead(id: Long)

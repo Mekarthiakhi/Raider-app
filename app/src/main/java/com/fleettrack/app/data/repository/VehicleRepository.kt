@@ -21,13 +21,19 @@ data class SupabaseVehicleDto(
     @SerialName("reg_no") val regNo: String,
     @SerialName("nickname") val nickname: String? = null,
     @SerialName("status") val status: String = "active",
-    @SerialName("fleet_id") val fleetId: String? = null
+    @SerialName("fleet_id") val fleetId: String? = null,
+    @SerialName("manager_id") val managerId: String? = null
 )
 
 interface VehicleRepository {
     fun getAllVehicles(): Flow<List<VehicleEntity>>
     fun getVehiclesByFleet(fleetId: String): Flow<List<VehicleEntity>>
+    fun getVehiclesByManager(managerId: String): Flow<List<VehicleEntity>>
+    fun getUnassignedVehicles(): Flow<List<VehicleEntity>>
     fun getActiveCount(): Flow<Int>
+    fun getActiveVehicleCountByManager(managerId: String): Flow<Int>
+    suspend fun getVehiclesListByManager(managerId: String): List<VehicleEntity>
+    suspend fun assignVehicleToManager(vehicleId: Long, managerId: String?)
     suspend fun getVehicleById(id: Long): VehicleEntity?
     suspend fun getVehicleByRegNo(regNo: String): VehicleEntity?
     suspend fun insertVehicle(vehicle: VehicleEntity): Long
@@ -49,8 +55,27 @@ class VehicleRepositoryImpl @Inject constructor(
     override fun getVehiclesByFleet(fleetId: String): Flow<List<VehicleEntity>> =
         vehicleDao.getByFleetId(fleetId)
 
+    override fun getVehiclesByManager(managerId: String): Flow<List<VehicleEntity>> =
+        vehicleDao.getVehiclesByManager(managerId)
+
+    override fun getUnassignedVehicles(): Flow<List<VehicleEntity>> =
+        vehicleDao.getUnassignedVehicles()
+
     override fun getActiveCount(): Flow<Int> =
         vehicleDao.getActiveVehicleCount()
+
+    override fun getActiveVehicleCountByManager(managerId: String): Flow<Int> =
+        vehicleDao.getActiveVehicleCountByManager(managerId)
+
+    override suspend fun getVehiclesListByManager(managerId: String): List<VehicleEntity> =
+        withContext(ioDispatcher) {
+            vehicleDao.getVehiclesListByManager(managerId)
+        }
+
+    override suspend fun assignVehicleToManager(vehicleId: Long, managerId: String?) =
+        withContext(ioDispatcher) {
+            vehicleDao.assignVehicleToManager(vehicleId, managerId)
+        }
 
     override suspend fun getVehicleById(id: Long): VehicleEntity? =
         withContext(ioDispatcher) {
@@ -70,7 +95,8 @@ class VehicleRepositoryImpl @Inject constructor(
                     regNo = vehicle.regNo,
                     nickname = vehicle.nickname,
                     status = vehicle.status,
-                    fleetId = "a0000000-0000-0000-0000-000000000001"
+                    fleetId = "a0000000-0000-0000-0000-000000000001",
+                    managerId = vehicle.managerId
                 )
                 SupabaseClientProvider.client.from("vehicles").upsert(dto)
                 Timber.d("Pushed vehicle to Supabase: ${vehicle.regNo}")
@@ -119,7 +145,8 @@ class VehicleRepositoryImpl @Inject constructor(
                                     regNo = remote.regNo,
                                     nickname = remote.nickname ?: "Cab",
                                     status = remote.status,
-                                    supabaseId = remote.id
+                                    supabaseId = remote.id,
+                                    managerId = remote.managerId
                                 )
                             )
                         }

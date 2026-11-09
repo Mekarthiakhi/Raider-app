@@ -2,6 +2,7 @@ package com.fleettrack.app.data.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -12,13 +13,26 @@ import kotlinx.datetime.Instant
  * TRIPS, EARNING'S, CASH COLLECTION, EXPENDITURE, COMMISSION RENT,
  * DRIVE PASS, ADVANCE, PAYMENT (CASH, ONLINE), REMARKS
  */
-@Entity(tableName = "duty_logs")
+@Entity(
+    tableName = "duty_logs",
+    indices = [
+        Index(value = ["manager_id"]),
+        Index(value = ["login_date"]),
+        Index(value = ["vehicle_no"])
+    ]
+)
 data class DutyLogEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
 
     @ColumnInfo(name = "fleet_id")
     val fleetId: String = "svm_fleet_hyderabad",
+
+    @ColumnInfo(name = "manager_id")
+    val managerId: String? = null,
+
+    @ColumnInfo(name = "logged_by_role")
+    val loggedByRole: String = "MANAGER",
 
     @ColumnInfo(name = "shift_type")
     val shiftType: String = "12_HOURS", // "12_HOURS" or "24_HOURS"
@@ -93,4 +107,3 @@ data class DutyLogEntity(
     @ColumnInfo(name = "created_at")
     val createdAt: Instant = Clock.System.now()
 )
-

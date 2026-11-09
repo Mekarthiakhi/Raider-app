@@ -21,12 +21,18 @@ data class SupabaseDriverDto(
     @SerialName("id") val id: String? = null,
     @SerialName("name") val name: String,
     @SerialName("phone") val phone: String,
-    @SerialName("fleet_id") val fleetId: String? = null
+    @SerialName("fleet_id") val fleetId: String? = null,
+    @SerialName("manager_id") val managerId: String? = null
 )
 
 interface DriverRepository {
     fun getAllDrivers(): Flow<List<DriverEntity>>
     fun getDriversByFleet(fleetId: String): Flow<List<DriverEntity>>
+    fun getDriversByManager(managerId: String): Flow<List<DriverEntity>>
+    fun getUnassignedDrivers(): Flow<List<DriverEntity>>
+    suspend fun getDriverCountByManager(managerId: String): Int
+    suspend fun getDriversListByManager(managerId: String): List<DriverEntity>
+    suspend fun assignDriverToManager(driverId: Long, managerId: String?)
     suspend fun getDriverById(id: Long): DriverEntity?
     suspend fun insertDriver(driver: DriverEntity): Long
     suspend fun insertAll(drivers: List<DriverEntity>)
@@ -48,6 +54,27 @@ class DriverRepositoryImpl @Inject constructor(
     override fun getDriversByFleet(fleetId: String): Flow<List<DriverEntity>> =
         driverDao.getByFleetId(fleetId)
 
+    override fun getDriversByManager(managerId: String): Flow<List<DriverEntity>> =
+        driverDao.getDriversByManager(managerId)
+
+    override fun getUnassignedDrivers(): Flow<List<DriverEntity>> =
+        driverDao.getUnassignedDrivers()
+
+    override suspend fun getDriverCountByManager(managerId: String): Int =
+        withContext(ioDispatcher) {
+            driverDao.getDriverCountByManager(managerId)
+        }
+
+    override suspend fun getDriversListByManager(managerId: String): List<DriverEntity> =
+        withContext(ioDispatcher) {
+            driverDao.getDriversListByManager(managerId)
+        }
+
+    override suspend fun assignDriverToManager(driverId: Long, managerId: String?) =
+        withContext(ioDispatcher) {
+            driverDao.assignDriverToManager(driverId, managerId)
+        }
+
     override suspend fun getDriverById(id: Long): DriverEntity? =
         withContext(ioDispatcher) {
             driverDao.getById(id)
@@ -61,7 +88,8 @@ class DriverRepositoryImpl @Inject constructor(
                 val dto = SupabaseDriverDto(
                     name = driver.name,
                     phone = driver.phone,
-                    fleetId = "a0000000-0000-0000-0000-000000000001"
+                    fleetId = "a0000000-0000-0000-0000-000000000001",
+                    managerId = driver.managerId
                 )
                 SupabaseClientProvider.client.from("drivers").insert(dto)
                 Timber.d("Pushed new driver to Supabase: ${driver.name} (${driver.phone})")
@@ -118,7 +146,8 @@ class DriverRepositoryImpl @Inject constructor(
                                     fleetId = remote.fleetId ?: "a0000000-0000-0000-0000-000000000001",
                                     name = remote.name,
                                     phone = remote.phone,
-                                    supabaseId = remote.id
+                                    supabaseId = remote.id,
+                                    managerId = remote.managerId
                                 )
                             )
                         }

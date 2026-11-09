@@ -13,4 +13,6 @@ captures/
 output.json
 *.keystore
 *.jks
+~$*
+.vscode/
 

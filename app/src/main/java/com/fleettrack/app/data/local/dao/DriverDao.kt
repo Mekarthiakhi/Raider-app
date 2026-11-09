@@ -34,7 +34,21 @@ interface DriverDao {
     @Query("SELECT * FROM drivers ORDER BY name ASC")
     fun getAll(): Flow<List<DriverEntity>>
 
+    @Query("SELECT * FROM drivers WHERE manager_id = :managerId ORDER BY name ASC")
+    fun getDriversByManager(managerId: String): Flow<List<DriverEntity>>
+
+    @Query("SELECT * FROM drivers WHERE manager_id = :managerId")
+    suspend fun getDriversListByManager(managerId: String): List<DriverEntity>
+
+    @Query("SELECT * FROM drivers WHERE manager_id IS NULL OR manager_id = '' ORDER BY name ASC")
+    fun getUnassignedDrivers(): Flow<List<DriverEntity>>
+
+    @Query("UPDATE drivers SET manager_id = :managerId WHERE id = :driverId")
+    suspend fun assignDriverToManager(driverId: Long, managerId: String?)
+
+    @Query("SELECT COUNT(*) FROM drivers WHERE manager_id = :managerId")
+    suspend fun getDriverCountByManager(managerId: String): Int
+
     @Query("UPDATE drivers SET consent_at = :consentAt WHERE id = :id")
     suspend fun updateConsent(id: Long, consentAt: Instant?)
 }
-

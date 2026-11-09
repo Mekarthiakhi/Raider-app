@@ -19,7 +19,8 @@ import kotlinx.datetime.Instant
     ],
     indices = [
         Index(value = ["fleet_id", "is_read"]),
-        Index(value = ["vehicle_id"])
+        Index(value = ["vehicle_id"]),
+        Index(value = ["manager_id"])
     ]
 )
 data class AlertEntity(
@@ -28,6 +29,9 @@ data class AlertEntity(
 
     @ColumnInfo(name = "fleet_id")
     val fleetId: String,
+
+    @ColumnInfo(name = "manager_id")
+    val managerId: String? = null,
 
     @ColumnInfo(name = "vehicle_id")
     val vehicleId: Long? = null,
@@ -44,4 +48,3 @@ data class AlertEntity(
     @ColumnInfo(name = "created_at")
     val createdAt: Instant
 )
-

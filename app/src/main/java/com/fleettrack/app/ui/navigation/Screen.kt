@@ -47,6 +47,19 @@ sealed class Screen(val route: String) {
     // Debug & Inspection
     data object NodeInspector : Screen("debug_node_inspector")
 
+    // Owner's Hub Managers Control Center
+    data object ManagersList : Screen("owner_managers_list")
+    data object ManagerDetail : Screen("owner_manager_detail/{managerId}") {
+        fun createRoute(managerId: String) = "owner_manager_detail/$managerId"
+    }
+
+    // Manager Portal Dedicated Scoped Routes
+    data object ManagerDashboard : Screen("manager_dashboard")
+    data object ManagerDrivers : Screen("manager_drivers")
+    data object ManagerCars : Screen("manager_cars")
+    data object ManagerRegister : Screen("manager_register")
+    data object ManagerLiveTracking : Screen("manager_live_tracking")
+
     // Backward compatibility aliases
     val FleetBoard get() = Dashboard
     val LiveFeed get() = Trips

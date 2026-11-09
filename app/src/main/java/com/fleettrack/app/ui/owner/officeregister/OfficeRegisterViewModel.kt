@@ -35,14 +35,20 @@ class OfficeRegisterViewModel @Inject constructor(
     private val _selectedFilter = MutableStateFlow("ALL")
     val selectedFilter: StateFlow<String> = _selectedFilter.asStateFlow()
 
+    private val _managerFilter = MutableStateFlow<String?>(null)
+    val managerFilter: StateFlow<String?> = _managerFilter.asStateFlow()
+
     private val allLogs = repository.getAllDutyLogs()
 
     val uiState: StateFlow<OfficeRegisterUiState> = combine(
         allLogs,
         _searchQuery,
-        _selectedFilter
-    ) { logs, query, filter ->
+        _selectedFilter,
+        _managerFilter
+    ) { logs, query, filter, mgrId ->
         val filtered = logs.filter { log ->
+            val matchesManager = mgrId == null || log.managerId == mgrId
+
             val matchesQuery = query.isBlank() ||
                     log.vehicleNo.contains(query, ignoreCase = true) ||
                     log.driverName.contains(query, ignoreCase = true) ||
@@ -55,12 +61,12 @@ class OfficeRegisterViewModel @Inject constructor(
                 else -> true
             }
 
-            matchesQuery && matchesFilter
+            matchesManager && matchesQuery && matchesFilter
         }
 
-        val totalEarnings = logs.sumOf { it.earnings }
-        val totalCash = logs.sumOf { it.cashCollection }
-        val totalTrips = logs.sumOf { it.trips }
+        val totalEarnings = filtered.sumOf { it.earnings }
+        val totalCash = filtered.sumOf { it.cashCollection }
+        val totalTrips = filtered.sumOf { it.trips }
 
         OfficeRegisterUiState(
             dutyLogs = filtered,
@@ -75,6 +81,10 @@ class OfficeRegisterViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = OfficeRegisterUiState()
     )
+
+    fun setManagerFilter(managerId: String?) {
+        _managerFilter.value = managerId
+    }
 
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
@@ -135,7 +145,9 @@ class OfficeRegisterViewModel @Inject constructor(
                 paymentOnline = paymentOnline,
                 netBalance = calc.netBalance,
                 status = if (paymentCash > 0 || paymentOnline > 0 || calc.netBalance == 0.0) "SETTLED" else "OPEN",
-                remarks = remarks.ifBlank { calc.remarks }
+                remarks = remarks.ifBlank { calc.remarks },
+                managerId = _managerFilter.value ?: "mgr_moosapet_01",
+                loggedByRole = "MANAGER"
             )
 
             repository.saveDutyLog(entity)

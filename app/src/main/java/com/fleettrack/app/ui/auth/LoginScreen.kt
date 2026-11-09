@@ -81,9 +81,12 @@ import com.fleettrack.app.util.AppUpdateHelper
 import com.fleettrack.app.util.AppUpdateInfo
 import kotlinx.coroutines.launch
 
+import com.fleettrack.app.data.model.UserRole
+
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
+    onManagerLoginSuccess: (String) -> Unit = {},
     onDriverCompanionClick: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
@@ -92,18 +95,19 @@ fun LoginScreen(
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
-    // Drivers database state
+    // Drivers & Managers database state
     val registeredDrivers by viewModel.registeredDrivers.collectAsState()
+    val registeredManagers by viewModel.registeredManagers.collectAsState()
 
-    // Login Role Selection (Driver Shift vs Fleet Owner)
-    var selectedRole by remember { mutableStateOf(LoginRole.DRIVER) }
+    // 3-Role Hierarchy Selection (Owner vs Manager vs Driver)
+    var selectedRole by remember { mutableStateOf(UserRole.DRIVER) }
 
     // Phone input (dynamic, max 10 digits)
     var phoneInput by remember { mutableStateOf("") }
     var secretKeyInput by remember { mutableStateOf("") }
 
     // Evaluate live role & authorization
-    val authStatus = remember(phoneInput, registeredDrivers, selectedRole, secretKeyInput) {
+    val authStatus = remember(phoneInput, registeredDrivers, registeredManagers, selectedRole, secretKeyInput) {
         viewModel.evaluatePhone(phoneInput, selectedRole, secretKeyInput)
     }
 
@@ -384,7 +388,7 @@ fun LoginScreen(
                     .padding(22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Role Selection Tabs (Driver Shift vs Fleet Owner)
+                // Role Selection Tabs (Fleet Owner vs Hub Manager vs Driver Shift)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -393,51 +397,75 @@ fun LoginScreen(
                         .padding(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Driver Tab
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (selectedRole == LoginRole.DRIVER) PrimaryPurple else Color.Transparent)
-                            .clickable {
-                                if (selectedRole != LoginRole.DRIVER) {
-                                    selectedRole = LoginRole.DRIVER
-                                    isOtpSent = false
-                                    otpCode = ""
-                                }
-                            }
-                            .padding(vertical = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "🚗 Driver Shift",
-                            color = if (selectedRole == LoginRole.DRIVER) Color.White else TextDark,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
-                        )
-                    }
-
                     // Owner Tab
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (selectedRole == LoginRole.OWNER) PrimaryPurple else Color.Transparent)
+                            .background(if (selectedRole == UserRole.OWNER) PrimaryPurple else Color.Transparent)
                             .clickable {
-                                if (selectedRole != LoginRole.OWNER) {
-                                    selectedRole = LoginRole.OWNER
+                                if (selectedRole != UserRole.OWNER) {
+                                    selectedRole = UserRole.OWNER
                                     isOtpSent = false
                                     otpCode = ""
                                 }
                             }
-                            .padding(vertical = 10.dp),
+                            .padding(vertical = 9.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "🛡️ Fleet Owner",
-                            color = if (selectedRole == LoginRole.OWNER) Color.White else TextDark,
+                            text = "👑 Owner",
+                            color = if (selectedRole == UserRole.OWNER) Color.White else TextDark,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    // Manager Tab
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (selectedRole == UserRole.MANAGER) PrimaryPurple else Color.Transparent)
+                            .clickable {
+                                if (selectedRole != UserRole.MANAGER) {
+                                    selectedRole = UserRole.MANAGER
+                                    isOtpSent = false
+                                    otpCode = ""
+                                }
+                            }
+                            .padding(vertical = 9.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "👔 Manager",
+                            color = if (selectedRole == UserRole.MANAGER) Color.White else TextDark,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    // Driver Tab
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (selectedRole == UserRole.DRIVER) PrimaryPurple else Color.Transparent)
+                            .clickable {
+                                if (selectedRole != UserRole.DRIVER) {
+                                    selectedRole = UserRole.DRIVER
+                                    isOtpSent = false
+                                    otpCode = ""
+                                }
+                            }
+                            .padding(vertical = 9.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "🚗 Driver",
+                            color = if (selectedRole == UserRole.DRIVER) Color.White else TextDark,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
                         )
                     }
                 }
@@ -445,17 +473,22 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = if (selectedRole == LoginRole.DRIVER) "Driver Shift Sign-In" else "Fleet Owner Portal",
+                    text = when (selectedRole) {
+                        UserRole.OWNER -> "👑 Fleet Owner Master Portal"
+                        UserRole.MANAGER -> "👔 Hub / Fleet Manager Sign-In"
+                        UserRole.DRIVER -> "🚗 Driver Partner Shift Sign-In"
+                    },
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextDark
                 )
 
                 Text(
-                    text = if (selectedRole == LoginRole.DRIVER)
-                        "Enter your registered driver mobile number to start shift & vehicle tracking."
-                    else
-                        "Moosapet Hub Management • Access 30 Cabs, Duty Register & Settlements.",
+                    text = when (selectedRole) {
+                        UserRole.OWNER -> "Master Access • Full visibility across all Hub Managers, 30+ Cabs & Accounts."
+                        UserRole.MANAGER -> "Moosapet, Kukatpally & Madhapur Hubs • Supervise your assigned 10–20 Drivers."
+                        UserRole.DRIVER -> "Enter your registered driver mobile number to start shift & vehicle tracking."
+                    },
                     fontSize = 12.sp,
                     color = TextGray,
                     textAlign = TextAlign.Center,
@@ -508,14 +541,14 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Optional Owner Secret Key (Allows instant Owner access from any mobile number)
-                if (selectedRole == LoginRole.OWNER) {
+                // Optional Owner / Manager Secret Key or Master PIN
+                if (selectedRole == UserRole.OWNER || selectedRole == UserRole.MANAGER) {
                     Spacer(modifier = Modifier.height(10.dp))
                     OutlinedTextField(
                         value = secretKeyInput,
                         onValueChange = { secretKeyInput = it },
-                        label = { Text("Owner Secret Key (Default: 7777)") },
-                        placeholder = { Text("Enter secret key if new mobile number") },
+                        label = { Text(if (selectedRole == UserRole.OWNER) "Owner Secret Key (Default: 7777)" else "Manager Access PIN / Secret Key") },
+                        placeholder = { Text(if (selectedRole == UserRole.OWNER) "Enter secret key if new mobile number" else "Enter 4-digit PIN or 7777") },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Lock,
@@ -577,6 +610,39 @@ fun LoginScreen(
                                 }
                             }
                         }
+                        is AuthStatus.ManagerAuthorized -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFFE0F2FE))
+                                    .border(1.dp, Color(0xFF0284C7), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Shield,
+                                        contentDescription = null,
+                                        tint = Color(0xFF0284C7),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = "Verified Hub Manager",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF0369A1)
+                                        )
+                                        Text(
+                                            text = "${authStatus.managerName} • ${authStatus.hubName}",
+                                            fontSize = 11.sp,
+                                            color = TextDark
+                                        )
+                                    }
+                                }
+                            }
+                        }
                         is AuthStatus.OwnerAuthorized -> {
                             Box(
                                 modifier = Modifier
@@ -602,7 +668,7 @@ fun LoginScreen(
                                             color = PrimaryPurple
                                         )
                                         Text(
-                                            text = "Authorized Owner Access • Moosapet Central Hub",
+                                            text = "Authorized Master Owner Access • Global Fleet",
                                             fontSize = 11.sp,
                                             color = TextDark
                                         )
@@ -629,16 +695,21 @@ fun LoginScreen(
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Column {
                                         Text(
-                                            text = if (selectedRole == LoginRole.OWNER) "Owner Access Not Authorized" else "Mobile Number Not Registered",
+                                            text = when (selectedRole) {
+                                                UserRole.OWNER -> "Owner Access Not Authorized"
+                                                UserRole.MANAGER -> "Hub Manager Not Found"
+                                                UserRole.DRIVER -> "Mobile Number Not Registered"
+                                            },
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 12.sp,
                                             color = Color(0xFFBF360C)
                                         )
                                         Text(
-                                            text = if (selectedRole == LoginRole.OWNER)
-                                                "Enter your Owner Secret Key above (default: 7777) to authorize this number, or contact office."
-                                            else
-                                                "Only drivers registered by SVM FLEET management can log in. Please contact Moosapet Office to onboard.",
+                                            text = when (selectedRole) {
+                                                UserRole.OWNER -> "Enter your Owner Secret Key above (default: 7777) to authorize this number."
+                                                UserRole.MANAGER -> "Only registered Hub Managers can log in. Use PIN or Secret Key (7777) to demo."
+                                                UserRole.DRIVER -> "Only drivers registered by SVM FLEET management can log in. Please contact office."
+                                            },
                                             fontSize = 11.sp,
                                             color = TextDark,
                                             lineHeight = 15.sp
@@ -653,7 +724,9 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                val isAuthorized = authStatus is AuthStatus.OwnerAuthorized || authStatus is AuthStatus.DriverAuthorized
+                val isAuthorized = authStatus is AuthStatus.OwnerAuthorized ||
+                        authStatus is AuthStatus.ManagerAuthorized ||
+                        authStatus is AuthStatus.DriverAuthorized
 
                 // OTP Trigger or Entry Box
                 if (!isOtpSent) {
@@ -791,7 +864,7 @@ fun LoginScreen(
 
                         when (authStatus) {
                             is AuthStatus.OwnerAuthorized -> {
-                                // Save Persistent Owner Session (Live DB Dynamic Mode)
+                                scope.launch { viewModel.saveOwnerSession(phoneInput) }
                                 sessionPrefs.edit()
                                     .putBoolean("is_logged_in", true)
                                     .putBoolean("is_demo_mode", false)
@@ -802,8 +875,29 @@ fun LoginScreen(
                                 Toast.makeText(context, "Welcome, Fleet Owner!", Toast.LENGTH_SHORT).show()
                                 onLoginSuccess()
                             }
+                            is AuthStatus.ManagerAuthorized -> {
+                                scope.launch {
+                                    viewModel.saveManagerSession(
+                                        authStatus.managerId,
+                                        authStatus.managerName,
+                                        authStatus.hubName
+                                    )
+                                }
+                                sessionPrefs.edit()
+                                    .putBoolean("is_logged_in", true)
+                                    .putBoolean("is_demo_mode", false)
+                                    .putString("role", "MANAGER")
+                                    .putString("phone", phoneInput)
+                                    .putString("manager_id", authStatus.managerId)
+                                    .putString("manager_name", authStatus.managerName)
+                                    .putString("hub_name", authStatus.hubName)
+                                    .apply()
+
+                                Toast.makeText(context, "Welcome, ${authStatus.managerName} (${authStatus.hubName})!", Toast.LENGTH_SHORT).show()
+                                onManagerLoginSuccess(authStatus.managerId)
+                            }
                             is AuthStatus.DriverAuthorized -> {
-                                // Save Persistent Driver Shift Session (Live DB Dynamic Mode)
+                                scope.launch { viewModel.saveDriverSession() }
                                 sessionPrefs.edit()
                                     .putBoolean("is_logged_in", true)
                                     .putBoolean("is_demo_mode", false)
@@ -818,10 +912,10 @@ fun LoginScreen(
                                 onDriverCompanionClick()
                             }
                             else -> {
-                                val errorMsg = if (selectedRole == LoginRole.DRIVER) {
-                                    "⛔ Driver Not Found: +91 $phoneInput is not registered by SVM FLEET management. Please contact office."
-                                } else {
-                                    "⛔ Management Access Denied: +91 $phoneInput is not an authorized owner number."
+                                val errorMsg = when (selectedRole) {
+                                    UserRole.OWNER -> "⛔ Access Denied: +91 $phoneInput is not an authorized owner number."
+                                    UserRole.MANAGER -> "⛔ Access Denied: +91 $phoneInput is not an authorized hub manager number."
+                                    UserRole.DRIVER -> "⛔ Driver Not Found: +91 $phoneInput is not registered by SVM FLEET management. Please contact office."
                                 }
                                 Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
                             }
@@ -835,7 +929,11 @@ fun LoginScreen(
                     enabled = isOtpSent && otpCode.isNotBlank()
                 ) {
                     Text(
-                        text = if (selectedRole == LoginRole.DRIVER) "Verify & Start Driver Shift" else "Verify & Access Owner Portal",
+                        text = when (selectedRole) {
+                            UserRole.OWNER -> "Verify & Access Owner Portal"
+                            UserRole.MANAGER -> "Verify & Access Manager Portal"
+                            UserRole.DRIVER -> "Verify & Start Driver Shift"
+                        },
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -843,78 +941,125 @@ fun LoginScreen(
                 }
 
                 // Direct 1-Tap Quick Access Demo Buttons (Showcase Static Mode: is_demo_mode = true)
-                if (selectedRole == LoginRole.DRIVER) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Button(
-                        onClick = {
-                            val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
-                            sessionPrefs.edit()
-                                .putBoolean("is_logged_in", true)
-                                .putBoolean("is_demo_mode", true)
-                                .putString("role", "DRIVER")
-                                .putString("phone", "9886210100")
-                                .putLong("driver_id", 20L)
-                                .putString("driver_name", "Anji Babu")
-                                .putBoolean("is_shift_active", false)
-                                .apply()
+                when (selectedRole) {
+                    UserRole.DRIVER -> {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                scope.launch { viewModel.saveDriverSession() }
+                                val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
+                                sessionPrefs.edit()
+                                    .putBoolean("is_logged_in", true)
+                                    .putBoolean("is_demo_mode", true)
+                                    .putString("role", "DRIVER")
+                                    .putString("phone", "9886210100")
+                                    .putLong("driver_id", 20L)
+                                    .putString("driver_name", "Anji Babu")
+                                    .putBoolean("is_shift_active", false)
+                                    .apply()
 
-                            Toast.makeText(context, "⚡ Welcome, Anji Babu! Opening Driver Shift Demo...", Toast.LENGTH_SHORT).show()
-                            onDriverCompanionClick()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = ActiveGreen),
-                        shape = PillShape,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.DirectionsCar,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "⚡ 1-Tap Driver Demo (Anji Babu)",
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                                Toast.makeText(context, "⚡ Welcome, Anji Babu! Opening Driver Shift Demo...", Toast.LENGTH_SHORT).show()
+                                onDriverCompanionClick()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = ActiveGreen),
+                            shape = PillShape,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DirectionsCar,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "⚡ 1-Tap Driver Demo (Anji Babu)",
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
-                } else {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Button(
-                        onClick = {
-                            val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
-                            sessionPrefs.edit()
-                                .putBoolean("is_logged_in", true)
-                                .putBoolean("is_demo_mode", true)
-                                .putString("role", "OWNER")
-                                .putString("phone", "9391915013")
-                                .apply()
+                    UserRole.MANAGER -> {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    viewModel.saveManagerSession("mgr_moosapet_01", "Srinivas Rao", "Moosapet Central Hub")
+                                }
+                                val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
+                                sessionPrefs.edit()
+                                    .putBoolean("is_logged_in", true)
+                                    .putBoolean("is_demo_mode", true)
+                                    .putString("role", "MANAGER")
+                                    .putString("phone", "9849012345")
+                                    .putString("manager_id", "mgr_moosapet_01")
+                                    .putString("manager_name", "Srinivas Rao")
+                                    .putString("hub_name", "Moosapet Central Hub")
+                                    .apply()
 
-                            Toast.makeText(context, "🛡️ Welcome, Akhilesh! Accessing Owner Demo...", Toast.LENGTH_SHORT).show()
-                            onLoginSuccess()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
-                        shape = PillShape,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Shield,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "⚡ 1-Tap Owner Demo (Showcase)",
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                                Toast.makeText(context, "👔 Welcome, Srinivas Rao! Opening Moosapet Hub Manager Demo (12 Drivers)...", Toast.LENGTH_SHORT).show()
+                                onManagerLoginSuccess("mgr_moosapet_01")
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                            shape = PillShape,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shield,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "⚡ 1-Tap Manager Demo (12 Drivers • Moosapet)",
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    UserRole.OWNER -> {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                scope.launch { viewModel.saveOwnerSession("9391915013") }
+                                val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
+                                sessionPrefs.edit()
+                                    .putBoolean("is_logged_in", true)
+                                    .putBoolean("is_demo_mode", true)
+                                    .putString("role", "OWNER")
+                                    .putString("phone", "9391915013")
+                                    .apply()
+
+                                Toast.makeText(context, "👑 Welcome, Akhilesh! Accessing Owner Demo...", Toast.LENGTH_SHORT).show()
+                                onLoginSuccess()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                            shape = PillShape,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shield,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "⚡ 1-Tap Owner Demo (Showcase)",
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }

@@ -148,6 +148,32 @@ interface RideDao {
         rawExtracted: String?
     )
 
+    @Query("SELECT * FROM rides WHERE manager_id = :managerId ORDER BY accepted_at DESC")
+    fun getRidesByManager(managerId: String): Flow<List<RideEntity>>
+
+    @Query("SELECT * FROM rides WHERE manager_id = :managerId AND accepted_at >= :startOfDay ORDER BY accepted_at DESC")
+    fun getTodayRidesByManager(managerId: String, startOfDay: Instant): Flow<List<RideEntity>>
+
+    @Query("""
+        SELECT 
+            COUNT(*) as rideCount,
+            COALESCE(SUM(fare), 0.0) as totalFare,
+            COALESCE(SUM(distance_km), 0.0) as totalKm,
+            CASE 
+                WHEN COALESCE(SUM(distance_km), 0.0) > 0 
+                THEN COALESCE(SUM(fare), 0.0) / SUM(distance_km) 
+                ELSE 0.0 
+            END as avgFarePerKm,
+            COALESCE(SUM(duration_min), 0.0) as totalDuration,
+            COUNT(CASE WHEN status = 'CANCELLED' THEN 1 END) as cancelledCount
+        FROM rides 
+        WHERE manager_id = :managerId AND accepted_at >= :startOfDay
+    """)
+    fun getTodaySummaryForManager(managerId: String, startOfDay: Instant): Flow<RideSummary>
+
+    @Query("UPDATE rides SET manager_id = :managerId WHERE id = :rideId")
+    suspend fun assignRideToManager(rideId: Long, managerId: String?)
+
     @Query("UPDATE rides SET sync_status = :syncStatus, supabase_id = :supabaseId WHERE id = :id")
     suspend fun updateSyncStatus(id: Long, syncStatus: SyncStatus, supabaseId: String?)
 

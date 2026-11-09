@@ -4,6 +4,7 @@ import androidx.room.TypeConverter
 import com.fleettrack.app.data.model.Platform
 import com.fleettrack.app.data.model.RideStatus
 import com.fleettrack.app.data.model.SyncStatus
+import com.fleettrack.app.data.model.UserRole
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 
@@ -58,5 +59,14 @@ class Converters {
     fun toSyncStatus(value: String?): SyncStatus? {
         return value?.let { enumValueOf<SyncStatus>(it) }
     }
-}
 
+    @TypeConverter
+    fun fromUserRole(role: UserRole?): String? {
+        return role?.name
+    }
+
+    @TypeConverter
+    fun toUserRole(value: String?): UserRole? {
+        return value?.let { enumValueOf<UserRole>(it) }
+    }
+}

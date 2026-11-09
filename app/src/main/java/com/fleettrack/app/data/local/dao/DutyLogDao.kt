@@ -20,6 +20,21 @@ interface DutyLogDao {
     @Query("SELECT * FROM duty_logs WHERE vehicle_no LIKE '%' || :query || '%' OR driver_name LIKE '%' || :query || '%' ORDER BY id DESC")
     fun searchDutyLogs(query: String): Flow<List<DutyLogEntity>>
 
+    @Query("SELECT * FROM duty_logs WHERE manager_id = :managerId ORDER BY id DESC")
+    fun getDutyLogsByManager(managerId: String): Flow<List<DutyLogEntity>>
+
+    @Query("SELECT * FROM duty_logs WHERE manager_id = :managerId AND (vehicle_no LIKE '%' || :query || '%' OR driver_name LIKE '%' || :query || '%') ORDER BY id DESC")
+    fun searchDutyLogsByManager(managerId: String, query: String): Flow<List<DutyLogEntity>>
+
+    @Query("SELECT COALESCE(SUM(earnings), 0.0) FROM duty_logs WHERE manager_id = :managerId")
+    fun getTotalEarningsByManager(managerId: String): Flow<Double>
+
+    @Query("SELECT COALESCE(SUM(cash_collection), 0.0) FROM duty_logs WHERE manager_id = :managerId")
+    fun getTotalCashCollectionByManager(managerId: String): Flow<Double>
+
+    @Query("SELECT COALESCE(SUM(trips), 0) FROM duty_logs WHERE manager_id = :managerId")
+    fun getTotalTripsByManager(managerId: String): Flow<Int>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(dutyLog: DutyLogEntity): Long
 

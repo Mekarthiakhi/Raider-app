@@ -28,6 +28,10 @@ interface RideRepository {
     fun getLatestRideForVehicle(vehicleId: Long): Flow<RideEntity?>
     fun getRidesByVehicle(vehicleId: Long): Flow<List<RideEntity>>
     fun getRidesByDriver(driverId: Long): Flow<List<RideEntity>>
+    fun getRidesByManager(managerId: String): Flow<List<RideEntity>>
+    fun getTodayRidesByManager(managerId: String, startOfDay: Instant): Flow<List<RideEntity>>
+    fun getTodaySummaryForManager(managerId: String, startOfDay: Instant): Flow<RideSummary>
+    suspend fun assignRideToManager(rideId: Long, managerId: String?)
     suspend fun getActiveRideForVehicle(vehicleId: Long): RideEntity?
     suspend fun getRideById(id: Long): RideEntity?
     suspend fun getRideByRideKey(rideKey: String): RideEntity?
@@ -91,6 +95,20 @@ class RideRepositoryImpl @Inject constructor(
 
     override fun getRidesByDriver(driverId: Long): Flow<List<RideEntity>> =
         rideDao.getByDriverId(driverId)
+
+    override fun getRidesByManager(managerId: String): Flow<List<RideEntity>> =
+        rideDao.getRidesByManager(managerId)
+
+    override fun getTodayRidesByManager(managerId: String, startOfDay: Instant): Flow<List<RideEntity>> =
+        rideDao.getTodayRidesByManager(managerId, startOfDay)
+
+    override fun getTodaySummaryForManager(managerId: String, startOfDay: Instant): Flow<RideSummary> =
+        rideDao.getTodaySummaryForManager(managerId, startOfDay)
+
+    override suspend fun assignRideToManager(rideId: Long, managerId: String?) =
+        withContext(ioDispatcher) {
+            rideDao.assignRideToManager(rideId, managerId)
+        }
 
     override suspend fun getActiveRideForVehicle(vehicleId: Long): RideEntity? =
         withContext(ioDispatcher) {
