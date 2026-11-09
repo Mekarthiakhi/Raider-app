@@ -71,7 +71,7 @@
                 <!-- Quick Action: Manual Shift Register -->
                 <button onclick="window.SVM_APP.openManualEntryModal()" class="px-3.5 py-2 rounded-xl bg-[#5B36F5] hover:bg-[#4a2ae0] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-purple-500/25 transition-all">
                     <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                    <span>+ Shift Entry</span>
+                    <span>+ Manual Shift Entry</span>
                 </button>
             </div>
         </div>
@@ -87,11 +87,11 @@
                 <button data-nav-tab="overview" class="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs bg-[#5B36F5] text-white shadow-lg shadow-purple-500/20">
                     <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview
                 </button>
+                <button data-nav-tab="register" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs text-gray-400 hover:text-white hover:bg-gray-800/50">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Duty Register (Manual & Auto)
+                </button>
                 <button data-nav-tab="map" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs text-gray-400 hover:text-white hover:bg-gray-800/50">
                     <i data-lucide="map" class="w-4 h-4"></i> Hyderabad Live Map
-                </button>
-                <button data-nav-tab="register" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs text-gray-400 hover:text-white hover:bg-gray-800/50">
-                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Duty Register
                 </button>
                 <button data-nav-tab="cars" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs text-gray-400 hover:text-white hover:bg-gray-800/50">
                     <i data-lucide="car" class="w-4 h-4"></i> Vehicles
@@ -114,7 +114,7 @@
                     <i data-lucide="car" class="w-3.5 h-3.5 text-purple-400"></i> Total Cabs
                 </span>
                 <div id="stat-total-cabs" class="text-2xl font-black text-white mt-1">30</div>
-                <span class="text-[10px] text-gray-500">Assigned across 3 Hubs</span>
+                <span class="text-[10px] text-gray-500">Across 3 Hubs</span>
             </div>
 
             <div class="glass-card p-4">
@@ -127,10 +127,10 @@
 
             <div class="glass-card p-4">
                 <span class="text-xs text-gray-400 flex items-center gap-1.5">
-                    <i data-lucide="trending-up" class="w-3.5 h-3.5 text-blue-400"></i> Today's Gross
+                    <i data-lucide="trending-up" class="w-3.5 h-3.5 text-blue-400"></i> Total Earned
                 </span>
                 <div id="stat-gross-revenue" class="text-2xl font-black text-white mt-1">₹0</div>
-                <span class="text-[10px] text-blue-400/80">Uber • Rapido • Ola</span>
+                <span class="text-[10px] text-blue-400/80">Gross Rides Earnings</span>
             </div>
 
             <div class="glass-card p-4">
@@ -143,10 +143,10 @@
 
             <div class="glass-card p-4 col-span-2 md:col-span-1">
                 <span class="text-xs text-gray-400 flex items-center gap-1.5">
-                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i> Driver Comm
+                    <i data-lucide="fuel" class="w-3.5 h-3.5 text-emerald-400"></i> Fuel & Comm
                 </span>
                 <div id="stat-net-settled" class="text-2xl font-black text-emerald-400 mt-1">₹0</div>
-                <span class="text-[10px] text-gray-500">35% / 40% Tiers</span>
+                <span class="text-[10px] text-gray-500">Commission & Fuel Exp</span>
             </div>
         </div>
 
@@ -175,11 +175,11 @@
                             <h3 class="font-bold text-sm text-white">Auto Telemetry Feed</h3>
                         </div>
                         <span class="text-[10px] px-2 py-0.5 rounded bg-amber-900/40 text-amber-300 border border-amber-500/30">
-                            OCR / Accessibility
+                            Uber • Rapido • Ola
                         </span>
                     </div>
                     <p class="text-xs text-gray-400 mb-3">
-                        Shifts captured automatically from driver phones. Click to aggregate into the master register.
+                        Fares captured from driver smartphones. Click <strong>1-Tap Auto-Aggregate</strong> to verify and add to register.
                     </p>
                     <div id="telemetry-pending-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1">
                         <!-- Populated dynamically -->
@@ -187,30 +187,30 @@
                 </div>
             </div>
 
-            <!-- Recent Duty Register Preview Table -->
+            <!-- Recent Duty Register Preview -->
             <div class="glass-card p-5">
                 <div class="flex items-center justify-between mb-4">
                     <div>
-                        <h3 class="font-bold text-base text-white">Moosapet Hub Duty Register</h3>
-                        <p class="text-xs text-gray-400">Daily commission & cash settlement logbook</p>
+                        <h3 class="font-bold text-base text-white">Moosapet Hub Duty Register (Recent Entries)</h3>
+                        <p class="text-xs text-gray-400">Driver earnings, vehicle trips, commission & fuel settlements</p>
                     </div>
                     <button onclick="window.SVM_APP.switchTab('register')" class="text-xs text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1">
-                        <span>View All Logs</span> <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        <span>Open Full Register</span> <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                     </button>
                 </div>
 
-                <!-- Register Table Component -->
+                <!-- Table View for Overview -->
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="border-b border-[#232836] text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                                <th class="py-2.5 px-4">Log #</th>
-                                <th class="py-2.5 px-4">Driver</th>
+                                <th class="py-2.5 px-4">Driver & Mobile</th>
                                 <th class="py-2.5 px-4">Vehicle</th>
                                 <th class="py-2.5 px-4 text-center">Trips</th>
-                                <th class="py-2.5 px-4 text-right">Gross (₹)</th>
-                                <th class="py-2.5 px-4 text-right">Cash (₹)</th>
-                                <th class="py-2.5 px-4 text-right">Comm (₹)</th>
+                                <th class="py-2.5 px-4 text-right">Earned (Gross)</th>
+                                <th class="py-2.5 px-4 text-right">Fuel/Exp</th>
+                                <th class="py-2.5 px-4 text-right">Cash Coll.</th>
+                                <th class="py-2.5 px-4 text-right">Commission</th>
                                 <th class="py-2.5 px-4 text-center">Source</th>
                                 <th class="py-2.5 px-4 text-center">Status</th>
                                 <th class="py-2.5 px-4 text-right">Receipt</th>
@@ -225,7 +225,133 @@
 
         </div>
 
-        <!-- VIEW 2: FULL MAP TAB -->
+        <!-- VIEW 2: FULL DUTY REGISTER TAB (Mobile Cards + Dense Table) -->
+        <div data-tab-content="register" class="hidden flex flex-col gap-5">
+            
+            <!-- Collapsible Commission Rules Banner (Mirroring Android App) -->
+            <div class="glass-card p-4 border-l-4 border-l-[#5B36F5]">
+                <div class="flex items-center justify-between cursor-pointer" onclick="document.getElementById('commission-rules-content').classList.toggle('hidden')">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="info" class="w-4 h-4 text-purple-400"></i>
+                        <h4 class="font-bold text-sm text-white">SVM FLEET Driver Commission Policy & Tiers</h4>
+                        <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">Moosapet Rules</span>
+                    </div>
+                    <span class="text-xs text-purple-400 font-semibold flex items-center gap-1">
+                        <span>Toggle Rules</span> <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </span>
+                </div>
+                
+                <div id="commission-rules-content" class="hidden mt-4 pt-4 border-t border-[#232836] grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div class="p-3 rounded-xl bg-[#12151C] border border-[#232836]">
+                        <h5 class="font-bold text-emerald-400 mb-2 flex items-center gap-1.5">
+                            <i data-lucide="clock" class="w-3.5 h-3.5"></i> 12 Hrs Shift (Minimum 10 Trips)
+                        </h5>
+                        <ul class="space-y-1 text-gray-300 font-mono">
+                            <li class="flex justify-between"><span>₹3,500 Above</span><strong class="text-emerald-400">40% Commission</strong></li>
+                            <li class="flex justify-between"><span>₹2,500 to ₹3,500</span><strong class="text-purple-400">35% Commission</strong></li>
+                            <li class="flex justify-between"><span>₹2,000 to ₹2,500</span><strong class="text-blue-400">30% Commission</strong></li>
+                            <li class="flex justify-between"><span>₹1,500 to ₹2,000</span><strong class="text-amber-400">25% Commission</strong></li>
+                            <li class="flex justify-between"><span>Below ₹1,500 or &lt;10 trips</span><strong class="text-gray-400">0% (Flat Rent)</strong></li>
+                        </ul>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-[#12151C] border border-[#232836]">
+                        <h5 class="font-bold text-blue-400 mb-2 flex items-center gap-1.5">
+                            <i data-lucide="clock-4" class="w-3.5 h-3.5"></i> 24 Hrs Shift (Minimum 18 Trips)
+                        </h5>
+                        <ul class="space-y-1 text-gray-300 font-mono">
+                            <li class="flex justify-between"><span>₹6,500 Above</span><strong class="text-emerald-400">40% Commission</strong></li>
+                            <li class="flex justify-between"><span>₹5,000 to ₹6,500</span><strong class="text-purple-400">35% Commission</strong></li>
+                            <li class="flex justify-between"><span>₹4,000 to ₹5,000</span><strong class="text-blue-400">30% Commission</strong></li>
+                            <li class="flex justify-between"><span>₹2,500 to ₹4,000</span><strong class="text-amber-400">25% Commission</strong></li>
+                            <li class="flex justify-between"><span>Below ₹2,500 or &lt;18 trips</span><strong class="text-gray-400">0% (Flat Rent)</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls: Search, Filter Chips & View Toggle -->
+            <div class="glass-card p-5">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-5">
+                    
+                    <!-- Search Input -->
+                    <div class="relative w-full md:w-80">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-gray-500"></i>
+                        <input id="register-search" type="text" placeholder="Search Driver name, phone or vehicle (3368)..."
+                            class="w-full bg-[#12151C] border border-[#232836] rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500" />
+                    </div>
+
+                    <!-- Filter Chips (All, 12h, 24h, Settled, Open) -->
+                    <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+                        <button onclick="window.SVM_APP.setShiftFilter('ALL')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#5B36F5] text-white border-[#5B36F5]">
+                            All Shifts
+                        </button>
+                        <button onclick="window.SVM_APP.setShiftFilter('12_HOURS')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-gray-700 bg-gray-900 text-gray-400 hover:text-white">
+                            12h Shift
+                        </button>
+                        <button onclick="window.SVM_APP.setShiftFilter('24_HOURS')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-gray-700 bg-gray-900 text-gray-400 hover:text-white">
+                            24h Shift
+                        </button>
+                        <button onclick="window.SVM_APP.setShiftFilter('OPEN')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-gray-700 bg-gray-900 text-gray-400 hover:text-white">
+                            Pending
+                        </button>
+                    </div>
+
+                    <!-- Right Actions: View Toggle + Export + New Shift -->
+                    <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                        <!-- View Toggle: Mobile Card vs Desktop Table -->
+                        <div class="flex items-center bg-[#12151C] border border-[#232836] rounded-xl p-0.5">
+                            <button id="view-mode-cards-btn" onclick="window.SVM_APP.setRegisterViewMode('cards')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#5B36F5] text-white flex items-center gap-1" title="Mobile App Card View">
+                                <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> Cards
+                            </button>
+                            <button id="view-mode-table-btn" onclick="window.SVM_APP.setRegisterViewMode('table')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white flex items-center gap-1" title="Table View">
+                                <i data-lucide="table" class="w-3.5 h-3.5"></i> Table
+                            </button>
+                        </div>
+
+                        <button onclick="window.SVM_APP.exportCSV()" class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold flex items-center gap-1.5 border border-gray-700">
+                            <i data-lucide="download" class="w-4 h-4"></i> CSV
+                        </button>
+                        <button onclick="window.SVM_APP.openManualEntryModal()" class="px-3.5 py-2 rounded-xl bg-[#5B36F5] hover:bg-[#4a2ae0] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-purple-500/25">
+                            <i data-lucide="plus" class="w-4 h-4"></i> + Add Shift
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 1. MOBILE APP STYLE CARDS CONTAINER -->
+                <div id="register-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Populated dynamically (mirrors Android DutyLogCard) -->
+                </div>
+
+                <!-- 2. DESKTOP TABLE CONTAINER (Hidden by default or toggled) -->
+                <div id="register-table-container" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-[#232836] text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                                <th class="py-2.5 px-4">Driver Name & Phone</th>
+                                <th class="py-2.5 px-4">Vehicle Reg No</th>
+                                <th class="py-2.5 px-4 text-center">Trips</th>
+                                <th class="py-2.5 px-4 text-right">Gross Earned</th>
+                                <th class="py-2.5 px-4 text-right">Fuel / Exp</th>
+                                <th class="py-2.5 px-4 text-right">Cash Coll.</th>
+                                <th class="py-2.5 px-4 text-right">Commission</th>
+                                <th class="py-2.5 px-4 text-right">Net Balance</th>
+                                <th class="py-2.5 px-4 text-center">Source</th>
+                                <th class="py-2.5 px-4 text-center">Status</th>
+                                <th class="py-2.5 px-4 text-right">Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody id="register-table-body-full">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- VIEW 3: FULL HYDERABAD MAP TAB -->
         <div data-tab-content="map" class="hidden flex flex-col gap-4">
             <div class="glass-card p-4 h-[650px] flex flex-col">
                 <div class="flex justify-between items-center mb-3">
@@ -238,63 +364,7 @@
                         <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#5B36F5]"></span> Hub Station</span>
                     </div>
                 </div>
-                <div id="hyderabad-map-full" class="flex-1 rounded-xl overflow-hidden border border-[#232836]">
-                    <!-- In full tab, app will handle or switch -->
-                </div>
-            </div>
-        </div>
-
-        <!-- VIEW 3: FULL DUTY REGISTER TAB -->
-        <div data-tab-content="register" class="hidden flex flex-col gap-4">
-            <div class="glass-card p-6">
-                <!-- Filters & Controls Bar -->
-                <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                    <div class="flex items-center gap-3 w-full md:w-auto">
-                        <div class="relative w-full md:w-72">
-                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-gray-500"></i>
-                            <input id="register-search" type="text" placeholder="Search driver, car (e.g. 3368)..."
-                                class="w-full bg-[#12151C] border border-[#232836] rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500" />
-                        </div>
-
-                        <select id="register-status-filter" class="bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-gray-300 focus:outline-none">
-                            <option value="ALL">All Statuses</option>
-                            <option value="SETTLED">Settled</option>
-                            <option value="PENDING">Pending</option>
-                        </select>
-                    </div>
-
-                    <div class="flex items-center gap-3 w-full md:w-auto justify-end">
-                        <button onclick="window.SVM_APP.exportCSV()" class="px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold flex items-center gap-1.5 border border-gray-700">
-                            <i data-lucide="download" class="w-4 h-4"></i> Export CSV
-                        </button>
-                        <button onclick="window.SVM_APP.openManualEntryModal()" class="px-3.5 py-2 rounded-xl bg-[#5B36F5] hover:bg-[#4a2ae0] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-purple-500/25">
-                            <i data-lucide="plus" class="w-4 h-4"></i> New Shift Log
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Complete Table -->
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-[#232836] text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                                <th class="py-2.5 px-4">Log #</th>
-                                <th class="py-2.5 px-4">Driver</th>
-                                <th class="py-2.5 px-4">Vehicle</th>
-                                <th class="py-2.5 px-4 text-center">Trips</th>
-                                <th class="py-2.5 px-4 text-right">Gross (₹)</th>
-                                <th class="py-2.5 px-4 text-right">Cash (₹)</th>
-                                <th class="py-2.5 px-4 text-right">Comm (₹)</th>
-                                <th class="py-2.5 px-4 text-center">Source</th>
-                                <th class="py-2.5 px-4 text-center">Status</th>
-                                <th class="py-2.5 px-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="register-table-body-full">
-                            <!-- Mirrored dynamically -->
-                        </tbody>
-                    </table>
-                </div>
+                <div id="hyderabad-map-full" class="flex-1 rounded-xl overflow-hidden border border-[#232836]"></div>
             </div>
         </div>
 
@@ -334,7 +404,7 @@
                     <h3 class="font-bold text-lg text-white flex items-center gap-2">
                         <span>📝</span> Manual Duty Register Entry
                     </h3>
-                    <p class="text-xs text-gray-400">Record a shift from paper logbook with auto commission calculation</p>
+                    <p class="text-xs text-gray-400">Moosapet Hub paper logbook digital entry with live commission & fuel calculation</p>
                 </div>
                 <button onclick="window.SVM_APP.closeManualEntryModal()" class="text-gray-400 hover:text-white p-1">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -342,9 +412,21 @@
             </div>
 
             <form onsubmit="window.SVM_APP.submitManualEntryForm(event)" class="mt-4 space-y-4">
+                
+                <!-- Quick Driver Selection (Auto Populates Fields) -->
+                <div class="p-3 rounded-xl bg-purple-950/20 border border-purple-800/40">
+                    <label class="block text-xs font-bold text-purple-300 mb-1">
+                        ⚡ Quick Select Fleet Driver (Auto-fills car & mobile number)
+                    </label>
+                    <select id="modal-quick-driver-select" onchange="window.SVM_APP.onQuickDriverSelected(this.value)" class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-white">
+                        <option value="">-- Choose Driver (or enter manually below) --</option>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Shift Duration</label>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Shift Duration *</label>
                         <select id="modal-shifttype" class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-white">
                             <option value="12_HOURS">12 Hrs Shift (Min 10 Trips)</option>
                             <option value="24_HOURS">24 Hrs Shift (Min 18 Trips)</option>
@@ -352,7 +434,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Assigned Hub</label>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Assigned Hub *</label>
                         <select id="modal-hub" class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-white">
                             <option value="mgr_moosapet_01">Moosapet Central Hub</option>
                             <option value="mgr_kukatpally_02">Kukatpally Y-Junction Hub</option>
@@ -367,7 +449,13 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Vehicle Reg No *</label>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Driver Mobile Number *</label>
+                        <input id="modal-driverphone" type="tel" placeholder="+91 93919 15013" required
+                            class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Vehicle Reg Number *</label>
                         <input id="modal-regno" type="text" placeholder="e.g. TS09 UB 3368" required
                             class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-white uppercase font-mono" />
                     </div>
@@ -379,21 +467,21 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Gross Fare / Earnings (₹) *</label>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Gross Earnings / Fare (₹) *</label>
                         <input id="modal-earnings" type="number" step="0.5" min="0" value="3000" required
                             class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-emerald-400 font-bold" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Fuel / Petrol / Toll Expenditure (₹)</label>
+                        <input id="modal-expenditure" type="number" step="0.5" min="0" value="200"
+                            class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-blue-400 font-bold" />
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-400 mb-1">Cash Collected by Driver (₹)</label>
                         <input id="modal-cash" type="number" step="0.5" min="0" value="2000"
                             class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-amber-400 font-bold" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Expenditure (Fuel/Tolls) (₹)</label>
-                        <input id="modal-expenditure" type="number" step="0.5" min="0" value="200"
-                            class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-white font-medium" />
                     </div>
 
                     <div>
@@ -407,22 +495,30 @@
                         <input id="modal-advance" type="number" step="0.5" min="0" value="0"
                             class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-white font-medium" />
                     </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Settlement Status</label>
+                        <select id="modal-status" class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-white">
+                            <option value="SETTLED">SETTLED (Payment Complete)</option>
+                            <option value="OPEN">OPEN / PENDING (Balance Due)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Remarks / Settlement Note</label>
-                    <input id="modal-remarks" type="text" placeholder="e.g. Settled via UPI"
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Remarks / Office Logbook Notes</label>
+                    <input id="modal-remarks" type="text" placeholder="e.g. Settled via UPI / Moosapet paper book entry"
                         class="w-full bg-[#12151C] border border-[#232836] rounded-xl px-3 py-2 text-xs text-white" />
                 </div>
 
                 <!-- Dynamic Calculation Preview Box -->
                 <div class="p-4 rounded-xl bg-[#12151C] border border-[#232836] flex flex-col gap-2">
                     <div class="flex justify-between items-center text-xs">
-                        <span class="text-gray-400">Validation:</span>
+                        <span class="text-gray-400">Shift Target Validation:</span>
                         <span id="calc-preview-trips-badge">--</span>
                     </div>
                     <div class="flex justify-between items-center text-xs">
-                        <span class="text-gray-400">Commission Tier:</span>
+                        <span class="text-gray-400">Commission Tier Earned:</span>
                         <span id="calc-preview-tier" class="font-bold text-purple-400">--</span>
                     </div>
                     <div class="flex justify-between items-center text-xs">
@@ -430,12 +526,12 @@
                         <span id="calc-preview-comm-amt" class="font-bold text-white">--</span>
                     </div>
                     <div class="flex justify-between items-center text-xs">
-                        <span class="text-gray-400">Total Credit (Comm + Exp):</span>
-                        <span id="calc-preview-credit" class="text-emerald-400 font-mono">--</span>
+                        <span class="text-gray-400">Total Driver Credit (Commission + Fuel/Exp):</span>
+                        <span id="calc-preview-credit" class="text-emerald-400 font-mono font-bold">--</span>
                     </div>
                     <div class="flex justify-between items-center text-xs">
-                        <span class="text-gray-400">Total Debit (Cash + Adv + Pass):</span>
-                        <span id="calc-preview-debit" class="text-amber-400 font-mono">--</span>
+                        <span class="text-gray-400">Total Driver Debit (Cash Collection + Advance + Pass):</span>
+                        <span id="calc-preview-debit" class="text-amber-400 font-mono font-bold">--</span>
                     </div>
                     <div class="pt-2 border-t border-[#232836] flex justify-between items-center">
                         <span class="text-xs font-bold text-white">Net Balance Settlement:</span>
@@ -497,4 +593,3 @@
     <script src="js/app.js"></script>
 </body>
 </html>
-

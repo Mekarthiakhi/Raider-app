@@ -1,0 +1,20 @@
+{
+  "name": "svm-fleet-web",
+  "version": "1.0.43",
+  "description": "SVM FLEET Operating System (Hyderabad Commercial Cabs Management)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Ready\""
+  },
+  "keywords": [
+    "fleet-management",
+    "uber",
+    "rapido",
+    "ola",
+    "hyderabad",
+    "telemetry"
+  ],
+  "author": "SVM FLEET Moosapet",
+  "license": "UNLICENSED"
+}

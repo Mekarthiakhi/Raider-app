@@ -10,8 +10,8 @@ class SvmFleetApp {
         this.activeTab = "overview";
         this.mapController = null;
         this.searchQuery = "";
-        this.statusFilter = "ALL";
-        this.selectedShiftType = "12_HOURS";
+        this.shiftFilter = "ALL";
+        this.registerViewMode = "cards"; // "cards" or "table"
     }
 
     init() {
@@ -45,17 +45,11 @@ class SvmFleetApp {
             });
         }
 
-        // Status Filter in Duty Register
-        const statusSelect = document.getElementById("register-status-filter");
-        if (statusSelect) {
-            statusSelect.addEventListener("change", (e) => {
-                this.statusFilter = e.target.value;
-                this.renderDutyRegister();
-            });
-        }
-
         // Live calculation triggers in Manual Entry Modal
-        const calcInputs = ["modal-trips", "modal-earnings", "modal-cash", "modal-expenditure", "modal-drivepass", "modal-advance", "modal-shifttype"];
+        const calcInputs = [
+            "modal-trips", "modal-earnings", "modal-cash", "modal-expenditure",
+            "modal-drivepass", "modal-advance", "modal-shifttype"
+        ];
         calcInputs.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
@@ -97,11 +91,9 @@ class SvmFleetApp {
         localStorage.setItem(APP_CONFIG.storageKeys.role, role);
         localStorage.setItem(APP_CONFIG.storageKeys.hubId, hubId);
 
-        // Update hub pill filters if owner
         this.renderHubPills();
         this.refreshAll();
 
-        // Focus map to hub or overview
         if (this.mapController) {
             this.mapController.focusHub(hubId);
         }
@@ -151,6 +143,39 @@ class SvmFleetApp {
         }
     }
 
+    setShiftFilter(filter) {
+        this.shiftFilter = filter;
+        document.querySelectorAll(".shift-filter-btn").forEach(btn => {
+            btn.className = "shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-gray-700 bg-gray-900 text-gray-400 hover:text-white";
+        });
+        const activeBtn = event ? event.currentTarget : null;
+        if (activeBtn) {
+            activeBtn.className = "shift-filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#5B36F5] text-white border-[#5B36F5]";
+        }
+        this.renderDutyRegister();
+    }
+
+    setRegisterViewMode(mode) {
+        this.registerViewMode = mode;
+        const cardsContainer = document.getElementById("register-cards-container");
+        const tableContainer = document.getElementById("register-table-container");
+        const cardsBtn = document.getElementById("view-mode-cards-btn");
+        const tableBtn = document.getElementById("view-mode-table-btn");
+
+        if (mode === "cards") {
+            if (cardsContainer) cardsContainer.classList.remove("hidden");
+            if (tableContainer) tableContainer.classList.add("hidden");
+            if (cardsBtn) cardsBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#5B36F5] text-white flex items-center gap-1";
+            if (tableBtn) tableBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white flex items-center gap-1";
+        } else {
+            if (cardsContainer) cardsContainer.classList.add("hidden");
+            if (tableContainer) tableContainer.classList.remove("hidden");
+            if (cardsBtn) cardsBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white flex items-center gap-1";
+            if (tableBtn) tableBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#5B36F5] text-white flex items-center gap-1";
+        }
+        if (window.lucide) window.lucide.createIcons();
+    }
+
     getActiveHubName() {
         const hub = APP_CONFIG.hubs.find(h => h.id === this.currentHubId);
         return hub ? hub.shortName : "All Hyderabad";
@@ -166,12 +191,17 @@ class SvmFleetApp {
 
     getCurrentFilteredLogs() {
         let logs = FleetDataRepository.getDutyLogs(this.currentHubId);
-        if (this.statusFilter !== "ALL") {
-            logs = logs.filter(l => l.status === this.statusFilter);
+
+        if (this.shiftFilter === "12_HOURS" || this.shiftFilter === "24_HOURS") {
+            logs = logs.filter(l => l.shiftType === this.shiftFilter);
+        } else if (this.shiftFilter === "OPEN") {
+            logs = logs.filter(l => l.status === "OPEN" || l.status === "PENDING");
         }
+
         if (this.searchQuery) {
             logs = logs.filter(l =>
                 l.driverName.toLowerCase().includes(this.searchQuery) ||
+                (l.driverPhone && l.driverPhone.toLowerCase().includes(this.searchQuery)) ||
                 l.vehicleNo.toLowerCase().includes(this.searchQuery) ||
                 (l.remarks && l.remarks.toLowerCase().includes(this.searchQuery))
             );
@@ -187,7 +217,6 @@ class SvmFleetApp {
         this.renderVehiclesGrid();
         this.renderPendingTelemetryList();
 
-        // Update map markers
         const vehicles = this.getCurrentFilteredVehicles();
         if (this.mapController) {
             this.mapController.updateVehicles(vehicles);
@@ -207,55 +236,148 @@ class SvmFleetApp {
 
         let totalGross = 0;
         let totalCash = 0;
-        let totalNetSettled = 0;
+        let totalFuelAndComm = 0;
 
         logs.forEach(l => {
             totalGross += (l.earnings || 0);
             totalCash += (l.cashCollection || 0);
-            totalNetSettled += (l.commissionRent || 0);
+            totalFuelAndComm += (l.commissionRent || 0) + (l.expenditure || 0);
         });
 
         document.getElementById("stat-total-cabs").innerText = totalVehicles;
         document.getElementById("stat-active-cabs").innerText = activeVehicles;
         document.getElementById("stat-gross-revenue").innerText = SvmCommissionCalculator.formatINR(totalGross);
         document.getElementById("stat-cash-collected").innerText = SvmCommissionCalculator.formatINR(totalCash);
-        document.getElementById("stat-net-settled").innerText = SvmCommissionCalculator.formatINR(totalNetSettled);
+        document.getElementById("stat-net-settled").innerText = SvmCommissionCalculator.formatINR(totalFuelAndComm);
     }
 
     renderDutyRegister() {
-        const tbody = document.getElementById("register-table-body");
+        const tbodyOverview = document.getElementById("register-table-body");
         const tbodyFull = document.getElementById("register-table-body-full");
-        if (!tbody && !tbodyFull) return;
+        const cardsContainer = document.getElementById("register-cards-container");
 
         const logs = this.getCurrentFilteredLogs();
 
-        if (logs.length === 0) {
-            const emptyHtml = `
-                <tr>
-                    <td colspan="10" class="py-12 text-center text-gray-500">
+        // 1. Render Mobile-App Style DutyLogCards
+        if (cardsContainer) {
+            if (logs.length === 0) {
+                cardsContainer.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-gray-500 glass-card">
                         <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-                        No duty logbook records found for this view.
-                    </td>
-                </tr>
-            `;
-            if (tbody) tbody.innerHTML = emptyHtml;
-            if (tbodyFull) tbodyFull.innerHTML = emptyHtml;
-            return;
+                        No duty logbook records match your filter.
+                    </div>
+                `;
+            } else {
+                cardsContainer.innerHTML = logs.map(log => {
+                    const isSettled = log.status === "SETTLED";
+                    const is12H = log.shiftType === "12_HOURS";
+                    const isAuto = log.source === "AUTOMATIC_TELEMETRY";
+                    const commTier = log.commissionPercentage || 0;
+                    const tierClass = commTier >= 40 ? "tier-40" : commTier >= 35 ? "tier-35" : commTier >= 30 ? "tier-30" : commTier >= 25 ? "tier-25" : "tier-none";
+
+                    return `
+                        <div class="glass-card p-4 flex flex-col justify-between hover:border-purple-500/50 transition-all">
+                            <!-- Card Header (Mirroring DutyLogCard) -->
+                            <div>
+                                <div class="flex justify-between items-start mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-purple-900/40 border border-purple-500/30 flex items-center justify-center text-purple-300">
+                                            <i data-lucide="car" class="w-5 h-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <h4 class="font-extrabold text-base text-white font-mono">${log.vehicleNo}</h4>
+                                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isSettled ? 'bg-emerald-900/40 text-emerald-300 border border-emerald-500/30' : 'bg-amber-900/40 text-amber-300 border border-amber-500/30'}">
+                                                    ${log.status}
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center gap-2 text-xs text-gray-300 mt-0.5">
+                                                <span class="font-bold">${log.driverName}</span>
+                                                <span class="text-gray-500">•</span>
+                                                <a href="tel:${log.driverPhone || ''}" class="text-blue-400 hover:underline font-mono text-[11px] flex items-center gap-1">
+                                                    <i data-lucide="phone" class="w-3 h-3"></i> ${log.driverPhone || 'No Phone'}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs text-gray-400 font-semibold block">${is12H ? '12h Shift' : '24h Shift'}</span>
+                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isAuto ? 'bg-purple-900/50 text-purple-300' : 'bg-gray-800 text-gray-400'}">
+                                            ${isAuto ? '⚡ Auto' : '📝 Manual'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Date & Log Time Row -->
+                                <div class="py-1.5 px-3 rounded-lg bg-[#12151C] border border-[#232836] flex justify-between text-[11px] text-gray-400 mb-3">
+                                    <span>Date: <strong class="text-gray-200">${log.loginDate}</strong></span>
+                                    <span>Time: <strong class="text-gray-200">${log.loginTime || '06:00 AM'} - ${log.logoutTime || '08:00 PM'}</strong></span>
+                                </div>
+
+                                <!-- 4-Metric Financial Matrix (TRIPS, EARNINGS, CASH COLL, COMMISSION) -->
+                                <div class="metric-matrix mb-3">
+                                    <div>
+                                        <div class="metric-item-title">Trips</div>
+                                        <div class="metric-item-value text-white">${log.trips}</div>
+                                    </div>
+                                    <div>
+                                        <div class="metric-item-title">Gross Fare</div>
+                                        <div class="metric-item-value text-emerald-400">₹${Math.round(log.earnings)}</div>
+                                    </div>
+                                    <div>
+                                        <div class="metric-item-title">Cash Coll.</div>
+                                        <div class="metric-item-value text-amber-400">₹${Math.round(log.cashCollection)}</div>
+                                    </div>
+                                    <div>
+                                        <div class="metric-item-title">Commission</div>
+                                        <div class="metric-item-value text-purple-400">₹${Math.round(log.commissionRent)}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Secondary Breakdown: Fuel, Pass, Advance & Tier -->
+                                <div class="text-xs text-gray-400 flex flex-wrap justify-between items-center py-2 border-t border-[#232836]">
+                                    <span class="flex items-center gap-1">
+                                        <i data-lucide="fuel" class="w-3.5 h-3.5 text-blue-400"></i> Fuel/Exp: <strong class="text-blue-300">₹${log.expenditure || 0}</strong>
+                                    </span>
+                                    <span>Pass: <strong class="text-gray-300">₹${log.drivePass || 0}</strong></span>
+                                    <span>Adv: <strong class="text-gray-300">₹${log.advance || 0}</strong></span>
+                                    <span class="pill-badge ${tierClass}">
+                                        ${commTier > 0 ? commTier + '% Tier' : 'No Tier'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Net Settlement Footer -->
+                            <div class="mt-3 pt-3 border-t border-[#232836] flex justify-between items-center">
+                                <div>
+                                    <span class="text-[10px] text-gray-500 uppercase tracking-wider block font-bold">Net Balance Settlement</span>
+                                    <span class="font-extrabold text-sm ${log.netBalance >= 0 ? 'text-emerald-400' : 'text-amber-400'}">
+                                        ${log.netBalance >= 0 ? 'Company Pays: ₹' + Math.round(log.netBalance) : 'Driver Owes: ₹' + Math.round(Math.abs(log.netBalance))}
+                                    </span>
+                                </div>
+                                <button onclick="window.SVM_APP.printReceipt('${log.id}')" class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-colors">
+                                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> Receipt
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+            }
         }
 
-        const rowsHtml = logs.map((log, idx) => {
+        // 2. Render Tables (Overview Table & Full Table)
+        const tableRowsHtml = logs.map(log => {
             const isAuto = log.source === "AUTOMATIC_TELEMETRY";
             const badgeClass = isAuto ? "bg-purple-900/40 text-purple-300 border border-purple-500/30" : "bg-gray-800 text-gray-300 border border-gray-700";
-            const sourceLabel = isAuto ? "⚡ Auto Telemetry" : "📝 Paper Log";
+            const sourceLabel = isAuto ? "⚡ Auto" : "📝 Manual";
             const isSettled = log.status === "SETTLED";
             const statusBadge = isSettled ? "bg-emerald-900/40 text-emerald-300 border border-emerald-500/30" : "bg-amber-900/40 text-amber-300 border border-amber-500/30";
 
             return `
                 <tr class="border-b border-[#232836] hover:bg-[#181C26]/60 transition-colors">
-                    <td class="py-3 px-4 text-xs font-mono text-gray-400">#${log.id.slice(-4)}</td>
                     <td class="py-3 px-4">
                         <div class="font-bold text-sm text-white">${log.driverName}</div>
-                        <div class="text-xs text-gray-400 font-mono">${log.driverPhone || ""}</div>
+                        <a href="tel:${log.driverPhone || ''}" class="text-xs text-blue-400 hover:underline font-mono">${log.driverPhone || ''}</a>
                     </td>
                     <td class="py-3 px-4">
                         <span class="inline-block px-2 py-0.5 rounded bg-gray-900 border border-gray-700 font-mono text-xs font-bold text-gray-200">
@@ -266,15 +388,21 @@ class SvmFleetApp {
                     <td class="py-3 px-4 text-center font-bold text-white text-sm">
                         ${log.trips}
                     </td>
-                    <td class="py-3 px-4 text-right font-bold text-white">
+                    <td class="py-3 px-4 text-right font-bold text-emerald-400">
                         ₹${Math.round(log.earnings).toLocaleString('en-IN')}
+                    </td>
+                    <td class="py-3 px-4 text-right font-bold text-blue-400 font-mono">
+                        ₹${Math.round(log.expenditure || 0).toLocaleString('en-IN')}
                     </td>
                     <td class="py-3 px-4 text-right text-amber-400 font-mono font-medium">
                         ₹${Math.round(log.cashCollection).toLocaleString('en-IN')}
                     </td>
-                    <td class="py-3 px-4 text-right text-emerald-400 font-bold">
+                    <td class="py-3 px-4 text-right text-purple-400 font-bold">
                         ₹${Math.round(log.commissionRent).toLocaleString('en-IN')}
                         <span class="text-[10px] block text-gray-500 font-normal">(${log.commissionPercentage || 0}%)</span>
+                    </td>
+                    <td class="py-3 px-4 text-right font-mono text-xs ${log.netBalance >= 0 ? 'text-emerald-400' : 'text-amber-400'}">
+                        ${log.netBalance >= 0 ? '+₹' + Math.round(log.netBalance) : '-₹' + Math.round(Math.abs(log.netBalance))}
                     </td>
                     <td class="py-3 px-4 text-center">
                         <span class="inline-block px-2 py-0.5 text-[10px] font-semibold rounded ${badgeClass}">
@@ -295,8 +423,12 @@ class SvmFleetApp {
             `;
         }).join("");
 
-        if (tbody) tbody.innerHTML = rowsHtml;
-        if (tbodyFull) tbodyFull.innerHTML = rowsHtml;
+        if (tbodyOverview) tbodyOverview.innerHTML = tableRowsHtml;
+        if (tbodyFull) tbodyFull.innerHTML = tableRowsHtml;
+
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
     }
 
     renderDriversGrid() {
@@ -315,7 +447,9 @@ class SvmFleetApp {
                         <div class="flex justify-between items-start mb-2">
                             <div>
                                 <h4 class="font-bold text-white text-base">${d.name}</h4>
-                                <p class="text-xs text-gray-400 font-mono">${d.phone}</p>
+                                <a href="tel:${d.phone}" class="text-xs text-blue-400 hover:underline font-mono flex items-center gap-1 mt-0.5">
+                                    <i data-lucide="phone" class="w-3 h-3"></i> ${d.phone}
+                                </a>
                             </div>
                             <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-purple-900/40 text-purple-300 border border-purple-500/30">
                                 ${hubLabel}
@@ -328,8 +462,8 @@ class SvmFleetApp {
                     </div>
                     <div class="mt-4 pt-3 border-t border-[#232836] flex justify-between items-center text-xs">
                         <span class="text-emerald-400 font-semibold">⭐ ${d.rating} Rating</span>
-                        <button onclick="window.SVM_APP.openManualEntryModal('${d.vehicleNo}', '${d.name}')" class="px-2.5 py-1 rounded bg-[#5B36F5] hover:bg-[#4a2ae0] text-white font-bold text-xs">
-                            + Enter Shift
+                        <button onclick="window.SVM_APP.openManualEntryModal('${d.vehicleNo}', '${d.name}', '${d.phone}')" class="px-2.5 py-1 rounded bg-[#5B36F5] hover:bg-[#4a2ae0] text-white font-bold text-xs">
+                            + Shift Entry
                         </button>
                     </div>
                 </div>
@@ -401,22 +535,23 @@ class SvmFleetApp {
             const calc = SvmCommissionCalculator.calculate(shift.shiftType, shift.trips, shift.earnings, shift.cashCollection, shift.expenditure);
 
             return `
-                <div class="p-3 rounded-xl bg-[#12151C] border border-[#232836] flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                <div class="p-3 rounded-xl bg-[#12151C] border border-[#232836] flex flex-col justify-between gap-2.5">
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="pulse-dot"></span>
                             <strong class="text-white text-sm font-bold">${shift.driverName}</strong>
                             <span class="px-2 py-0.5 rounded bg-gray-800 text-xs font-mono text-gray-300">${shift.vehicleNo}</span>
-                            <span class="text-xs text-gray-400 font-mono">(${shift.capturedPlatforms.join(", ")})</span>
                         </div>
-                        <div class="flex items-center gap-4 mt-1 text-xs text-gray-400">
-                            <span>Trips: <strong class="text-white">${shift.trips}</strong></span>
-                            <span>Gross: <strong class="text-emerald-400">₹${shift.earnings}</strong></span>
-                            <span>Cash: <strong class="text-amber-400">₹${shift.cashCollection}</strong></span>
-                            <span>Comm (${calc.commissionPercentage}%): <strong class="text-purple-400">₹${Math.round(calc.commissionAmount)}</strong></span>
+                        <div class="text-[11px] text-gray-400 mt-1">
+                            ${shift.capturedPlatforms.join(", ")}
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-[#232836] text-[11px]">
+                            <div>Trips: <strong class="text-white">${shift.trips}</strong></div>
+                            <div>Gross: <strong class="text-emerald-400">₹${shift.earnings}</strong></div>
+                            <div>Fuel: <strong class="text-blue-400">₹${shift.expenditure}</strong></div>
                         </div>
                     </div>
-                    <button onclick="window.SVM_APP.autoAggregateShift(${idx})" class="px-3 py-1.5 rounded-lg bg-[#5B36F5] hover:bg-[#4a2ae0] text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-purple-500/20">
+                    <button onclick="window.SVM_APP.autoAggregateShift(${idx})" class="w-full mt-1 py-1.5 rounded-lg bg-[#5B36F5] hover:bg-[#4a2ae0] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-purple-500/20">
                         <span>⚡ 1-Tap Auto-Aggregate</span>
                     </button>
                 </div>
@@ -450,7 +585,7 @@ class SvmFleetApp {
             advance: 0,
             paymentCash: 0,
             paymentOnline: Math.abs(calc.netBalance),
-            netBalance: 0,
+            netBalance: calc.netBalance,
             status: "SETTLED",
             remarks: `Auto-aggregated from ${shift.capturedPlatforms.join(", ")}. ${calc.commissionPercentage}% tier verified.`,
             managerId: shift.managerId,
@@ -459,29 +594,54 @@ class SvmFleetApp {
 
         FleetDataRepository.saveDutyLog(newLog);
 
-        // Remove from pending
         window.PENDING_TELEMETRY_SHIFTS.splice(index, 1);
 
         this.refreshAll();
         this.showToast(`Auto-aggregated shift for ${shift.driverName} into Master Register!`, "success");
     }
 
-    openManualEntryModal(prefillRegNo = "", prefillDriverName = "", prefillTrips = "", prefillGross = "") {
+    populateQuickDriverDropdown() {
+        const select = document.getElementById("modal-quick-driver-select");
+        if (!select) return;
+
+        const drivers = FleetDataRepository.getDrivers();
+        let options = `<option value="">-- Choose Driver (or enter manually below) --</option>`;
+        drivers.forEach(d => {
+            options += `<option value="${d.id}">${d.name} (${d.phone}) — ${d.vehicleNo}</option>`;
+        });
+        select.innerHTML = options;
+    }
+
+    onQuickDriverSelected(driverId) {
+        if (!driverId) return;
+        const drivers = FleetDataRepository.getDrivers();
+        const d = drivers.find(item => item.id === parseInt(driverId));
+        if (!d) return;
+
+        document.getElementById("modal-drivername").value = d.name;
+        document.getElementById("modal-driverphone").value = d.phone;
+        document.getElementById("modal-regno").value = d.vehicleNo;
+        document.getElementById("modal-hub").value = d.managerId || "mgr_moosapet_01";
+        this.updateModalCalculation();
+    }
+
+    openManualEntryModal(prefillRegNo = "", prefillDriverName = "", prefillDriverPhone = "", prefillTrips = "", prefillGross = "") {
         const modal = document.getElementById("manual-entry-modal");
         if (!modal) return;
 
-        // Reset or populate fields
+        this.populateQuickDriverDropdown();
+
         document.getElementById("modal-regno").value = prefillRegNo;
         document.getElementById("modal-drivername").value = prefillDriverName;
+        document.getElementById("modal-driverphone").value = prefillDriverPhone || "+91 93919 15013";
         document.getElementById("modal-trips").value = prefillTrips || 12;
         document.getElementById("modal-earnings").value = prefillGross || 3000;
         document.getElementById("modal-cash").value = 2000;
         document.getElementById("modal-expenditure").value = 200;
         document.getElementById("modal-drivepass").value = 0;
         document.getElementById("modal-advance").value = 0;
-        document.getElementById("modal-remarks").value = "Manual register entry from Moosapet book.";
+        document.getElementById("modal-remarks").value = "Manual register entry from Moosapet logbook.";
 
-        // Set hub based on session or car
         const hubSelect = document.getElementById("modal-hub");
         if (hubSelect) {
             hubSelect.value = this.currentHubId !== "ALL" ? this.currentHubId : "mgr_moosapet_01";
@@ -507,22 +667,24 @@ class SvmFleetApp {
 
         const result = SvmCommissionCalculator.calculate(shiftType, trips, gross, cash, exp, pass, advance);
 
-        // Render preview breakdown
-        document.getElementById("calc-preview-trips-badge").innerText = result.minTripsMet ? `✓ Min Trips Met (${trips})` : `⚠ Below Min (${trips}/${shiftType === "12_HOURS" ? 10 : 18})`;
-        document.getElementById("calc-preview-trips-badge").className = result.minTripsMet ? "text-emerald-400 font-bold text-xs" : "text-amber-400 font-bold text-xs";
+        const badgeEl = document.getElementById("calc-preview-trips-badge");
+        if (badgeEl) {
+            badgeEl.innerText = result.minTripsMet ? `✓ Target Met (${trips} trips)` : `⚠ Below Minimum (${trips}/${shiftType === "12_HOURS" ? 10 : 18} trips)`;
+            badgeEl.className = result.minTripsMet ? "text-emerald-400 font-bold text-xs" : "text-amber-400 font-bold text-xs";
+        }
 
-        document.getElementById("calc-preview-tier").innerText = result.commissionPercentage > 0 ? `${result.commissionPercentage}% Commission Tier` : "0% (No Tier)";
+        document.getElementById("calc-preview-tier").innerText = result.commissionPercentage > 0 ? `${result.commissionPercentage}% Commission Tier` : "0% (No Tier Applied)";
         document.getElementById("calc-preview-comm-amt").innerText = `₹${Math.round(result.commissionAmount)}`;
-        document.getElementById("calc-preview-credit").innerText = `₹${Math.round(result.driverCredit)}`;
-        document.getElementById("calc-preview-debit").innerText = `₹${Math.round(result.driverDebit)}`;
+        document.getElementById("calc-preview-credit").innerText = `₹${Math.round(result.driverCredit)} (Comm: ₹${Math.round(result.commissionAmount)} + Fuel: ₹${Math.round(exp)})`;
+        document.getElementById("calc-preview-debit").innerText = `₹${Math.round(result.driverDebit)} (Cash: ₹${Math.round(cash)} + Adv: ₹${Math.round(advance)})`;
 
         const netEl = document.getElementById("calc-preview-net");
         if (result.netBalance >= 0) {
             netEl.innerText = `+₹${Math.round(result.netBalance)} (Company pays Driver)`;
             netEl.className = "text-emerald-400 font-extrabold text-base";
         } else {
-            netEl.innerText = `-₹${Math.round(Math.abs(result.netBalance))} (Driver owes Company)`;
-            netEl.className = "text-alert-coral font-extrabold text-base";
+            netEl.innerText = `-₹${Math.round(Math.abs(result.netBalance))} (Driver deposits cash to Office)`;
+            netEl.className = "text-amber-400 font-extrabold text-base";
         }
     }
 
@@ -531,6 +693,7 @@ class SvmFleetApp {
 
         const shiftType = document.getElementById("modal-shifttype").value;
         const driverName = document.getElementById("modal-drivername").value.trim();
+        const driverPhone = document.getElementById("modal-driverphone").value.trim();
         const vehicleNo = document.getElementById("modal-regno").value.trim().toUpperCase();
         const hubId = document.getElementById("modal-hub").value;
         const trips = parseInt(document.getElementById("modal-trips").value) || 0;
@@ -539,6 +702,7 @@ class SvmFleetApp {
         const exp = parseFloat(document.getElementById("modal-expenditure").value) || 0;
         const pass = parseFloat(document.getElementById("modal-drivepass").value) || 0;
         const advance = parseFloat(document.getElementById("modal-advance").value) || 0;
+        const status = document.getElementById("modal-status").value;
         const remarks = document.getElementById("modal-remarks").value.trim();
 
         if (!driverName || !vehicleNo) {
@@ -557,7 +721,7 @@ class SvmFleetApp {
             logoutTime: "07:30 PM",
             vehicleNo,
             driverName,
-            driverPhone: "+91 98450 00000",
+            driverPhone: driverPhone || "+91 93919 15013",
             trips,
             earnings: gross,
             cashCollection: cash,
@@ -569,7 +733,7 @@ class SvmFleetApp {
             paymentCash: cash > 0 ? cash : 0,
             paymentOnline: 0,
             netBalance: calc.netBalance,
-            status: "SETTLED",
+            status: status || "SETTLED",
             remarks: remarks || calc.remarks,
             managerId: hubId,
             source: "MANUAL_REGISTER"
@@ -578,7 +742,7 @@ class SvmFleetApp {
         FleetDataRepository.saveDutyLog(newLog);
         this.closeManualEntryModal();
         this.refreshAll();
-        this.showToast(`Manual Duty Log registered for ${driverName} (${vehicleNo})!`, "success");
+        this.showToast(`Manual Shift Log saved for ${driverName} (${vehicleNo})!`, "success");
     }
 
     openReassignModal(vehicleId) {
@@ -613,7 +777,7 @@ class SvmFleetApp {
         FleetDataRepository.reassignVehicle(vehicleId, targetHubId);
         this.closeReassignModal();
         this.refreshAll();
-        this.showToast("Vehicle & Driver successfully transferred to new Hub!", "success");
+        this.showToast("Vehicle & Driver transferred to new Hub!", "success");
     }
 
     exportCSV() {
@@ -623,19 +787,26 @@ class SvmFleetApp {
             return;
         }
 
-        const headers = ["ID", "Shift", "Date", "Vehicle", "Driver", "Trips", "Gross Earnings", "Cash Collected", "Expenditure", "Commission Tier", "Commission Amount", "Status", "Source", "Remarks"];
+        const headers = [
+            "Log ID", "Shift Type", "Date", "Driver Name", "Driver Phone",
+            "Vehicle No", "Trips", "Gross Earned (INR)", "Fuel & Exp (INR)",
+            "Cash Collected (INR)", "Commission Tier", "Commission Amount (INR)",
+            "Net Balance (INR)", "Status", "Source", "Remarks"
+        ];
         const rows = logs.map(l => [
             l.id,
             l.shiftType,
             l.loginDate,
-            l.vehicleNo,
             `"${l.driverName}"`,
+            `"${l.driverPhone || ''}"`,
+            l.vehicleNo,
             l.trips,
             l.earnings,
+            l.expenditure || 0,
             l.cashCollection,
-            l.expenditure,
-            `${l.commissionPercentage}%`,
+            `${l.commissionPercentage || 0}%`,
             l.commissionRent,
+            l.netBalance,
             l.status,
             l.source,
             `"${l.remarks || ''}"`
@@ -645,7 +816,7 @@ class SvmFleetApp {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `SVM_FLEET_Statement_${this.currentHubId}_${Date.now()}.csv`);
+        link.setAttribute("download", `SVM_FLEET_Duty_Register_${this.currentHubId}_${Date.now()}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -663,11 +834,11 @@ class SvmFleetApp {
             <head>
                 <title>SVM FLEET - Shift Settlement Receipt #${log.id}</title>
                 <style>
-                    body { font-family: monospace; padding: 24px; color: #111; }
+                    body { font-family: monospace; padding: 24px; color: #111; max-width: 600px; margin: 0 auto; }
                     .header { text-align: center; border-bottom: 2px dashed #444; padding-bottom: 12px; margin-bottom: 16px; }
                     .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
                     .total { border-top: 2px dashed #444; margin-top: 12px; padding-top: 12px; font-weight: bold; font-size: 16px; }
-                    .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #666; }
+                    .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 12px; }
                 </style>
             </head>
             <body>
@@ -677,17 +848,20 @@ class SvmFleetApp {
                     <h3>DRIVER DUTY SETTLEMENT RECEIPT</h3>
                 </div>
                 <div class="row"><span>Receipt ID:</span><span>#${log.id}</span></div>
-                <div class="row"><span>Date & Time:</span><span>${log.loginDate} (${log.shiftType === '12_HOURS' ? '12 Hrs Shift' : '24 Hrs Shift'})</span></div>
-                <div class="row"><span>Driver Name:</span><span>${log.driverName} (${log.driverPhone || 'N/A'})</span></div>
-                <div class="row"><span>Vehicle No:</span><span>${log.vehicleNo}</span></div>
-                <div class="row"><span>Trips Completed:</span><span>${log.trips}</span></div>
+                <div class="row"><span>Date & Time:</span><span>${log.loginDate} (${log.shiftType === '12_HOURS' ? '12h Shift' : '24h Shift'})</span></div>
+                <div class="row"><span>Driver:</span><span><strong>${log.driverName}</strong> (${log.driverPhone || 'N/A'})</span></div>
+                <div class="row"><span>Vehicle Reg No:</span><span><strong>${log.vehicleNo}</strong></span></div>
+                <div class="row"><span>Trips Completed:</span><span><strong>${log.trips}</strong></span></div>
                 <hr style="border: 0; border-top: 1px dashed #aaa; margin: 10px 0;" />
                 <div class="row"><span>Gross Earnings:</span><span>₹${log.earnings}</span></div>
                 <div class="row"><span>Commission Tier:</span><span>${log.commissionPercentage || 0}%</span></div>
                 <div class="row"><span>Commission Amount:</span><span>₹${log.commissionRent}</span></div>
-                <div class="row"><span>Expenditure (Fuel/Tolls):</span><span>₹${log.expenditure}</span></div>
+                <div class="row"><span>Fuel & Daily Expenditure:</span><span>₹${log.expenditure || 0}</span></div>
                 <div class="row"><span>Cash Collected from Riders:</span><span>₹${log.cashCollection}</span></div>
-                <div class="total row"><span>NET BALANCE:</span><span>₹${log.netBalance >= 0 ? '+' : ''}${log.netBalance} (${log.netBalance >= 0 ? 'Company Pays Driver' : 'Driver Deposited to Office'})</span></div>
+                <div class="total row">
+                    <span>NET BALANCE:</span>
+                    <span>₹${log.netBalance >= 0 ? '+' : ''}${log.netBalance} (${log.netBalance >= 0 ? 'Company Pays Driver' : 'Driver Deposited to Office'})</span>
+                </div>
                 <div class="footer">
                     <p>Remarks: ${log.remarks || 'Standard shift completion.'}</p>
                     <p>Verified by SVM FLEET Hub Officer</p>
@@ -707,11 +881,10 @@ class SvmFleetApp {
         document.querySelectorAll("[data-nav-tab]").forEach(btn => {
             const active = btn.getAttribute("data-nav-tab") === tabId;
             btn.className = active
-                ? "flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-[#5B36F5] text-white shadow-lg shadow-purple-500/20"
-                : "flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm text-gray-400 hover:text-white hover:bg-gray-800/50";
+                ? "flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs bg-[#5B36F5] text-white shadow-lg shadow-purple-500/20"
+                : "flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs text-gray-400 hover:text-white hover:bg-gray-800/50";
         });
 
-        // Hide all views, show targeted view
         document.querySelectorAll("[data-tab-content]").forEach(content => {
             content.classList.add("hidden");
         });
@@ -720,7 +893,6 @@ class SvmFleetApp {
             activeContent.classList.remove("hidden");
         }
 
-        // Trigger Leaflet map invalidateSize if map is switched to
         if (tabId === "map" || tabId === "overview") {
             setTimeout(() => {
                 if (this.mapController && this.mapController.map) {

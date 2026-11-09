@@ -166,3 +166,72 @@ body {
         color: #000 !important;
     }
 }
+
+/* Material 3 & GlassCard Mobile Enhancements */
+.pill-badge {
+    border-radius: 9999px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.metric-matrix {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: rgba(18, 21, 28, 0.9);
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+    padding: 10px;
+    gap: 8px;
+    text-align: center;
+}
+
+.metric-item-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-item-value {
+    font-size: 15px;
+    font-weight: 800;
+    margin-top: 2px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Tier Glow Badges */
+.tier-40 {
+    background: rgba(46, 211, 160, 0.15);
+    color: #2ED3A0;
+    border: 1px solid rgba(46, 211, 160, 0.35);
+}
+
+.tier-35 {
+    background: rgba(91, 54, 245, 0.15);
+    color: #a78bfa;
+    border: 1px solid rgba(91, 54, 245, 0.35);
+}
+
+.tier-30 {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38BDF8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.tier-25 {
+    background: rgba(233, 185, 73, 0.15);
+    color: #E9B949;
+    border: 1px solid rgba(233, 185, 73, 0.35);
+}
+
+.tier-none {
+    background: rgba(148, 163, 184, 0.1);
+    color: #94A3B8;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
