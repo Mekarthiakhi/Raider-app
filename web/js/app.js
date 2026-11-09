@@ -83,11 +83,27 @@ class SvmFleetApp {
             });
         }
 
+        const addDriverModal = document.getElementById("add-driver-modal");
+        if (addDriverModal) {
+            addDriverModal.addEventListener("click", (e) => {
+                if (e.target === addDriverModal) this.closeAddDriverModal();
+            });
+        }
+
+        const addManagerModal = document.getElementById("add-manager-modal");
+        if (addManagerModal) {
+            addManagerModal.addEventListener("click", (e) => {
+                if (e.target === addManagerModal) this.closeAddManagerModal();
+            });
+        }
+
         // Escape key to dismiss modals
         window.addEventListener("keydown", (e) => {
             if (e.key === "Escape") {
                 this.closeManualEntryModal();
                 this.closeReassignModal();
+                this.closeAddDriverModal();
+                this.closeAddManagerModal();
             }
         });
     }
@@ -569,39 +585,72 @@ class SvmFleetApp {
         if (!container) return;
 
         const drivers = this.getCurrentFilteredDrivers();
+        const logs = FleetDataRepository.getDutyLogs();
 
         container.innerHTML = drivers.map(d => {
             const hub = APP_CONFIG.hubs.find(h => h.id === d.managerId);
             const hubLabel = hub ? hub.shortName : "Hub";
+            const driverLogs = logs.filter(l => l.driverName.toLowerCase() === d.name.toLowerCase() || (l.driverPhone && l.driverPhone === d.phone));
+            const totalShiftsLogged = driverLogs.length;
+            const isOnDuty = d.status === "ON_DUTY";
 
             return `
-                <div class="glass-panel p-4 flex flex-col justify-between">
+                <div class="glass-panel p-4 flex flex-col justify-between hover:border-indigo-500/40 transition-all">
                     <div>
-                        <div class="flex justify-between items-start mb-2">
+                        <div class="flex justify-between items-start mb-2.5">
                             <div>
-                                <h4 class="font-bold text-white text-base">${d.name}</h4>
-                                <a href="tel:${d.phone}" class="text-xs text-indigo-400 hover:underline font-mono flex items-center gap-1 mt-0.5">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-extrabold text-white text-base">${d.name}</h4>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold rounded-full ${isOnDuty ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/30' : 'bg-amber-950/60 text-amber-300 border border-amber-500/30'}">
+                                        <span class="w-1.5 h-1.5 rounded-full ${isOnDuty ? 'bg-emerald-400' : 'bg-amber-400'}"></span>
+                                        ${isOnDuty ? 'ON DUTY' : 'IDLE'}
+                                    </span>
+                                </div>
+                                <a href="tel:${d.phone}" class="text-xs text-indigo-400 hover:underline font-mono flex items-center gap-1 mt-1">
                                     <i data-lucide="phone" class="w-3 h-3"></i> ${d.phone}
                                 </a>
                             </div>
-                            <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-indigo-950/60 text-indigo-300 border border-indigo-500/30">
+                            <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-indigo-950/60 text-indigo-300 border border-indigo-500/30">
                                 ${hubLabel}
                             </span>
                         </div>
-                        <div class="mt-3 py-2 px-3 rounded-lg bg-[#0E121C] border border-white/10 flex justify-between text-xs">
-                            <span class="text-slate-400">Assigned Car:</span>
-                            <span class="font-mono font-bold text-slate-200">${d.vehicleNo}</span>
+                        <div class="grid grid-cols-2 gap-2 mt-3 p-2.5 rounded-xl bg-[#0C0F17] border border-white/5 text-xs">
+                            <div>
+                                <span class="text-[10px] text-slate-500 block font-semibold uppercase tracking-wider">Assigned Cab</span>
+                                <span class="font-mono font-bold text-slate-200 mt-0.5 block">${d.vehicleNo || 'Unassigned'}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-slate-500 block font-semibold uppercase tracking-wider">Duty History</span>
+                                <span class="font-mono font-bold text-indigo-400 mt-0.5 block">${totalShiftsLogged} Logs</span>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-4 pt-3 border-t border-white/10 flex justify-between items-center text-xs">
-                        <span class="text-emerald-400 font-semibold">⭐ ${d.rating} Rating</span>
-                        <button onclick="window.SVM_APP.openManualEntryModal('${d.vehicleNo}', '${d.name}', '${d.phone}')" class="px-3 py-1.5 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white font-bold text-xs">
-                            + Shift Entry
-                        </button>
+                        <span class="text-emerald-400 font-bold flex items-center gap-1">⭐ ${d.rating}</span>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="window.SVM_APP.filterDriverInRegister('${d.name}')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors" title="View Duty Register for this driver">
+                                <i data-lucide="file-text" class="w-3 h-3"></i> Shifts
+                            </button>
+                            <button onclick="window.SVM_APP.openManualEntryModal('${d.vehicleNo || ''}', '${d.name}', '${d.phone}')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1 shadow-md shadow-indigo-500/20 cursor-pointer transition-colors">
+                                <i data-lucide="plus" class="w-3 h-3"></i> Log Shift
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
         }).join("");
+
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    filterDriverInRegister(driverName) {
+        this.switchTab('register');
+        const searchInput = document.getElementById("register-search");
+        if (searchInput) {
+            searchInput.value = driverName;
+            this.searchQuery = driverName.toLowerCase();
+            this.renderDutyRegister();
+        }
     }
 
     renderVehiclesGrid() {
@@ -806,22 +855,18 @@ class SvmFleetApp {
             console.warn("Error setting modal values:", e);
         }
 
-        // Guaranteed display via inline style and .open class on modal-overlay
-        modal.style.setProperty("display", "flex", "important");
+        // Rely strictly on class state (.open)
         modal.classList.add("open");
         modal.scrollTop = 0;
         document.body.classList.add("modal-open");
-        document.body.style.overflow = "hidden";
     }
 
     closeManualEntryModal() {
         const modal = document.getElementById("manual-entry-modal");
         if (modal) {
-            modal.style.display = "none";
             modal.classList.remove("open");
         }
         document.body.classList.remove("modal-open");
-        document.body.style.overflow = "";
     }
 
     updateModalCalculation() {
@@ -942,21 +987,17 @@ class SvmFleetApp {
             <option value="${h.id}" ${v.managerId === h.id ? 'selected' : ''}>${h.name} (${h.managerName})</option>
         `).join("");
 
-        modal.style.setProperty("display", "flex", "important");
         modal.classList.add("open");
         modal.scrollTop = 0;
         document.body.classList.add("modal-open");
-        document.body.style.overflow = "hidden";
     }
 
     closeReassignModal() {
         const modal = document.getElementById("reassign-hub-modal");
         if (modal) {
-            modal.style.display = "none";
             modal.classList.remove("open");
         }
         document.body.classList.remove("modal-open");
-        document.body.style.overflow = "";
     }
 
     submitReassignment(e) {
@@ -968,6 +1009,123 @@ class SvmFleetApp {
         this.closeReassignModal();
         this.refreshAll();
         this.showToast("Vehicle & Driver transferred to new Hub!", "success");
+    }
+
+    openAddDriverModal() {
+        const modal = document.getElementById("add-driver-modal");
+        if (!modal) return;
+
+        const hubSelect = document.getElementById("add-driver-hub");
+        if (hubSelect) {
+            hubSelect.innerHTML = APP_CONFIG.hubs.map(h => `<option value="${h.id}">${h.name}</option>`).join("");
+        }
+
+        const vehicleSelect = document.getElementById("add-driver-vehicle");
+        if (vehicleSelect) {
+            const vehicles = FleetDataRepository.getVehicles();
+            vehicleSelect.innerHTML = `<option value="">-- No Vehicle Assigned Yet --</option>` +
+                vehicles.map(v => `<option value="${v.regNo}">${v.regNo} (${v.model}) - ${v.driverName ? 'Driver: ' + v.driverName : 'Unassigned'}</option>`).join("");
+        }
+
+        modal.classList.add("open");
+        modal.scrollTop = 0;
+        document.body.classList.add("modal-open");
+    }
+
+    closeAddDriverModal() {
+        const modal = document.getElementById("add-driver-modal");
+        if (modal) {
+            modal.classList.remove("open");
+        }
+        document.body.classList.remove("modal-open");
+    }
+
+    async submitAddDriver(e) {
+        e.preventDefault();
+        const name = document.getElementById("add-driver-name")?.value.trim();
+        const phone = document.getElementById("add-driver-phone")?.value.trim();
+        const managerId = document.getElementById("add-driver-hub")?.value || "mgr_moosapet_01";
+        const vehicleNo = document.getElementById("add-driver-vehicle")?.value.trim().toUpperCase() || "";
+        const rating = parseFloat(document.getElementById("add-driver-rating")?.value) || 4.85;
+        const status = document.getElementById("add-driver-status")?.value || "ON_DUTY";
+
+        if (!name || !phone) {
+            alert("Please provide both Driver Name and Mobile Number.");
+            return;
+        }
+
+        const newDriver = {
+            id: Date.now(),
+            name,
+            phone,
+            managerId,
+            vehicleNo,
+            status,
+            rating,
+            totalTrips: 0
+        };
+
+        await FleetDataRepository.saveDriver(newDriver);
+        this.closeAddDriverModal();
+        this.refreshAll();
+        this.showToast(`Driver ${name} successfully enrolled in SVM Fleet!`, "success");
+    }
+
+    openAddManagerModal() {
+        const modal = document.getElementById("add-manager-modal");
+        if (!modal) return;
+        modal.classList.add("open");
+        modal.scrollTop = 0;
+        document.body.classList.add("modal-open");
+    }
+
+    closeAddManagerModal() {
+        const modal = document.getElementById("add-manager-modal");
+        if (modal) {
+            modal.classList.remove("open");
+        }
+        document.body.classList.remove("modal-open");
+    }
+
+    async submitAddManager(e) {
+        e.preventDefault();
+        const hubName = document.getElementById("add-hub-name")?.value.trim();
+        const shortName = document.getElementById("add-hub-short")?.value.trim();
+        const managerName = document.getElementById("add-hub-manager")?.value.trim();
+        const phone = document.getElementById("add-hub-phone")?.value.trim();
+        const pin = document.getElementById("add-hub-pin")?.value.trim() || "1234";
+        const color = document.getElementById("add-hub-color")?.value || "#6366F1";
+        const cabsCount = parseInt(document.getElementById("add-hub-cabs")?.value) || 6;
+        const lat = parseFloat(document.getElementById("add-hub-lat")?.value) || 17.4400;
+        const lng = parseFloat(document.getElementById("add-hub-lng")?.value) || 78.3489;
+
+        if (!hubName || !managerName || !phone) {
+            alert("Please fill in Hub Name, Manager Name, and Phone Number.");
+            return;
+        }
+
+        const newHub = {
+            id: "mgr_" + (shortName || hubName).toLowerCase().replace(/[^a-z0-9]/g, "_") + "_" + Date.now().toString().slice(-4),
+            name: hubName,
+            shortName: shortName || hubName,
+            managerName,
+            phone,
+            pin,
+            lat,
+            lng,
+            color,
+            cabsCount
+        };
+
+        FleetDataRepository.saveHub(newHub);
+        this.closeAddManagerModal();
+        this.renderRoleSelector();
+        this.renderHubPills();
+        if (this.mapController) {
+            this.mapController.renderHubs();
+        }
+        this.refreshAll();
+        this.showToast(`New Hub "${hubName}" & Manager ${managerName} created!`, "success");
     }
 
     exportCSV() {

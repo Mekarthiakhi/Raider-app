@@ -114,8 +114,26 @@ const APP_CONFIG = {
         hubId: "svm_active_hub_id",
         dutyLogs: "svm_duty_logs_v1",
         vehicles: "svm_vehicles_v1",
-        drivers: "svm_drivers_v1"
+        drivers: "svm_drivers_v1",
+        customHubs: "svm_custom_hubs"
     }
 };
+
+// Merge any custom hubs created by Fleet Owner from localStorage
+try {
+    const customHubsStr = localStorage.getItem("svm_custom_hubs");
+    if (customHubsStr) {
+        const customHubs = JSON.parse(customHubsStr);
+        if (Array.isArray(customHubs)) {
+            customHubs.forEach(ch => {
+                if (!APP_CONFIG.hubs.some(h => h.id === ch.id)) {
+                    APP_CONFIG.hubs.push(ch);
+                }
+            });
+        }
+    }
+} catch (e) {
+    console.warn("Could not load custom hubs:", e);
+}
 
 window.APP_CONFIG = APP_CONFIG;

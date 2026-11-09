@@ -307,49 +307,65 @@ class FleetDataRepository {
         try {
             if (window.supabase && APP_CONFIG.supabase) {
                 this.supabase = window.supabase.createClient(APP_CONFIG.supabase.url, APP_CONFIG.supabase.anonKey);
-                this.isCloudConnected = true;
-                this.updateCloudStatusIndicator(true);
+                // Mark connecting state; only mark live after successful query or subscription
+                this.updateCloudStatusIndicator("CONNECTING");
 
                 // Initial fetch from cloud DB
                 this.syncWithSupabase();
 
                 // Setup Realtime subscription
                 this.setupRealtimeSubscription();
+            } else {
+                this.isCloudConnected = false;
+                this.updateCloudStatusIndicator("OFFLINE");
             }
         } catch (e) {
             console.warn("Supabase initialization error:", e);
-            this.updateCloudStatusIndicator(false);
+            this.isCloudConnected = false;
+            this.updateCloudStatusIndicator("OFFLINE");
         }
     }
 
-    updateCloudStatusIndicator(connected) {
+    updateCloudStatusIndicator(status) {
+        // status: "ONLINE", "CONNECTING", "OFFLINE"
         const mobileEl = document.getElementById("db-cloud-indicator");
         const desktopEl = document.getElementById("db-cloud-indicator-desktop");
         
-        const html = connected
-            ? `<span class="pulse-dot"></span><span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Cloud DB Live</span>`
-            : `<span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Offline Cache</span>`;
-            
-        const mobileClass = connected
-            ? "flex md:hidden items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 shadow-sm"
-            : "flex md:hidden items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-950/40 border border-amber-500/30";
-
-        const desktopClass = connected
-            ? "hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 shadow-sm"
-            : "hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-950/40 border border-amber-500/30";
-
+        const isOnline = status === "ONLINE" || status === true;
+        const isConnecting = status === "CONNECTING";
+        
+        let label = "Cloud DB Live";
+        let dotHtml = '<span class="pulse-dot"></span>';
+        let colorClass = "bg-emerald-950/40 border-emerald-500/30 text-emerald-400";
+        
+        if (isConnecting) {
+            label = "Connecting...";
+            dotHtml = '<span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>';
+            colorClass = "bg-indigo-950/40 border-indigo-500/30 text-indigo-300";
+        } else if (!isOnline) {
+            label = "Offline Cache";
+            dotHtml = '<span class="w-2 h-2 rounded-full bg-amber-400"></span>';
+            colorClass = "bg-amber-950/40 border-amber-500/30 text-amber-400";
+        }
+        
+        const content = `${dotHtml}<span class="text-[10px] font-bold uppercase tracking-wider">${label}</span>`;
+        
         if (mobileEl) {
-            mobileEl.innerHTML = html;
-            mobileEl.className = mobileClass;
+            mobileEl.innerHTML = content;
+            mobileEl.className = `flex md:hidden items-center gap-1.5 px-2.5 py-1 rounded-full border shadow-sm ${colorClass}`;
         }
         if (desktopEl) {
-            desktopEl.innerHTML = html;
-            desktopEl.className = desktopClass;
+            desktopEl.innerHTML = content;
+            desktopEl.className = `hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full border shadow-sm ${colorClass}`;
         }
     }
 
     async syncWithSupabase() {
-        if (!this.supabase) return;
+        if (!this.supabase) {
+            this.isCloudConnected = false;
+            this.updateCloudStatusIndicator("OFFLINE");
+            return;
+        }
 
         try {
             const { data, error } = await this.supabase
@@ -359,8 +375,14 @@ class FleetDataRepository {
 
             if (error) {
                 console.warn("Supabase fetch duty logs error:", error);
+                this.isCloudConnected = false;
+                this.updateCloudStatusIndicator("OFFLINE");
                 return;
             }
+
+            // Connection succeeded!
+            this.isCloudConnected = true;
+            this.updateCloudStatusIndicator("ONLINE");
 
             if (data && data.length > 0) {
                 // Map DB rows to client format
@@ -412,6 +434,8 @@ class FleetDataRepository {
             }
         } catch (err) {
             console.warn("Sync error:", err);
+            this.isCloudConnected = false;
+            this.updateCloudStatusIndicator("OFFLINE");
         }
     }
 
@@ -425,9 +449,19 @@ class FleetDataRepository {
                     console.log('Realtime DB update received from Supabase:', payload);
                     this.syncWithSupabase();
                 })
-                .subscribe();
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        this.isCloudConnected = true;
+                        this.updateCloudStatusIndicator("ONLINE");
+                    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                        this.isCloudConnected = false;
+                        this.updateCloudStatusIndicator("OFFLINE");
+                    }
+                });
         } catch (e) {
             console.warn("Realtime subscription error:", e);
+            this.isCloudConnected = false;
+            this.updateCloudStatusIndicator("OFFLINE");
         }
     }
 
@@ -498,17 +532,60 @@ class FleetDataRepository {
 
                 if (error) {
                     console.warn("Supabase insert error:", error);
+                    this.isCloudConnected = false;
+                    this.updateCloudStatusIndicator("OFFLINE");
                 } else if (data && data[0]) {
+                    this.isCloudConnected = true;
+                    this.updateCloudStatusIndicator("ONLINE");
                     logData.id = data[0].id;
                     logData.source = 'SUPABASE_CLOUD';
                     localStorage.setItem(APP_CONFIG.storageKeys.dutyLogs, JSON.stringify(logs));
                 }
             } catch (err) {
                 console.warn("Supabase write error:", err);
+                this.isCloudConnected = false;
+                this.updateCloudStatusIndicator("OFFLINE");
             }
         }
 
         return logData;
+    }
+
+    async saveDriver(driverData) {
+        const drivers = this.getDrivers();
+        if (!driverData.id) {
+            driverData.id = Date.now();
+        }
+        drivers.push(driverData);
+        localStorage.setItem(APP_CONFIG.storageKeys.drivers, JSON.stringify(drivers));
+
+        // If an existing vehicle was assigned, link it to this driver
+        if (driverData.vehicleNo) {
+            const vehicles = this.getVehicles();
+            const v = vehicles.find(veh => veh.regNo.toUpperCase() === driverData.vehicleNo.toUpperCase());
+            if (v) {
+                v.driverId = driverData.id;
+                v.driverName = driverData.name;
+                v.managerId = driverData.managerId;
+                localStorage.setItem(APP_CONFIG.storageKeys.vehicles, JSON.stringify(vehicles));
+            }
+        }
+
+        return driverData;
+    }
+
+    saveHub(hubData) {
+        if (!hubData.id) {
+            const cleanShort = (hubData.shortName || "hub").toLowerCase().replace(/[^a-z0-9]/g, "_");
+            hubData.id = "mgr_" + cleanShort + "_" + Date.now().toString().slice(-4);
+        }
+        if (!APP_CONFIG.hubs.some(h => h.id === hubData.id)) {
+            APP_CONFIG.hubs.push(hubData);
+        }
+        const customHubs = JSON.parse(localStorage.getItem(APP_CONFIG.storageKeys.customHubs) || "[]");
+        customHubs.push(hubData);
+        localStorage.setItem(APP_CONFIG.storageKeys.customHubs, JSON.stringify(customHubs));
+        return hubData;
     }
 
     reassignVehicle(vehicleId, newManagerId) {

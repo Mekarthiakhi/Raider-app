@@ -1,5 +1,5 @@
 /* ============================================================================
-   SVM FLEET Operating System (Executive Web Edition)
+   SVM FLEET Operating System (Executive Web Edition v2.5 PRO)
    Hyderabad Commercial Cabs Management (Moosapet • Kukatpally • Madhapur)
    High-Performance Dark Glassmorphism Design System (Linear / Stripe / Vercel Aesthetic)
    ============================================================================ */
@@ -9,8 +9,8 @@
     --bg-surface: #0E121C;
     --bg-elevated: #141824;
     
-    --surface-glass: rgba(14, 18, 28, 0.72);
-    --surface-glass-hover: rgba(22, 28, 44, 0.82);
+    --surface-glass: rgba(14, 18, 28, 0.78);
+    --surface-glass-hover: rgba(22, 28, 44, 0.88);
     --surface-border: rgba(255, 255, 255, 0.08);
     --surface-border-hover: rgba(99, 102, 241, 0.45);
     
@@ -24,6 +24,7 @@
     --color-amber-glow: rgba(245, 158, 11, 0.25);
     --color-sky: #0EA5E9;
     --color-coral: #EF4444;
+    --color-purple: #8B5CF6;
 
     --text-white: #F8FAFC;
     --text-muted: #94A3B8;
@@ -44,9 +45,9 @@ html {
 body {
     background-color: var(--bg-base);
     background-image: 
-        radial-gradient(at 15% 10%, rgba(99, 102, 241, 0.12) 0px, transparent 45%),
-        radial-gradient(at 85% 85%, rgba(16, 185, 129, 0.08) 0px, transparent 40%),
-        radial-gradient(at 50% 50%, rgba(245, 158, 11, 0.03) 0px, transparent 60%),
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(99, 102, 241, 0.16) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 85% 90%, rgba(16, 185, 129, 0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 30% at 50% 40%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
         radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
     background-size: 100% 100%, 100% 100%, 100% 100%, 24px 24px;
     background-attachment: fixed;
@@ -88,65 +89,64 @@ body.modal-open {
 }
 
 .glass-panel-elevated {
-    background: rgba(15, 20, 32, 0.94);
+    background: rgba(14, 18, 30, 0.95);
     backdrop-filter: blur(32px);
     -webkit-backdrop-filter: blur(32px);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 20px;
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.15), 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 45px -10px rgba(99, 102, 241, 0.25);
+    border-radius: 22px;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.16), 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 50px -10px rgba(99, 102, 241, 0.25);
 }
 
 /* --------------------------------------------------------------------------
-   CRITICAL MODAL OVERLAY ARCHITECTURE (Always Centered & Locked)
+   CRITICAL MODAL OVERLAY ARCHITECTURE (Pure Class-State, Top-Aligned Scroll)
    -------------------------------------------------------------------------- */
 .modal-overlay {
-    display: none !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    inset: 0 !important;
-    z-index: 999999 !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: rgba(3, 5, 12, 0.88) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    padding: 1.25rem !important;
-    overflow-y: auto !important;
-    margin: 0 !important;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    inset: 0;
+    z-index: 999999;
+    background: rgba(4, 6, 12, 0.86);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding: 2.5rem 1rem 3rem 1rem;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .modal-overlay.open {
-    display: flex !important;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
 }
 
 .modal-dialog-box {
-    width: 100% !important;
-    max-height: calc(100vh - 2.5rem) !important;
-    overflow-y: auto !important;
-    margin: auto !important;
-    position: relative !important;
-    transform: translateY(0) scale(1) !important;
-    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease !important;
+    width: 100%;
+    margin: 0 auto;
+    position: relative;
+    transform: translateY(0) scale(1);
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
+    opacity: 1;
 }
 
 .modal-overlay:not(.open) .modal-dialog-box {
-    transform: translateY(16px) scale(0.96) !important;
-    opacity: 0 !important;
+    transform: translateY(16px) scale(0.96);
+    opacity: 0;
 }
 
 .modal-overlay.open .modal-dialog-box {
-    animation: modalSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    animation: modalSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes modalSlideIn {
     0% {
         opacity: 0;
-        transform: translateY(16px) scale(0.96);
+        transform: translateY(18px) scale(0.96);
     }
     100% {
         opacity: 1;
@@ -158,24 +158,25 @@ body.modal-open {
    Custom Dark Inputs & Selects
    -------------------------------------------------------------------------- */
 select, input, textarea {
-    background-color: #0E121C !important;
+    background-color: #0C0F17 !important;
     color: var(--text-white) !important;
-    border: 1px solid var(--surface-border) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 12px;
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 select option {
-    background-color: #0D111A !important;
+    background-color: #0A0D14 !important;
     color: #F8FAFC !important;
     padding: 12px !important;
 }
 
 select:focus, input:focus, textarea:focus {
     border-color: var(--accent-indigo) !important;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
-    background-color: #121724 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    background-color: #101522 !important;
 }
 
 /* --------------------------------------------------------------------------
