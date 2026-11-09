@@ -1,11 +1,13 @@
 package com.fleettrack.app.ui.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fleettrack.app.data.local.FleetDataSeeder
 import com.fleettrack.app.data.local.entity.DriverEntity
 import com.fleettrack.app.data.repository.DriverRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -27,11 +29,35 @@ sealed class AuthStatus {
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val driverRepository: DriverRepository
 ) : ViewModel() {
 
+    private val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
+
     // Authorized Fleet Owner Numbers (Moosapet Hyderabad Office & Demo Test Numbers)
-    val authorizedOwnerNumbers = listOf("9391915013", "9959859347", "9876543210", "9999999999", "1111111111", "0000000000")
+    val defaultOwnerNumbers = listOf("9391915013", "9959859347", "9876543210", "9999999999", "1111111111", "0000000000")
+
+    fun getOwnerSecretKey(): String {
+        return sessionPrefs.getString("owner_secret_key", "7777") ?: "7777"
+    }
+
+    fun setOwnerSecretKey(newKey: String) {
+        sessionPrefs.edit().putString("owner_secret_key", newKey.trim()).apply()
+    }
+
+    fun getCustomOwnerNumbers(): Set<String> {
+        return sessionPrefs.getStringSet("owner_custom_numbers", emptySet()) ?: emptySet()
+    }
+
+    fun addCustomOwnerNumber(phone: String) {
+        val clean = phone.filter { it.isDigit() }.takeLast(10)
+        if (clean.length == 10) {
+            val current = getCustomOwnerNumbers().toMutableSet()
+            current.add(clean)
+            sessionPrefs.edit().putStringSet("owner_custom_numbers", current).apply()
+        }
+    }
 
     val registeredDrivers: StateFlow<List<DriverEntity>> = driverRepository.getAllDrivers()
         .stateIn(
@@ -61,20 +87,29 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    fun evaluatePhone(phoneInput: String, role: LoginRole = LoginRole.DRIVER): AuthStatus {
+    fun evaluatePhone(phoneInput: String, role: LoginRole = LoginRole.DRIVER, secretKeyInput: String = ""): AuthStatus {
         val clean = phoneInput.filter { it.isDigit() }
         if (clean.length < 10) return AuthStatus.IncompletePhone
         val last10 = clean.takeLast(10)
 
+        val secretKey = getOwnerSecretKey()
+        val customNumbers = getCustomOwnerNumbers()
+
         if (role == LoginRole.OWNER) {
-            // Check Owner Numbers
-            if (authorizedOwnerNumbers.any { it.endsWith(last10) }) {
+            // 1. Secret Key Match: Allows Owner access from ANY mobile number
+            if (secretKeyInput.isNotBlank() && secretKeyInput.trim() == secretKey) {
+                addCustomOwnerNumber(last10)
+                return AuthStatus.OwnerAuthorized(last10)
+            }
+
+            // 2. Pre-authorized Owner Numbers (Akhilesh & Office) or previously verified custom numbers
+            if (defaultOwnerNumbers.any { it.endsWith(last10) } || customNumbers.any { it.endsWith(last10) }) {
                 return AuthStatus.OwnerAuthorized(last10)
             }
             return AuthStatus.Unauthorized(last10)
         } else {
             // 1. If an authorized owner is logging in on Driver Tab, allow them to test Driver Mode!
-            if (authorizedOwnerNumbers.any { it.endsWith(last10) }) {
+            if (defaultOwnerNumbers.any { it.endsWith(last10) } || customNumbers.any { it.endsWith(last10) }) {
                 val seedOwnerDriver = FleetDataSeeder.driverList.firstOrNull { pair ->
                     val p = pair.second.filter { it.isDigit() }
                     p.endsWith(last10) || last10.endsWith(p.takeLast(10))

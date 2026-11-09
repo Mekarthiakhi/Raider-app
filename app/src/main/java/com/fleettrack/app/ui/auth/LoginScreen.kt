@@ -100,10 +100,11 @@ fun LoginScreen(
 
     // Phone input (dynamic, max 10 digits)
     var phoneInput by remember { mutableStateOf("") }
+    var secretKeyInput by remember { mutableStateOf("") }
 
     // Evaluate live role & authorization
-    val authStatus = remember(phoneInput, registeredDrivers, selectedRole) {
-        viewModel.evaluatePhone(phoneInput, selectedRole)
+    val authStatus = remember(phoneInput, registeredDrivers, selectedRole, secretKeyInput) {
+        viewModel.evaluatePhone(phoneInput, selectedRole, secretKeyInput)
     }
 
     // OTP Flow State
@@ -507,6 +508,33 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Optional Owner Secret Key (Allows instant Owner access from any mobile number)
+                if (selectedRole == LoginRole.OWNER) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = secretKeyInput,
+                        onValueChange = { secretKeyInput = it },
+                        label = { Text("Owner Secret Key (Default: 7777)") },
+                        placeholder = { Text("Enter secret key if new mobile number") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = PrimaryPurple,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryPurple,
+                            unfocusedBorderColor = SurfaceBorder
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Authorization Status Feedback Card
@@ -601,13 +629,16 @@ fun LoginScreen(
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Column {
                                         Text(
-                                            text = "Mobile Number Not Registered",
+                                            text = if (selectedRole == LoginRole.OWNER) "Owner Access Not Authorized" else "Mobile Number Not Registered",
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 12.sp,
                                             color = Color(0xFFBF360C)
                                         )
                                         Text(
-                                            text = "Only drivers registered by SVM FLEET management can log in. Please contact Moosapet Office to onboard.",
+                                            text = if (selectedRole == LoginRole.OWNER)
+                                                "Enter your Owner Secret Key above (default: 7777) to authorize this number, or contact office."
+                                            else
+                                                "Only drivers registered by SVM FLEET management can log in. Please contact Moosapet Office to onboard.",
                                             fontSize = 11.sp,
                                             color = TextDark,
                                             lineHeight = 15.sp

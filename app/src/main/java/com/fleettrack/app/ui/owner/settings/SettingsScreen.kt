@@ -1,5 +1,6 @@
 package com.fleettrack.app.ui.owner.settings
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +18,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -27,17 +30,24 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,6 +88,9 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val sessionPrefs = remember { context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE) }
+    var currentSecretKey by remember { mutableStateOf(sessionPrefs.getString("owner_secret_key", "7777") ?: "7777") }
+    var showChangeKeyDialog by remember { mutableStateOf(false) }
     var isDarkTheme by remember { mutableStateOf(false) }
 
     LazyColumn(
@@ -155,6 +168,87 @@ fun SettingsScreen(
                         icon = Icons.Default.Extension,
                         label = "Platform Integrations (Uber, Rapido, Ola)",
                         onClick = { }
+                    )
+                }
+            }
+        }
+
+        // Owner Security & Master Secret Key Card
+        item {
+            GlassCard(modifier = Modifier.fillMaxWidth(), shape = CardShape) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "OWNER SECURITY & ACCESS KEY",
+                        color = TextMutedGray,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showChangeKeyDialog = true }
+                            .padding(vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(PrimaryPurpleContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Lock,
+                                    contentDescription = "Secret Key",
+                                    tint = PrimaryPurple,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column {
+                                Text(
+                                    text = "Owner Secret Key / Master PIN",
+                                    color = TextDark,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = "Key: $currentSecretKey • Tap to change",
+                                    color = PrimaryPurple,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = "Change Key",
+                            tint = TextMutedGray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
+
+                    SettingItemRow(
+                        icon = Icons.Default.Person,
+                        label = "Authorized: +91 93919 15013 (Akhilesh), +91 99598 59347",
+                        onClick = {
+                            Toast.makeText(context, "These mobile numbers can log into Owner Mode directly", Toast.LENGTH_SHORT).show()
+                        }
                     )
                 }
             }
@@ -442,6 +536,82 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (showChangeKeyDialog) {
+        var newKeyInput by remember { mutableStateOf("") }
+        var confirmKeyInput by remember { mutableStateOf("") }
+        var errorMsg by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { showChangeKeyDialog = false },
+            title = {
+                Text(text = "Change Owner Secret Key", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "This secret key allows logging into Owner Mode from any mobile number (Current: $currentSecretKey).",
+                        fontSize = 12.sp,
+                        color = TextGray
+                    )
+                    OutlinedTextField(
+                        value = newKeyInput,
+                        onValueChange = { newKeyInput = it },
+                        label = { Text("New Secret Key (e.g. 4-6 digits)") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = confirmKeyInput,
+                        onValueChange = { confirmKeyInput = it },
+                        label = { Text("Confirm New Key") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (errorMsg != null) {
+                        Text(
+                            text = errorMsg ?: "",
+                            color = InactiveRed,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (newKeyInput.isBlank() || newKeyInput.length < 4) {
+                            errorMsg = "Key must be at least 4 digits/characters"
+                            return@Button
+                        }
+                        if (newKeyInput.trim() != confirmKeyInput.trim()) {
+                            errorMsg = "New key and confirmation do not match"
+                            return@Button
+                        }
+                        val key = newKeyInput.trim()
+                        sessionPrefs.edit().putString("owner_secret_key", key).apply()
+                        currentSecretKey = key
+                        showChangeKeyDialog = false
+                        Toast.makeText(context, "✅ Owner Secret Key changed to: $key", Toast.LENGTH_LONG).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                    shape = PillShape
+                ) {
+                    Text("Save Key")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showChangeKeyDialog = false }) {
+                    Text("Cancel", color = TextGray)
+                }
+            }
+        )
     }
 }
 
