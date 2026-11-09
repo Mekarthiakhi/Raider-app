@@ -16,12 +16,21 @@ class SvmFleetApp {
         this.searchQuery = "";
         this.shiftFilter = "ALL";
         this.registerViewMode = "table"; // "table" or "cards"
+        this.notifications = [
+            { id: 1, title: "Shift Completed", text: "Suman Goud (TS10 EF 7745) completed 15 trips (₹3,750 gross). 35% commission tier unlocked!", time: "2m ago", unread: true, type: "success" },
+            { id: 2, title: "Cash Handover", text: "Ravi Kumar (TS09 UB 3368) logged cash handover of ₹2,000 at Moosapet depot.", time: "8m ago", unread: true, type: "info" },
+            { id: 3, title: "Target Met", text: "Kukatpally Cab TS09 AC 9890 crossed shift target (10 trips, ₹2,400 gross).", time: "14m ago", unread: true, type: "warning" },
+            { id: 4, title: "Fleet Reassignment", text: "Vehicle TS11 QR 4411 assigned to Madhapur Hitec City Hub.", time: "25m ago", unread: true, type: "info" }
+        ];
+        this.activeGuideTab = "guide-quickstart";
     }
 
     init() {
         this.setupEventListeners();
+        this.setupWheelLocks();
         this.renderRoleSelector();
         this.updateGreeting();
+        this.renderNotifications();
         
         // Initialize Hyderabad Leaflet Map
         if (typeof HyderabadMapController !== "undefined") {
@@ -40,6 +49,19 @@ class SvmFleetApp {
         if (window.lucide) {
             window.lucide.createIcons();
         }
+    }
+
+    setupWheelLocks() {
+        // Prevent mousewheel scroll from changing numeric values on all number inputs
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
+        });
+
+        window.addEventListener("wheel", () => {
+            if (document.activeElement && document.activeElement.type === "number") {
+                document.activeElement.blur();
+            }
+        }, { passive: false });
     }
 
     setupEventListeners() {
@@ -85,11 +107,7 @@ class SvmFleetApp {
                 if (search) search.focus();
             }
             if (e.key === "Escape") {
-                this.closeManualEntryModal();
-                this.closeReassignModal();
-                this.closeAddDriverModal();
-                this.closeAddVehicleModal();
-                this.closeAddManagerModal();
+                this.closeAllModals();
             }
         });
 
@@ -103,6 +121,7 @@ class SvmFleetApp {
             if (el) {
                 el.addEventListener("input", () => this.updateModalCalculation());
                 el.addEventListener("change", () => this.updateModalCalculation());
+                el.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
             }
         });
 
@@ -112,7 +131,8 @@ class SvmFleetApp {
             "reassign-hub-modal",
             "add-driver-modal",
             "add-vehicle-modal",
-            "add-manager-modal"
+            "add-manager-modal",
+            "user-guide-modal"
         ];
         modalIds.forEach(id => {
             const modal = document.getElementById(id);
@@ -124,6 +144,23 @@ class SvmFleetApp {
                 });
             }
         });
+
+        // Document click handler to dismiss dropdowns when clicking outside
+        document.addEventListener("click", (e) => {
+            // Dismiss notification panel if clicked outside
+            const notifBtn = document.getElementById("btn-notification-bell");
+            const notifDropdown = document.getElementById("notification-dropdown");
+            if (notifDropdown && notifBtn && !notifBtn.contains(e.target) && !notifDropdown.contains(e.target)) {
+                notifDropdown.classList.remove("open");
+            }
+
+            // Dismiss driver combobox dropdown if clicked outside wrapper
+            const combobox = document.getElementById("driver-combobox-wrapper");
+            const driverDropdown = document.getElementById("driver-search-dropdown");
+            if (combobox && driverDropdown && !combobox.contains(e.target)) {
+                this.closeDriverDropdown();
+            }
+        });
     }
 
     closeAllModals() {
@@ -132,6 +169,7 @@ class SvmFleetApp {
         this.closeAddDriverModal();
         this.closeAddVehicleModal();
         this.closeAddManagerModal();
+        this.closeUserGuideModal();
     }
 
     updateGreeting() {
@@ -920,14 +958,117 @@ class SvmFleetApp {
 
     populateQuickDriverDropdown() {
         const select = document.getElementById("modal-quick-driver-select");
-        if (!select) return;
-
         const drivers = window.DEMO_REPO ? window.DEMO_REPO.getDrivers(this.currentHubId) : [];
-        let options = `<option value="">-- Choose Driver (or enter manually below) --</option>`;
-        drivers.forEach(d => {
-            options += `<option value="${d.id}">${d.name} (${d.phone}) - ${d.vehicleNo || 'No Cab'}</option>`;
-        });
-        select.innerHTML = options;
+
+        if (select) {
+            let options = `<option value="">-- Choose Driver (or enter manually below) --</option>`;
+            drivers.forEach(d => {
+                options += `<option value="${d.id}">${d.name} (${d.phone}) - ${d.vehicleNo || 'No Cab'}</option>`;
+            });
+            select.innerHTML = options;
+        }
+
+        this.renderDriverDropdownOptions(drivers);
+    }
+
+    renderDriverDropdownOptions(drivers) {
+        const dropdown = document.getElementById("driver-search-dropdown");
+        if (!dropdown) return;
+
+        if (!drivers || drivers.length === 0) {
+            dropdown.innerHTML = `
+                <div class="p-3 text-center text-xs text-[#64748B]">
+                    No drivers found. Enter details manually below.
+                </div>
+            `;
+            return;
+        }
+
+        dropdown.innerHTML = drivers.map(d => {
+            const initials = d.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+            const hubName = d.managerId === "mgr_moosapet_01" ? "Moosapet" : d.managerId === "mgr_kukatpally_02" ? "Kukatpally" : "Madhapur";
+
+            return `
+                <div class="dropdown-option flex items-center justify-between p-2.5 hover:bg-[#6655F5]/20 cursor-pointer transition-colors"
+                     onclick="window.SVM_APP.selectDriverOption(${d.id})">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-full bg-[#6655F5]/30 border border-[#6655F5]/40 text-[#8B5CF6] font-bold text-xs flex items-center justify-center shrink-0">
+                            ${initials}
+                        </div>
+                        <div class="text-left">
+                            <span class="font-bold text-xs text-white block">${d.name}</span>
+                            <span class="text-[10px] text-slate-400 font-mono">${d.phone}</span>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#162038] text-[#10B981] border border-[#263149] inline-block">
+                            ${d.vehicleNo || 'No Cab'}
+                        </span>
+                        <span class="text-[9px] text-slate-400 block mt-0.5">${hubName}</span>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    toggleDriverDropdown() {
+        const dropdown = document.getElementById("driver-search-dropdown");
+        if (!dropdown) return;
+        if (dropdown.classList.contains("hidden")) {
+            this.openDriverDropdown();
+        } else {
+            this.closeDriverDropdown();
+        }
+    }
+
+    openDriverDropdown() {
+        const dropdown = document.getElementById("driver-search-dropdown");
+        const chevron = document.getElementById("driver-search-chevron");
+        const input = document.getElementById("driver-search-input");
+        if (dropdown) dropdown.classList.remove("hidden");
+        if (chevron) chevron.classList.add("rotate-180");
+        if (input) input.focus();
+    }
+
+    closeDriverDropdown() {
+        const dropdown = document.getElementById("driver-search-dropdown");
+        const chevron = document.getElementById("driver-search-chevron");
+        if (dropdown) dropdown.classList.add("hidden");
+        if (chevron) chevron.classList.remove("rotate-180");
+    }
+
+    filterDriverDropdown(query) {
+        this.openDriverDropdown();
+        const drivers = window.DEMO_REPO ? window.DEMO_REPO.getDrivers(this.currentHubId) : [];
+        const q = (query || "").toLowerCase().trim();
+        if (!q) {
+            this.renderDriverDropdownOptions(drivers);
+            return;
+        }
+
+        const filtered = drivers.filter(d => 
+            (d.name && d.name.toLowerCase().includes(q)) ||
+            (d.phone && d.phone.toLowerCase().includes(q)) ||
+            (d.vehicleNo && d.vehicleNo.toLowerCase().includes(q))
+        );
+
+        this.renderDriverDropdownOptions(filtered);
+    }
+
+    selectDriverOption(driverId) {
+        const drivers = window.DEMO_REPO ? window.DEMO_REPO.getDrivers() : [];
+        const d = drivers.find(item => item.id === parseInt(driverId));
+        if (d) {
+            const searchInput = document.getElementById("driver-search-input");
+            if (searchInput) {
+                searchInput.value = `${d.name} (${d.vehicleNo || 'No Cab'})`;
+            }
+            const quickSelect = document.getElementById("modal-quick-driver-select");
+            if (quickSelect) quickSelect.value = driverId;
+        }
+
+        this.onQuickDriverSelected(driverId);
+        this.closeDriverDropdown();
     }
 
     onQuickDriverSelected(driverId) {
@@ -959,6 +1100,12 @@ class SvmFleetApp {
         try {
             this.populateQuickDriverDropdown();
 
+            const searchInput = document.getElementById("driver-search-input");
+            if (searchInput) {
+                searchInput.value = prefillDriverName ? `${prefillDriverName} (${prefillRegNo || ''})` : "";
+            }
+            this.closeDriverDropdown();
+
             const regnoEl = document.getElementById("modal-regno");
             const nameEl = document.getElementById("modal-drivername");
             const phoneEl = document.getElementById("modal-driverphone");
@@ -986,6 +1133,11 @@ class SvmFleetApp {
                 hubSelect.value = this.currentHubId !== "ALL" ? this.currentHubId : "mgr_moosapet_01";
             }
 
+            // Prevent wheel events on modal inputs
+            modal.querySelectorAll('input[type="number"]').forEach(input => {
+                input.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
+            });
+
             this.updateModalCalculation();
         } catch (e) {
             console.warn("Error setting modal values:", e);
@@ -1002,6 +1154,7 @@ class SvmFleetApp {
         if (modal) {
             modal.classList.remove("open");
         }
+        this.closeDriverDropdown();
         document.body.classList.remove("modal-open");
     }
 
@@ -1459,6 +1612,92 @@ class SvmFleetApp {
                 }
             }, 100);
         }
+    }
+
+    renderNotifications() {
+        const unreadCount = this.notifications.filter(n => n.unread).length;
+        const badge = document.getElementById("notif-badge");
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.classList.remove("hidden");
+            } else {
+                badge.classList.add("hidden");
+            }
+        }
+
+        const pill = document.getElementById("notif-count-pill");
+        if (pill) {
+            pill.textContent = unreadCount > 0 ? `${unreadCount} New` : "All caught up";
+        }
+
+        const container = document.getElementById("notification-items-container");
+        if (container) {
+            container.innerHTML = this.notifications.map(n => `
+                <div class="p-3.5 hover:bg-[#161F33] transition-colors flex items-start gap-3 ${n.unread ? 'bg-[#0E1528]/80' : 'opacity-70'}">
+                    <span class="w-2 h-2 mt-1.5 rounded-full shrink-0 ${n.unread ? (n.type === 'success' ? 'bg-[#10B981]' : n.type === 'warning' ? 'bg-[#F59E0B]' : 'bg-[#6655F5]') : 'bg-transparent'}"></span>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-1 mb-0.5">
+                            <span class="font-bold text-xs text-white truncate">${n.title}</span>
+                            <span class="text-[10px] text-slate-500 font-mono shrink-0">${n.time}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">${n.text}</p>
+                    </div>
+                </div>
+            `).join("");
+        }
+    }
+
+    toggleNotifications() {
+        const dropdown = document.getElementById("notification-dropdown");
+        if (dropdown) {
+            dropdown.classList.toggle("open");
+        }
+    }
+
+    markAllNotificationsRead() {
+        this.notifications.forEach(n => { n.unread = false; });
+        this.renderNotifications();
+        this.showToast("All telemetry alerts marked as read.", "info");
+    }
+
+    openUserGuideModal() {
+        const modal = document.getElementById("user-guide-modal");
+        if (modal) {
+            modal.classList.add("open");
+            modal.scrollTop = 0;
+            document.body.classList.add("modal-open");
+            this.switchGuideTab("guide-quickstart");
+        }
+    }
+
+    closeUserGuideModal() {
+        const modal = document.getElementById("user-guide-modal");
+        if (modal) {
+            modal.classList.remove("open");
+        }
+        document.body.classList.remove("modal-open");
+    }
+
+    switchGuideTab(tabId) {
+        this.activeGuideTab = tabId;
+        document.querySelectorAll(".guide-tab-btn").forEach(btn => {
+            btn.className = "guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all";
+        });
+        const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+        if (activeBtn) {
+            activeBtn.className = "guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#6655F5] text-white transition-all";
+        }
+
+        document.querySelectorAll(".guide-content-panel").forEach(panel => {
+            panel.classList.add("hidden");
+        });
+        const activePanel = document.getElementById(tabId);
+        if (activePanel) {
+            activePanel.classList.remove("hidden");
+        }
+
+        if (window.lucide) window.lucide.createIcons();
     }
 
     showToast(message, type = "info") {

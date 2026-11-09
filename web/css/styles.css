@@ -164,7 +164,7 @@ body.modal-open {
 }
 
 /* --------------------------------------------------------------------------
-   MODAL OVERLAY (Class-State Only, Top-Aligned Scrollable, Never Clips)
+   MODAL OVERLAY (Class-State Only, Soft Transparent Backdrop, Never Clips)
    -------------------------------------------------------------------------- */
 .modal-overlay {
     display: none;
@@ -177,32 +177,32 @@ body.modal-open {
     height: 100vh;
     inset: 0;
     z-index: 999999;
-    padding: 2.5rem 1rem 3rem 1rem;
+    padding: 1.25rem;
     overflow-y: auto;
     overflow-x: hidden;
-    background: rgba(5, 9, 22, 0.88);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: rgba(8, 13, 27, 0.60);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .modal-overlay.open {
     display: flex !important;
-    align-items: flex-start !important;
+    align-items: center !important;
     justify-content: center !important;
 }
 
 .modal-dialog-box {
     width: 100%;
-    margin: 0 auto;
+    margin: auto;
     position: relative;
     transform: translateY(0) scale(1);
     transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
     opacity: 1;
     background: #11182A;
-    border: 1px solid #263149;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.95), 0 0 40px -10px rgba(102, 85, 245, 0.35);
-    max-height: calc(100vh - 4.5rem);
+    max-height: min(90vh, 780px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -256,8 +256,18 @@ body.modal-open {
 }
 
 /* --------------------------------------------------------------------------
-   Inputs, Controls & Selects
+   Inputs, Controls & Selects (No Spinner, No Mousewheel Auto-Increment)
    -------------------------------------------------------------------------- */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
 select, input, textarea {
     background-color: #080D1B !important;
     border-color: #263149 !important;
@@ -377,6 +387,68 @@ select:focus, input:focus, textarea:focus {
 }
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary-purple);
+}
+
+/* --------------------------------------------------------------------------
+   Searchable Select (Select2 Style Dropdown)
+   -------------------------------------------------------------------------- */
+.custom-searchable-combobox {
+    position: relative;
+    width: 100%;
+}
+
+.custom-searchable-combobox .dropdown-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    background: #0E1528;
+    border: 1px solid #263149;
+    border-radius: 14px;
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.8), 0 0 20px -4px rgba(102, 85, 245, 0.25);
+    z-index: 9999999;
+}
+
+.custom-searchable-combobox .dropdown-option {
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(38, 49, 73, 0.4);
+}
+
+.custom-searchable-combobox .dropdown-option:last-child {
+    border-bottom: none;
+}
+
+.custom-searchable-combobox .dropdown-option:hover {
+    background-color: rgba(102, 85, 245, 0.18);
+}
+
+.custom-searchable-combobox .dropdown-option.selected {
+    background-color: rgba(102, 85, 245, 0.28);
+}
+
+/* --------------------------------------------------------------------------
+   Floating Notifications Panel
+   -------------------------------------------------------------------------- */
+#notification-dropdown {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+#notification-dropdown:not(.open) {
+    display: none;
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+}
+#notification-dropdown.open {
+    display: block !important;
+    opacity: 1;
+    transform: translateY(0) scale(1);
 }
 
 /* --------------------------------------------------------------------------

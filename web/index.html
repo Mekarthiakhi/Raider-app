@@ -21,7 +21,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <!-- Custom Glassmorphism Stylesheet (Single Source of Truth with Cache-Busting Version) -->
-    <link rel="stylesheet" href="css/styles.css?v=20261110_demo_v4">
+    <link rel="stylesheet" href="css/styles.css?v=20261110_demo_v5">
 </head>
 <body class="bg-[#080D1B] text-slate-100 min-h-screen flex font-sans selection:bg-[#6655F5] selection:text-white">
 
@@ -104,6 +104,10 @@
                     <i data-lucide="settings" class="w-4 h-4 text-[#94A3B8]"></i>
                     <span>Settings</span>
                 </button>
+                <button type="button" onclick="window.SVM_APP.openUserGuideModal()" class="sidebar-link mt-2 border border-[#6655F5]/30 bg-[#6655F5]/10 hover:bg-[#6655F5]/20 text-[#8B5CF6] transition-all">
+                    <i data-lucide="book-open" class="w-4 h-4 text-[#8B5CF6]"></i>
+                    <span class="font-bold">User Guide & Manual</span>
+                </button>
             </nav>
         </div>
 
@@ -184,10 +188,38 @@
                     <span class="text-[10px] font-extrabold uppercase tracking-wider">CLOUD DB LIVE</span>
                 </div>
 
-                <!-- Notification Bell with unread badge 1 -->
-                <button type="button" class="relative p-2 rounded-xl bg-[#11182A] border border-[#263149] text-slate-400 hover:text-white transition-colors cursor-pointer" title="Telemetry Alerts">
-                    <i data-lucide="bell" class="w-4 h-4"></i>
-                    <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#6655F5] text-white text-[9px] font-bold flex items-center justify-center">1</span>
+                <!-- Interactive Notification Bell with Live Telemetry Dropdown -->
+                <div class="relative">
+                    <button id="btn-notification-bell" type="button" onclick="window.SVM_APP.toggleNotifications()" class="relative p-2 rounded-xl bg-[#11182A] border border-[#263149] hover:border-[#6655F5] text-slate-300 hover:text-white transition-colors cursor-pointer" title="Telemetry & Shift Alerts">
+                        <i data-lucide="bell" class="w-4 h-4"></i>
+                        <span id="notif-badge" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#6655F5] text-white text-[9px] font-bold flex items-center justify-center animate-pulse">4</span>
+                    </button>
+
+                    <!-- Notifications Dropdown Floating Panel -->
+                    <div id="notification-dropdown" class="absolute right-0 mt-2.5 w-80 sm:w-96 bg-[#11182A] border border-[#263149] rounded-2xl shadow-2xl z-50 overflow-hidden divide-y divide-[#1E273D]">
+                        <div class="p-3.5 bg-[#0E1528] flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="bell-ring" class="w-4 h-4 text-[#6655F5]"></i>
+                                <span class="font-extrabold text-xs text-white">Live Telemetry Alerts</span>
+                                <span id="notif-count-pill" class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#6655F5]/20 text-[#8B5CF6]">4 New</span>
+                            </div>
+                            <button type="button" onclick="window.SVM_APP.markAllNotificationsRead()" class="text-[11px] font-semibold text-[#6655F5] hover:text-[#8B5CF6] cursor-pointer">
+                                Mark all read
+                            </button>
+                        </div>
+                        <div class="max-h-80 overflow-y-auto divide-y divide-[#1E273D]/60" id="notification-items-container">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                        <div class="p-2.5 bg-[#0E1528] text-center">
+                            <span class="text-[10px] text-[#64748B] font-mono">Live fleet telemetry & companion app stream</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Guide Walkthrough Trigger Button -->
+                <button type="button" onclick="window.SVM_APP.openUserGuideModal()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F33] border border-[#263149] hover:border-[#6655F5] text-slate-200 text-xs font-bold transition-all cursor-pointer" title="Interactive System Manual">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5 text-[#6655F5]"></i>
+                    <span>User Guide</span>
                 </button>
 
                 <!-- User Profile Pill matching screenshot -->
@@ -910,154 +942,186 @@
                 </button>
             </div>
 
-            <!-- Scrollable Body -->
-            <form id="form-manual-entry" onsubmit="window.SVM_APP.submitManualEntryForm(event)" class="modal-dialog-body space-y-4">
+            <!-- Form wrapping scrollable body and pinned footer -->
+            <form id="form-manual-entry" onsubmit="window.SVM_APP.submitManualEntryForm(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-dialog-body space-y-4">
                 
-                <!-- Quick Driver Selection (Auto Populates Fields) -->
-                <div class="p-3.5 rounded-xl bg-gradient-to-r from-[#6655F5]/10 via-[#0B1020] to-[#8B5CF6]/10 border border-[#6655F5]/30">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label class="text-xs font-bold text-[#8B5CF6] flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-[#6655F5]"></span> ⚡ Quick Auto-Fill Fleet Driver
-                        </label>
-                        <span class="text-[10px] text-[#64748B] font-mono">Auto-populates phone & car</span>
-                    </div>
-                    <select id="modal-quick-driver-select" onchange="window.SVM_APP.onQuickDriverSelected(this.value)" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                        <option value="">-- Choose Driver (or enter manually below) --</option>
-                    </select>
-                </div>
+                    <!-- Quick Driver Selection (Select2 Style Searchable Dropdown) -->
+                    <div class="p-3.5 rounded-xl bg-gradient-to-r from-[#6655F5]/10 via-[#0B1020] to-[#8B5CF6]/10 border border-[#6655F5]/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-bold text-[#8B5CF6] flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-[#6655F5]"></span>
+                                <span>⚡ Select Driver (Select2 Quick Search)</span>
+                            </label>
+                            <span class="text-[10px] text-[#94A3B8] font-mono">Auto-populates phone, cab & hub</span>
+                        </div>
 
-                <!-- Shift & Hub -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#6655F5]"></span> Shift Duration *
-                        </label>
-                        <select id="modal-shifttype" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                            <option value="12_HOURS">12 Hrs Shift (Min 10 Trips)</option>
-                            <option value="24_HOURS">24 Hrs Shift (Min 18 Trips)</option>
-                        </select>
+                        <!-- Custom Searchable Combobox -->
+                        <div class="custom-searchable-combobox relative" id="driver-combobox-wrapper">
+                            <div class="flex items-center gap-2 bg-[#080D1B] border border-[#263149] focus-within:border-[#6655F5] rounded-xl px-3 py-2 transition-colors cursor-pointer" onclick="window.SVM_APP.toggleDriverDropdown()">
+                                <i data-lucide="search" class="w-4 h-4 text-[#6655F5] shrink-0"></i>
+                                <input id="driver-search-input" type="text" placeholder="Type driver name, phone, or cab reg... (e.g. Ravi, TS09)"
+                                    autocomplete="off"
+                                    onfocus="window.SVM_APP.openDriverDropdown()"
+                                    oninput="window.SVM_APP.filterDriverDropdown(this.value)"
+                                    class="w-full bg-transparent border-none text-xs text-white placeholder-[#64748B] focus:outline-none" />
+                                <i data-lucide="chevron-down" id="driver-search-chevron" class="w-4 h-4 text-[#64748B] shrink-0 transition-transform"></i>
+                            </div>
+
+                            <!-- Dropdown List Options (Scrollable Select2-style menu) -->
+                            <div id="driver-search-dropdown" class="dropdown-list hidden">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Hidden select for form value compatibility -->
+                        <select id="modal-quick-driver-select" onchange="window.SVM_APP.onQuickDriverSelected(this.value)" class="hidden"></select>
+                    </div>
+
+                    <!-- Shift Duration & Hub -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#6655F5]"></span> Shift Duration *
+                            </label>
+                            <select id="modal-shifttype" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <option value="12_HOURS">12 Hrs Shift (Min 10 Trips)</option>
+                                <option value="24_HOURS">24 Hrs Shift (Min 18 Trips)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#3185F6]"></span> Assigned Operating Hub *
+                            </label>
+                            <select id="modal-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <option value="mgr_moosapet_01">Moosapet Central Hub</option>
+                                <option value="mgr_kukatpally_02">Kukatpally Y-Junction Hub</option>
+                                <option value="mgr_madhapur_03">Madhapur Hitec City Hub</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Driver & Vehicle Details -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Name *</label>
+                            <input id="modal-drivername" type="text" placeholder="e.g. Suman" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Mobile Number *</label>
+                            <input id="modal-driverphone" type="tel" placeholder="+91 93919 15013" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Vehicle Reg Number *</label>
+                            <input id="modal-regno" type="text" placeholder="e.g. TS09 UB 3368" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white uppercase font-mono font-bold" />
+                        </div>
+                    </div>
+
+                    <!-- Shift Metrics & Financials (Clean 2x2 Grid with Currency Badges) -->
+                    <div class="p-3.5 rounded-xl bg-[#0B1020] border border-[#263149] space-y-3">
+                        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                            <span class="flex items-center gap-1.5 text-white">
+                                <i data-lucide="gauge" class="w-3.5 h-3.5 text-[#10B981]"></i>
+                                Shift Duty & Financial Collections
+                            </span>
+                            <span class="text-[10px] text-[#64748B] font-mono">Input fields do not scroll-change</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-200 mb-1">Trips Done * (Min Target)</label>
+                                <input id="modal-trips" type="number" min="0" value="12" required
+                                    class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono font-bold" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-[#10B981] mb-1">Gross Fare / Revenue (₹) *</label>
+                                <input id="modal-earnings" type="number" step="0.5" min="0" value="3000" required
+                                    class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#10B981] font-mono font-bold" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-[#3185F6] mb-1">Fuel / Petrol & Daily Exp (₹)</label>
+                                <input id="modal-expenditure" type="number" step="0.5" min="0" value="200"
+                                    class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#3185F6] font-mono font-bold" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-[#F59E0B] mb-1">Cash Collected from Riders (₹)</label>
+                                <input id="modal-cash" type="number" step="0.5" min="0" value="2000"
+                                    class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#F59E0B] font-mono font-bold" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Passes, Advances & Settlement Status -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Drive Pass Fee (₹)</label>
+                            <input id="modal-drivepass" type="number" step="0.5" min="0" value="0"
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Advance Taken (₹)</label>
+                            <input id="modal-advance" type="number" step="0.5" min="0" value="0"
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Settlement Status</label>
+                            <select id="modal-status" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <option value="SETTLED">SETTLED (Payment Complete)</option>
+                                <option value="PENDING">PENDING (Balance Due)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#3185F6]"></span> Assigned Operating Hub *
-                        </label>
-                        <select id="modal-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                            <option value="mgr_moosapet_01">Moosapet Central Hub</option>
-                            <option value="mgr_kukatpally_02">Kukatpally Y-Junction Hub</option>
-                            <option value="mgr_madhapur_03">Madhapur Hitec City Hub</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Driver & Vehicle -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Name *</label>
-                        <input id="modal-drivername" type="text" placeholder="e.g. Suman" required
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Remarks / Logbook Notes</label>
+                        <input id="modal-remarks" type="text" placeholder="e.g. Settled via UPI / Moosapet paper book entry"
                             class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Mobile Number *</label>
-                        <input id="modal-driverphone" type="tel" placeholder="+91 93919 15013" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Vehicle Reg Number *</label>
-                        <input id="modal-regno" type="text" placeholder="e.g. TS09 UB 3368" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white uppercase font-mono font-bold" />
-                    </div>
-                </div>
-
-                <!-- Trip Metrics & Financials -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Trips Done *</label>
-                        <input id="modal-trips" type="number" min="0" value="12" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono font-bold" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-[#10B981] mb-1">Gross Fare (₹) *</label>
-                        <input id="modal-earnings" type="number" step="0.5" min="0" value="3000" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#10B981] font-mono font-bold" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-[#3185F6] mb-1">Fuel / Petrol (₹)</label>
-                        <input id="modal-expenditure" type="number" step="0.5" min="0" value="200"
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#3185F6] font-mono font-bold" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-[#F59E0B] mb-1">Cash Coll. (₹)</label>
-                        <input id="modal-cash" type="number" step="0.5" min="0" value="2000"
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#F59E0B] font-mono font-bold" />
-                    </div>
-                </div>
-
-                <!-- Passes, Advances & Settlement Status -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Drive Pass Fee (₹)</label>
-                        <input id="modal-drivepass" type="number" step="0.5" min="0" value="0"
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Advance Taken (₹)</label>
-                        <input id="modal-advance" type="number" step="0.5" min="0" value="0"
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Settlement Status</label>
-                        <select id="modal-status" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                            <option value="SETTLED">SETTLED (Payment Complete)</option>
-                            <option value="PENDING">PENDING (Balance Due)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Remarks / Logbook Notes</label>
-                    <input id="modal-remarks" type="text" placeholder="e.g. Settled via UPI / Moosapet paper book entry"
-                        class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
-                </div>
-
-                <!-- Live Calculation Preview Box -->
-                <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149] flex flex-col gap-2.5">
-                    <div class="flex items-center justify-between pb-2 border-b border-[#263149]">
-                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
-                            <i data-lucide="calculator" class="w-3.5 h-3.5 text-[#6655F5]"></i>
-                            Official Commission Engine
-                        </span>
-                        <span id="calc-preview-trips-badge">--</span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 text-xs">
-                        <div class="p-2.5 rounded-lg bg-[#11182A] border border-[#263149]">
-                            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Commission Tier</span>
-                            <span id="calc-preview-tier" class="font-extrabold text-sm text-[#6655F5] mt-0.5 block">--</span>
-                            <span class="text-[10px] text-slate-400 mt-1 block">Comm: <strong id="calc-preview-comm-amt" class="text-white font-mono">--</strong></span>
+                    <!-- Live Calculation Preview Card -->
+                    <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149] flex flex-col gap-2.5 shadow-inner">
+                        <div class="flex items-center justify-between pb-2 border-b border-[#263149]">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                                <i data-lucide="calculator" class="w-3.5 h-3.5 text-[#6655F5]"></i>
+                                Official Commission Engine
+                            </span>
+                            <span id="calc-preview-trips-badge">--</span>
                         </div>
 
-                        <div class="p-2.5 rounded-lg bg-[#11182A] border border-[#263149]">
-                            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Total Driver Credit</span>
-                            <span id="calc-preview-credit" class="text-[#10B981] font-mono font-extrabold text-sm mt-0.5 block">--</span>
-                            <span class="text-[10px] text-slate-400 mt-1 block">Debit: <strong id="calc-preview-debit" class="text-[#F59E0B] font-mono">--</strong></span>
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div class="p-2.5 rounded-lg bg-[#11182A] border border-[#263149]">
+                                <span class="text-[10px] text-slate-400 uppercase font-semibold block">Commission Tier</span>
+                                <span id="calc-preview-tier" class="font-extrabold text-sm text-[#6655F5] mt-0.5 block">--</span>
+                                <span class="text-[10px] text-slate-400 mt-1 block">Comm: <strong id="calc-preview-comm-amt" class="text-white font-mono">--</strong></span>
+                            </div>
+
+                            <div class="p-2.5 rounded-lg bg-[#11182A] border border-[#263149]">
+                                <span class="text-[10px] text-slate-400 uppercase font-semibold block">Total Driver Credit</span>
+                                <span id="calc-preview-credit" class="text-[#10B981] font-mono font-extrabold text-sm mt-0.5 block">--</span>
+                                <span class="text-[10px] text-slate-400 mt-1 block">Debit: <strong id="calc-preview-debit" class="text-[#F59E0B] font-mono">--</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-lg bg-[#11182A] border border-[#263149] flex flex-col sm:flex-row justify-between sm:items-center gap-1">
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Net Settlement Handover</span>
+                                <span id="calc-preview-net" class="font-black text-sm">--</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-mono">Credit − Debit Formula</span>
                         </div>
                     </div>
 
-                    <div class="p-3 rounded-lg bg-[#11182A] border border-[#263149] flex flex-col sm:flex-row justify-between sm:items-center gap-1">
-                        <div>
-                            <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Net Settlement Handover</span>
-                            <span id="calc-preview-net" class="font-black text-sm">--</span>
-                        </div>
-                        <span class="text-[10px] text-slate-400 font-mono">Credit − Debit Formula</span>
-                    </div>
                 </div>
 
                 <!-- Fixed Sticky Footer -->
@@ -1322,14 +1386,158 @@
         </div>
     </div>
 
+    <!-- ====================================================================== -->
+    <!-- MODAL 6: USER GUIDE & SYSTEM MANUAL (Interactive Walkthrough)          -->
+    <!-- ====================================================================== -->
+    <div id="user-guide-modal" class="modal-overlay">
+        <div class="modal-dialog-box max-w-2xl w-full">
+            <div class="modal-dialog-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6655F5] to-indigo-700 flex items-center justify-center font-bold text-lg shadow-md shadow-[#6655F5]/30 border border-white/20">
+                        📖
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-[#6655F5] uppercase tracking-widest block font-mono">OPERATIONAL MANUAL</span>
+                        <h3 class="font-extrabold text-base text-white">SVM FLEET System User Guide</h3>
+                    </div>
+                </div>
+                <button type="button" onclick="window.SVM_APP.closeUserGuideModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Tabbed Guide Navigation -->
+            <div class="px-6 pt-3 pb-1 border-b border-[#263149] bg-[#0E1528] flex items-center gap-2 overflow-x-auto">
+                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-quickstart')" id="tab-btn-guide-quickstart" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#6655F5] text-white transition-all">
+                    1. Quick Start
+                </button>
+                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-shifts')" id="tab-btn-guide-shifts" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all">
+                    2. Shift Entry & Slabs
+                </button>
+                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-register')" id="tab-btn-guide-register" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all">
+                    3. Duty Register & Receipts
+                </button>
+                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-cabs')" id="tab-btn-guide-cabs" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all">
+                    4. Fleet & Hubs
+                </button>
+            </div>
+
+            <div class="modal-dialog-body space-y-4">
+                <!-- Guide Tab 1: Quick Start -->
+                <div id="guide-quickstart" class="guide-content-panel space-y-4 text-xs text-slate-300">
+                    <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149] space-y-2">
+                        <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-[#10B981]"></span> Welcome to SVM FLEET Operating System
+                        </h4>
+                        <p class="leading-relaxed text-[#94A3B8]">
+                            SVM FLEET is an executive fleet management suite built for commercial taxi aggregators (Uber, Rapido, Ola) across Hyderabad. It manages 30 vehicles, 27 active drivers, and 3 major regional depots.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="p-3.5 rounded-xl bg-[#11182A] border border-[#263149]">
+                            <span class="font-bold text-white block mb-1 flex items-center gap-1.5">
+                                <i data-lucide="shield" class="w-3.5 h-3.5 text-[#6655F5]"></i> Role Switching
+                            </span>
+                            <p class="text-slate-400 leading-normal">
+                                Use the top branch dropdown to view <strong>Hyderabad (All Hubs)</strong> as Fleet Owner, or isolate specific stations like <strong>Moosapet Central Hub</strong>, <strong>Kukatpally</strong>, or <strong>Madhapur</strong>.
+                            </p>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-[#11182A] border border-[#263149]">
+                            <span class="font-bold text-white block mb-1 flex items-center gap-1.5">
+                                <i data-lucide="bell" class="w-3.5 h-3.5 text-[#F59E0B]"></i> Live Telemetry
+                            </span>
+                            <p class="text-slate-400 leading-normal">
+                                Click the bell icon in the top header to inspect real-time shift submissions, automated sync alerts from Uber/Rapido, and physical cash deposits.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guide Tab 2: Shift Entry & Commission Slabs -->
+                <div id="guide-shifts" class="guide-content-panel hidden space-y-4 text-xs text-slate-300">
+                    <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149] space-y-2">
+                        <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                            <i data-lucide="calculator" class="w-4 h-4 text-[#6655F5]"></i> How to Log a Shift with Searchable Driver Select
+                        </h4>
+                        <ol class="list-decimal pl-5 space-y-1.5 text-slate-400 leading-relaxed">
+                            <li>Click the purple <strong>"+ Add Shift"</strong> button in the top navigation or Duty Register.</li>
+                            <li>In the <strong>Select Driver</strong> combobox, type the driver's name, phone, or cab registration (e.g. <em>"Ravi"</em> or <em>"3368"</em>). The driver and vehicle are populated automatically!</li>
+                            <li>Choose <strong>12 Hrs Shift (Min 10 trips)</strong> or <strong>24 Hrs Shift (Min 18 trips)</strong>.</li>
+                            <li>Enter trips completed, gross earnings, fuel spent, and cash collected from riders.</li>
+                            <li>The <strong>Official Commission Engine</strong> dynamically computes the tier, credit, and whether the company pays the driver or the driver owes cash to the office.</li>
+                        </ol>
+                    </div>
+
+                    <div class="p-3.5 rounded-xl bg-[#11182A] border border-[#263149] space-y-2">
+                        <span class="font-bold text-white block">Official Commission Structure:</span>
+                        <div class="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                            <div class="p-2 rounded bg-[#080D1B] border border-[#263149]">
+                                <span class="text-[#10B981] font-bold block">12h Shifts</span>
+                                <div>≥₹3,500: <strong>40%</strong></div>
+                                <div>₹2,500–₹3,500: <strong>35%</strong></div>
+                                <div>₹2,000–₹2,500: <strong>30%</strong></div>
+                            </div>
+                            <div class="p-2 rounded bg-[#080D1B] border border-[#263149]">
+                                <span class="text-[#3185F6] font-bold block">24h Shifts</span>
+                                <div>≥₹6,500: <strong>40%</strong></div>
+                                <div>₹5,000–₹6,500: <strong>35%</strong></div>
+                                <div>₹4,000–₹5,000: <strong>30%</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guide Tab 3: Duty Register & Receipts -->
+                <div id="guide-register" class="guide-content-panel hidden space-y-4 text-xs text-slate-300">
+                    <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149] space-y-2">
+                        <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                            <i data-lucide="receipt" class="w-4 h-4 text-[#10B981]"></i> Duty Register & Printable Driver Vouchers
+                        </h4>
+                        <p class="leading-relaxed text-slate-400">
+                            The Duty Register lists every completed shift log with financial breakdowns.
+                        </p>
+                        <ul class="list-disc pl-5 space-y-1.5 text-slate-400">
+                            <li><strong>Search & Filter</strong>: Use the search box or hit <kbd class="px-1.5 py-0.5 rounded bg-[#162038] text-[10px] font-mono border border-[#263149]">Ctrl + K</kbd> to find any shift by driver, plate, or mobile number.</li>
+                            <li><strong>Receipt Button</strong>: Click the receipt icon <i data-lucide="receipt" class="w-3.5 h-3.5 inline text-[#6655F5]"></i> on any row to generate a printable, formatted Driver Settlement Voucher for paper filing or driver WhatsApp confirmation.</li>
+                            <li><strong>Export CSV</strong>: Click <em>"Export CSV"</em> to download a spreadsheet of all shift records for accounting.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Guide Tab 4: Fleet & Hub Operations -->
+                <div id="guide-cabs" class="guide-content-panel hidden space-y-4 text-xs text-slate-300">
+                    <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149] space-y-2">
+                        <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                            <i data-lucide="car" class="w-4 h-4 text-[#3185F6]"></i> Managing Vehicles, Drivers & Regional Hubs
+                        </h4>
+                        <ul class="list-disc pl-5 space-y-1.5 text-slate-400 leading-relaxed">
+                            <li><strong>Add Driver</strong>: Go to the Drivers tab and click <em>"+ Add Driver"</em> to register new operators with license numbers, emergency contacts, and assigned cabs.</li>
+                            <li><strong>Add Vehicle</strong>: Go to the Vehicles tab and click <em>"+ Add Vehicle"</em> to enter commercial taxi registration plates and models.</li>
+                            <li><strong>Transfer Hub</strong>: Click <em>"Transfer Hub"</em> on any vehicle card to instantly reassign a cab and driver between Moosapet, Kukatpally, or Madhapur.</li>
+                            <li><strong>Add Regional Depot</strong>: Click <em>"+ Add Hub & Manager"</em> in the sidebar or hub picker to expand operations into new Hyderabad zones (e.g. Gachibowli, Secunderabad).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-dialog-footer">
+                <button type="button" onclick="window.SVM_APP.closeUserGuideModal()" class="px-6 py-2.5 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold shadow-lg shadow-[#6655F5]/30 transition-all cursor-pointer">
+                    Got It, Let's Drive! 🚕
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Hidden compatibility selectors -->
     <select id="role-selector" class="hidden"></select>
     <div id="hub-filter-pills" class="hidden"></div>
 
     <!-- Core Scripts (Isolated Mock Data Layer for Client Demo) -->
-    <script src="js/calculator.js?v=20261110_demo_v4"></script>
-    <script src="js/mockData.js?v=20261110_demo_v4"></script>
-    <script src="js/map.js?v=20261110_demo_v4"></script>
-    <script src="js/app.js?v=20261110_demo_v4"></script>
+    <script src="js/calculator.js?v=20261110_demo_v5"></script>
+    <script src="js/mockData.js?v=20261110_demo_v5"></script>
+    <script src="js/map.js?v=20261110_demo_v5"></script>
+    <script src="js/app.js?v=20261110_demo_v5"></script>
 </body>
 </html>
