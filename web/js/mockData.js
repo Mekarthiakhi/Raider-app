@@ -543,17 +543,6 @@ class MockFleetRepository {
 // Global Demo Repository instance
 window.DEMO_REPO = new MockFleetRepository();
 window.DEMO_CONFIG = DEMO_CONFIG;
-window.DEMO_HUBS = DEMO_HUBS;
 window.DEMO_EARNINGS_TREND = DEMO_EARNINGS_TREND;
 window.DEMO_PLATFORM_EARNINGS = DEMO_PLATFORM_EARNINGS;
-
-// Global compatibility aliases
-window.APP_CONFIG = {
-    hubs: DEMO_HUBS,
-    storageKeys: {
-        role: "SVM_ROLE",
-        hubId: "SVM_HUB_ID"
-    }
-};
-window.FleetDataRepository = window.DEMO_REPO;
 
