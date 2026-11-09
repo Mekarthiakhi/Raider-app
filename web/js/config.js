@@ -1,6 +1,6 @@
 /**
  * SVM FLEET Operating System (Web Portal)
- * Global Configuration & Hub Profiles
+ * Global Configuration & Supabase Cloud Database Credentials
  */
 
 const APP_CONFIG = {
@@ -9,6 +9,12 @@ const APP_CONFIG = {
     city: "Hyderabad, Telangana",
     masterPin: "7777",
     
+    // Supabase Cloud Backend Configuration
+    supabase: {
+        url: "https://nwcfwqiymqzzgrzgegty.supabase.co",
+        anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53Y2Z3cWl5bXF6emdyemdlZ3R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NjQwODksImV4cCI6MjEwOTA0MDA4OX0.1OFgMnay_qnHK8AZbStplhjh-1gJM1epRPEIs8_6uzA"
+    },
+
     // Owner Master Account
     owner: {
         name: "Akhilesh (Fleet Owner)",

@@ -1,67 +1,61 @@
 # 🚀 Deploying SVM FLEET Web Operating System to Render
 
-You can deploy the **SVM FLEET Web Operating System** to **[Render.com](https://render.com)** in less than 2 minutes. Render provides free hosting for static websites and web applications connected directly to your GitHub repository.
+The **SVM FLEET Web Operating System** is completely connected to your live **Supabase Cloud Database**. Any manual or automated revenue entry made on the website is immediately saved to the cloud (`office_duty_logs` table) and will sync with the Android mobile app.
 
 ---
 
-## 🌟 Quick Deploy Steps (Recommended: Free Static Site)
+## 🌟 Step-by-Step Render Deployment (Takes 2 Minutes)
 
-### Step 1: Push Code to GitHub
-Your repository is already connected and pushed to:
-`https://github.com/Mekarthiakhi/Raider-app.git`
+Render provides **free hosting** for static websites connected directly to your GitHub repository.
 
-### Step 2: Open Render Dashboard
-1. Go to **[dashboard.render.com](https://dashboard.render.com)** and log in (or sign up with your GitHub account).
-2. Click the blue **"New +"** button at the top-right corner.
-3. Select **"Static Site"**.
+### Step 1: Open Render Dashboard
+1. Go to **[dashboard.render.com](https://dashboard.render.com)**.
+2. Sign in with your **GitHub account**.
+3. In the top-right corner, click **"New +"** and choose **"Static Site"**.
 
-### Step 3: Connect Your GitHub Repository
-1. In the repository list, find and select **`Raider-app`** (or paste `https://github.com/Mekarthiakhi/Raider-app`).
-2. Configure the following 3 fields:
-   - **Name:** `svm-fleet` (or any name you like)
+---
+
+### Step 2: Connect Your GitHub Repository
+1. In the repository list, find and click on **`Raider-app`** (or enter `https://github.com/Mekarthiakhi/Raider-app`).
+2. Fill in the deployment settings:
+   - **Name:** `svm-fleet` (or any custom name)
    - **Branch:** `main`
-   - **Root Directory:** `web` *(leave empty or enter `web`)*
+   - **Root Directory:** `web`
    - **Build Command:** *(leave empty)*
-   - **Publish Directory:** `.` *(if Root Directory is `web`) or `web` (if Root Directory is empty)*
-
-### Step 4: Click "Create Static Site"
-- Render will deploy your website in ~30 seconds!
-- You will receive a live URL like:  
-  **`https://svm-fleet.onrender.com`**
+   - **Publish Directory:** `.`
 
 ---
 
-## ⚡ Alternative Option: Deploy as a Node.js Web Service
+### Step 3: Click "Create Static Site"
+1. Click the blue **"Create Static Site"** button at the bottom.
+2. Render will deploy your site in ~30 seconds.
+3. Once finished, Render gives you a live public URL:  
+   👉 **`https://svm-fleet.onrender.com`**
 
-If you prefer deploying as a Web Service:
-1. In Render Dashboard, click **"New +"** ➔ **"Web Service"**.
-2. Select **`Raider-app`**.
-3. Render will auto-detect the root `package.json` and `server.js`:
-   - **Runtime:** `Node`
-   - **Build Command:** `npm install` (or leave empty)
-   - **Start Command:** `node server.js`
-4. Click **"Deploy Web Service"**.
+*(You can open this URL on any mobile phone, tablet, laptop, or desktop!)*
 
 ---
 
-## 📋 Features Available on Your Deployed Website
+## ☁️ How the Database Connection Works
 
-Once live on Render, your operators in Moosapet, Kukatpally, and Madhapur can open the URL on any phone, tablet, or desktop:
+- **Live Database:** Connected to Supabase (`https://nwcfwqiymqzzgrzgegty.supabase.co`).
+- **Database Table:** `public.office_duty_logs`.
+- **Offline-First with Realtime Sync:**
+  1. **Immediate Local Cache:** When you hit "Save & Settle Shift Log", the dashboard updates with zero waiting or lag.
+  2. **Cloud Sync:** The entry is automatically posted to Supabase via `@supabase/supabase-js`.
+  3. **Live Indicator:** The top header displays a green pulsing **`Cloud DB Synced`** badge showing the connection status.
+  4. **Supabase Realtime WebSockets:** If another hub manager or the Android app adds a new shift, the website receives the update in real-time without reloading the page!
 
-1. **Live Hyderabad GPS Map:**
-   - 30 commercial cabs active across Uber, Rapido, and Ola.
-   - Hub bases for Moosapet, Kukatpally, and Madhapur.
-2. **Manual Duty Register Entry (Matching Paper Logbook):**
-   - Driver Name & Mobile Number (with one-tap calling).
-   - Vehicle Reg Number (`TS09 UB 3368`, etc.).
-   - Trips completed.
-   - Gross earnings ("how much they earn").
-   - Fuel & Daily Expenditure (Petrol / Diesel / CNG / Tolls).
-   - Cash collected from passengers.
-   - **Automatic SVM Commission Calculation (25%, 30%, 35%, 40% tiers)**.
-   - **Net Balance Settlement** (Company pays driver vs Driver owes office).
-3. **Mobile-App Card View & Dense Table View:**
-   - Switch with 1 click between the mobile app's `DutyLogCard` look and a dense spreadsheet table.
-4. **CSV Export & Printable A4 Receipts:**
-   - Export all shift entries to CSV or print instant settlement slips.
+---
 
+## 📱 Features on the Live Website
+
+1. **Dual Revenue Entry:**
+   - **Manual Paper Register:** Select any driver to auto-fill their phone and vehicle reg number, enter trips and fare, and the system automatically calculates the official SVM commission tier (25%, 30%, 35%, 40%), fuel expenditure, and net balance!
+   - **Automatic Telemetry Inflow:** 1-Tap aggregate incoming telemetry shifts from Uber, Rapido, and Ola.
+2. **Mobile App Cards View & Desktop Table View:**
+   - Switch with 1 click between the mobile app's `DutyLogCard` look and a high-density spreadsheet table.
+3. **Hyderabad Live GPS Map:**
+   - Live fleet monitoring across Moosapet, Kukatpally, and Madhapur Hubs.
+4. **Export & Print:**
+   - Download CSV reports and print A4 / thermal settlement receipts.

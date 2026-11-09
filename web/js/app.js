@@ -559,7 +559,7 @@ class SvmFleetApp {
         }).join("");
     }
 
-    autoAggregateShift(index) {
+    async autoAggregateShift(index) {
         const shift = window.PENDING_TELEMETRY_SHIFTS[index];
         if (!shift) return;
 
@@ -592,12 +592,12 @@ class SvmFleetApp {
             source: "AUTOMATIC_TELEMETRY"
         };
 
-        FleetDataRepository.saveDutyLog(newLog);
+        await FleetDataRepository.saveDutyLog(newLog);
 
         window.PENDING_TELEMETRY_SHIFTS.splice(index, 1);
 
         this.refreshAll();
-        this.showToast(`Auto-aggregated shift for ${shift.driverName} into Master Register!`, "success");
+        this.showToast(`Auto-aggregated shift for ${shift.driverName} & synced to Cloud DB!`, "success");
     }
 
     populateQuickDriverDropdown() {
@@ -688,7 +688,7 @@ class SvmFleetApp {
         }
     }
 
-    submitManualEntryForm(e) {
+    async submitManualEntryForm(e) {
         e.preventDefault();
 
         const shiftType = document.getElementById("modal-shifttype").value;
@@ -739,10 +739,10 @@ class SvmFleetApp {
             source: "MANUAL_REGISTER"
         };
 
-        FleetDataRepository.saveDutyLog(newLog);
+        await FleetDataRepository.saveDutyLog(newLog);
         this.closeManualEntryModal();
         this.refreshAll();
-        this.showToast(`Manual Shift Log saved for ${driverName} (${vehicleNo})!`, "success");
+        this.showToast(`Manual Shift Log saved & synced to Cloud DB for ${driverName}!`, "success");
     }
 
     openReassignModal(vehicleId) {

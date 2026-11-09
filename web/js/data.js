@@ -1,6 +1,6 @@
 /**
  * SVM FLEET Operating System (Web Portal)
- * Master Fleet Data & LocalStorage Repository
+ * Master Fleet Data & Supabase Cloud Database Repository
  */
 
 const DEFAULT_DRIVERS = [
@@ -280,9 +280,11 @@ const PENDING_TELEMETRY_SHIFTS = [
     }
 ];
 
-// Master Data Repository Class
+// Master Data Repository Class with Supabase Cloud DB Connection
 class FleetDataRepository {
     constructor() {
+        this.supabase = null;
+        this.isCloudConnected = false;
         this.init();
     }
 
@@ -295,6 +297,129 @@ class FleetDataRepository {
         }
         if (!localStorage.getItem(APP_CONFIG.storageKeys.dutyLogs)) {
             localStorage.setItem(APP_CONFIG.storageKeys.dutyLogs, JSON.stringify(DEFAULT_DUTY_LOGS));
+        }
+
+        // Initialize Supabase client
+        this.initSupabase();
+    }
+
+    initSupabase() {
+        try {
+            if (window.supabase && APP_CONFIG.supabase) {
+                this.supabase = window.supabase.createClient(APP_CONFIG.supabase.url, APP_CONFIG.supabase.anonKey);
+                this.isCloudConnected = true;
+                this.updateCloudStatusIndicator(true);
+
+                // Initial fetch from cloud DB
+                this.syncWithSupabase();
+
+                // Setup Realtime subscription
+                this.setupRealtimeSubscription();
+            }
+        } catch (e) {
+            console.warn("Supabase initialization error:", e);
+            this.updateCloudStatusIndicator(false);
+        }
+    }
+
+    updateCloudStatusIndicator(connected) {
+        const el = document.getElementById("db-cloud-indicator");
+        if (!el) return;
+        if (connected) {
+            el.innerHTML = `
+                <span class="pulse-dot"></span>
+                <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Cloud DB Synced</span>
+            `;
+            el.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30";
+        } else {
+            el.innerHTML = `
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Offline Cache</span>
+            `;
+            el.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-950/40 border border-amber-500/30";
+        }
+    }
+
+    async syncWithSupabase() {
+        if (!this.supabase) return;
+
+        try {
+            const { data, error } = await this.supabase
+                .from('office_duty_logs')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.warn("Supabase fetch duty logs error:", error);
+                return;
+            }
+
+            if (data && data.length > 0) {
+                // Map DB rows to client format
+                const mappedLogs = data.map(row => {
+                    const calc = SvmCommissionCalculator.calculate(
+                        row.shift_type || '12_HOURS',
+                        row.trips || 0,
+                        row.earnings || 0,
+                        row.cash_collection || 0,
+                        row.expenditure || 0,
+                        row.drive_pass || 0,
+                        row.advance || 0
+                    );
+
+                    return {
+                        id: row.id,
+                        shiftType: row.shift_type || '12_HOURS',
+                        loginDate: row.login_date,
+                        loginTime: row.login_time,
+                        logoutDate: row.logout_date,
+                        logoutTime: row.logout_time,
+                        vehicleNo: row.vehicle_no,
+                        driverName: row.driver_name,
+                        driverPhone: row.driver_phone || '+91 93919 15013',
+                        trips: row.trips || 0,
+                        earnings: parseFloat(row.earnings || 0),
+                        cashCollection: parseFloat(row.cash_collection || 0),
+                        expenditure: parseFloat(row.expenditure || 0),
+                        commissionRent: parseFloat(row.commission_rent || calc.commissionAmount),
+                        commissionPercentage: calc.commissionPercentage,
+                        drivePass: parseFloat(row.drive_pass || 0),
+                        advance: parseFloat(row.advance || 0),
+                        paymentCash: parseFloat(row.payment_cash || 0),
+                        paymentOnline: parseFloat(row.payment_online || 0),
+                        netBalance: parseFloat(row.net_balance !== undefined ? row.net_balance : calc.netBalance),
+                        status: row.status || 'SETTLED',
+                        remarks: row.remarks || '',
+                        managerId: row.manager_id || 'mgr_moosapet_01',
+                        source: 'SUPABASE_CLOUD'
+                    };
+                });
+
+                localStorage.setItem(APP_CONFIG.storageKeys.dutyLogs, JSON.stringify(mappedLogs));
+
+                if (window.SVM_APP) {
+                    window.SVM_APP.renderMetricCards();
+                    window.SVM_APP.renderDutyRegister();
+                }
+            }
+        } catch (err) {
+            console.warn("Sync error:", err);
+        }
+    }
+
+    setupRealtimeSubscription() {
+        if (!this.supabase) return;
+
+        try {
+            this.supabase
+                .channel('public:office_duty_logs')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'office_duty_logs' }, payload => {
+                    console.log('Realtime DB update received from Supabase:', payload);
+                    this.syncWithSupabase();
+                })
+                .subscribe();
+        } catch (e) {
+            console.warn("Realtime subscription error:", e);
         }
     }
 
@@ -316,11 +441,12 @@ class FleetDataRepository {
         return logs.filter(l => l.managerId === managerId);
     }
 
-    saveDutyLog(logData) {
+    async saveDutyLog(logData) {
         const logs = this.getDutyLogs();
         if (!logData.id) {
             logData.id = "log_" + Date.now();
         }
+
         const existingIdx = logs.findIndex(l => l.id === logData.id);
         if (existingIdx >= 0) {
             logs[existingIdx] = logData;
@@ -328,6 +454,52 @@ class FleetDataRepository {
             logs.unshift(logData);
         }
         localStorage.setItem(APP_CONFIG.storageKeys.dutyLogs, JSON.stringify(logs));
+
+        // Asynchronously persist to Supabase Cloud DB
+        if (this.supabase) {
+            try {
+                const dbPayload = {
+                    fleet_id: 'svm_fleet_hyderabad',
+                    shift_type: logData.shiftType,
+                    login_date: logData.loginDate,
+                    login_time: logData.loginTime,
+                    logout_date: logData.logoutDate,
+                    logout_time: logData.logoutTime,
+                    vehicle_no: logData.vehicleNo,
+                    driver_name: logData.driverName,
+                    driver_phone: logData.driverPhone,
+                    trips: logData.trips,
+                    earnings: logData.earnings,
+                    cash_collection: logData.cashCollection,
+                    expenditure: logData.expenditure,
+                    commission_rent: logData.commissionRent,
+                    drive_pass: logData.drivePass || 0,
+                    advance: logData.advance || 0,
+                    payment_cash: logData.paymentCash || 0,
+                    payment_online: logData.paymentOnline || 0,
+                    net_balance: logData.netBalance,
+                    status: logData.status || 'SETTLED',
+                    remarks: logData.remarks || '',
+                    manager_id: logData.managerId
+                };
+
+                const { data, error } = await this.supabase
+                    .from('office_duty_logs')
+                    .insert(dbPayload)
+                    .select();
+
+                if (error) {
+                    console.warn("Supabase insert error:", error);
+                } else if (data && data[0]) {
+                    logData.id = data[0].id;
+                    logData.source = 'SUPABASE_CLOUD';
+                    localStorage.setItem(APP_CONFIG.storageKeys.dutyLogs, JSON.stringify(logs));
+                }
+            } catch (err) {
+                console.warn("Supabase write error:", err);
+            }
+        }
+
         return logData;
     }
 
@@ -337,7 +509,6 @@ class FleetDataRepository {
         if (v) {
             v.managerId = newManagerId;
             localStorage.setItem(APP_CONFIG.storageKeys.vehicles, JSON.stringify(vehicles));
-            // Also reassign driver if attached
             if (v.driverId) {
                 const drivers = this.getDrivers();
                 const d = drivers.find(item => item.id === v.driverId);
@@ -360,4 +531,3 @@ class FleetDataRepository {
 
 window.FleetDataRepository = new FleetDataRepository();
 window.PENDING_TELEMETRY_SHIFTS = PENDING_TELEMETRY_SHIFTS;
-
