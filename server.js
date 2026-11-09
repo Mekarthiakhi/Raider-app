@@ -59,3 +59,4 @@ server.listen(PORT, () => {
     console.log(`🚀 SVM FLEET Web Operating System running on port ${PORT}`);
     console.log(`📁 Serving directory: ${WEB_DIR}`);
 });
+

@@ -64,3 +64,4 @@ Once live on Render, your operators in Moosapet, Kukatpally, and Madhapur can op
    - Switch with 1 click between the mobile app's `DutyLogCard` look and a dense spreadsheet table.
 4. **CSV Export & Printable A4 Receipts:**
    - Export all shift entries to CSV or print instant settlement slips.
+
