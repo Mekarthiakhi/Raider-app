@@ -13,8 +13,12 @@ class SvmFleetApp {
         this.selectedTimeframe = "day"; // "day" | "week" | "month"
         this.selectedChartTimeframe = "daily"; // "daily" | "weekly" | "monthly"
         this.mapController = null;
+        this.fullMapController = null;
         this.searchQuery = "";
         this.shiftFilter = "ALL";
+        this.selectedDateRange = "all"; // "all" | "today" | "week" | "month" | "custom"
+        this.specificDateFilter = ""; // YYYY-MM-DD
+        this.reportPeriod = "week"; // "today" | "week" | "month" | "all"
         this.registerViewMode = "table"; // "table" or "cards"
         this.notifications = [
             { id: 1, title: "Shift Completed", text: "Suman Goud (TS10 EF 7745) completed 15 trips (₹3,750 gross). 35% commission tier unlocked!", time: "2m ago", unread: true, type: "success" },
@@ -32,18 +36,25 @@ class SvmFleetApp {
         this.updateGreeting();
         this.renderNotifications();
         
-        // Initialize Hyderabad Leaflet Map
+        // Initialize Hyderabad Leaflet Map (Dashboard overview instance)
         if (typeof HyderabadMapController !== "undefined") {
             this.mapController = new HyderabadMapController("hyderabad-map");
             this.mapController.init();
         }
         
-        // Render all dashboard and sub-panel components
+        // Render all dashboard, sub-panel, and reports components
         this.refreshAll();
+        this.renderReportsTab();
 
         // Render trend chart & donut chart
         this.renderTrendChart("daily");
         this.renderPlatformDonutChart();
+
+        // Window resize event to invalidate map size
+        window.addEventListener("resize", () => {
+            if (this.mapController) this.mapController.invalidateSize();
+            if (this.fullMapController) this.fullMapController.invalidateSize();
+        });
 
         // Refresh Lucide icons
         if (window.lucide) {
@@ -125,6 +136,20 @@ class SvmFleetApp {
             }
         });
 
+        // Live calculation triggers in Edit Settlement Modal
+        const editCalcInputs = [
+            "edit-settle-trips", "edit-settle-gross", "edit-settle-cash", "edit-settle-fuel",
+            "edit-settle-advance", "edit-settle-shifttype"
+        ];
+        editCalcInputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener("input", () => this.updateEditModalCalculation());
+                el.addEventListener("change", () => this.updateEditModalCalculation());
+                el.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
+            }
+        });
+
         // Backdrop click dismissal for modals
         const modalIds = [
             "manual-entry-modal",
@@ -132,7 +157,8 @@ class SvmFleetApp {
             "add-driver-modal",
             "add-vehicle-modal",
             "add-manager-modal",
-            "user-guide-modal"
+            "user-guide-modal",
+            "edit-settlement-modal"
         ];
         modalIds.forEach(id => {
             const modal = document.getElementById(id);
@@ -170,6 +196,7 @@ class SvmFleetApp {
         this.closeAddVehicleModal();
         this.closeAddManagerModal();
         this.closeUserGuideModal();
+        this.closeEditSettlementModal();
     }
 
     updateGreeting() {
@@ -281,12 +308,73 @@ class SvmFleetApp {
     setShiftFilter(filter) {
         this.shiftFilter = filter;
         document.querySelectorAll(".shift-filter-btn").forEach(btn => {
-            btn.className = "shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#0B1021] text-slate-400 hover:text-white";
+            btn.className = "shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white";
         });
-        if (window.event && window.event.currentTarget) {
-            window.event.currentTarget.className = "shift-filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#6655F5] text-white border-[#6655F5]";
+        const activeMap = {
+            "ALL": "filter-shift-all",
+            "12_HOURS": "filter-shift-12",
+            "24_HOURS": "filter-shift-24",
+            "PENDING": "filter-shift-pending",
+            "SETTLED": "filter-shift-settled"
+        };
+        const activeBtn = document.getElementById(activeMap[filter]);
+        if (activeBtn) {
+            activeBtn.className = "shift-filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#6655F5] text-white border-[#6655F5]";
         }
         this.renderDutyRegister();
+    }
+
+    formatInputDateToLog(dateStr) {
+        if (!dateStr) return "";
+        const parts = dateStr.split("-");
+        if (parts.length !== 3) return dateStr;
+        const [year, month, day] = parts;
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const mIdx = parseInt(month, 10) - 1;
+        return `${day.padStart(2, "0")} ${months[mIdx]} ${year}`;
+    }
+
+    setDateRangeFilter(range) {
+        this.selectedDateRange = range;
+        this.specificDateFilter = "";
+        const picker = document.getElementById("register-date-picker");
+        if (picker) picker.value = "";
+
+        ["all", "today", "week", "month"].forEach(r => {
+            const btn = document.getElementById(`btn-daterange-${r}`);
+            if (btn) {
+                if (r === range) {
+                    btn.className = "date-range-btn px-3 py-1 rounded-lg text-xs font-bold bg-[#6655F5] text-white transition-all";
+                } else {
+                    btn.className = "date-range-btn px-3 py-1 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all";
+                }
+            }
+        });
+
+        this.renderDutyRegister();
+    }
+
+    setSpecificDateFilter(dateStr) {
+        if (!dateStr) {
+            this.clearDateFilter();
+            return;
+        }
+        this.specificDateFilter = dateStr;
+        this.selectedDateRange = "custom";
+
+        ["all", "today", "week", "month"].forEach(r => {
+            const btn = document.getElementById(`btn-daterange-${r}`);
+            if (btn) {
+                btn.className = "date-range-btn px-3 py-1 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all";
+            }
+        });
+
+        this.renderDutyRegister();
+    }
+
+    clearDateFilter() {
+        this.specificDateFilter = "";
+        this.setDateRangeFilter("all");
     }
 
     setRegisterViewMode(mode) {
@@ -332,8 +420,23 @@ class SvmFleetApp {
 
         if (this.shiftFilter === "12_HOURS" || this.shiftFilter === "24_HOURS") {
             logs = logs.filter(l => l.shiftType === this.shiftFilter);
-        } else if (this.shiftFilter === "OPEN") {
-            logs = logs.filter(l => l.status === "OPEN" || l.status === "PENDING");
+        } else if (this.shiftFilter === "PENDING" || this.shiftFilter === "OPEN") {
+            logs = logs.filter(l => l.status === "PENDING" || l.status === "OPEN");
+        } else if (this.shiftFilter === "SETTLED") {
+            logs = logs.filter(l => l.status === "SETTLED");
+        }
+
+        // Date selection filter
+        if (this.specificDateFilter) {
+            const formattedTarget = this.formatInputDateToLog(this.specificDateFilter);
+            logs = logs.filter(l => l.loginDate === formattedTarget || l.loginDate.includes(this.specificDateFilter));
+        } else if (this.selectedDateRange === "today") {
+            logs = logs.filter(l => l.loginDate.includes("09 Nov 2026") || l.loginDate === new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }));
+        } else if (this.selectedDateRange === "week") {
+            const weekDates = ["03 Nov", "04 Nov", "05 Nov", "06 Nov", "07 Nov", "08 Nov", "09 Nov"];
+            logs = logs.filter(l => weekDates.some(d => l.loginDate.includes(d)));
+        } else if (this.selectedDateRange === "month") {
+            logs = logs.filter(l => l.loginDate.includes("Nov 2026"));
         }
 
         if (this.searchQuery) {
@@ -592,9 +695,9 @@ class SvmFleetApp {
                                         <div>
                                             <div class="flex items-center gap-2">
                                                 <h4 class="font-extrabold text-base text-white font-mono">${log.vehicleNo}</h4>
-                                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isSettled ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30' : 'bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30'}">
+                                                <button onclick="window.SVM_APP.openEditSettlementModal('${log.id}')" class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isSettled ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 hover:bg-[#10B981]/25' : 'bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30 hover:bg-[#F59E0B]/25'} transition-colors cursor-pointer" title="Click to edit settlement">
                                                     ${isSettled ? '✓ Settled' : '⏳ Pending'}
-                                                </span>
+                                                </button>
                                             </div>
                                             <div class="flex items-center gap-2 text-xs text-slate-300 mt-0.5">
                                                 <span class="font-bold">${log.driverName}</span>
@@ -654,9 +757,14 @@ class SvmFleetApp {
                                         ${log.netBalance >= 0 ? 'Company Pays: ₹' + Math.round(log.netBalance) : 'Driver Handover: ₹' + Math.round(Math.abs(log.netBalance))}
                                     </span>
                                 </div>
-                                <button onclick="window.SVM_APP.printReceipt('${log.id}')" class="px-3 py-1.5 rounded-lg bg-[#141B30] hover:bg-[#1E273D] text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
-                                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> Receipt
-                                </button>
+                                <div class="flex items-center gap-1.5">
+                                    <button onclick="window.SVM_APP.openEditSettlementModal('${log.id}')" class="px-2.5 py-1.5 rounded-lg bg-[#6655F5]/20 hover:bg-[#6655F5]/30 text-[#8B5CF6] hover:text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer" title="Edit Shift & Commission">
+                                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Settle
+                                    </button>
+                                    <button onclick="window.SVM_APP.printReceipt('${log.id}')" class="px-2.5 py-1.5 rounded-lg bg-[#141B30] hover:bg-[#1E273D] text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer" title="Print Receipt">
+                                        <i data-lucide="printer" class="w-3.5 h-3.5"></i> Receipt
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -681,10 +789,10 @@ class SvmFleetApp {
                 sourceTag = `<span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#0B1021] text-white border border-[#334155]">Uber</span>`;
             }
 
-            // Status Tag matching screenshot
+            // Status Tag clickable to edit settlement
             const statusTag = isSettled
-                ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">✓ Settled</span>`
-                : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30">⏳ Pending</span>`;
+                ? `<button onclick="window.SVM_APP.openEditSettlementModal('${log.id}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 hover:bg-[#10B981]/25 transition-colors cursor-pointer" title="Click to Edit Settlement">✓ Settled</button>`
+                : `<button onclick="window.SVM_APP.openEditSettlementModal('${log.id}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30 hover:bg-[#F59E0B]/25 transition-colors cursor-pointer" title="Click to Settle & Edit">⏳ Pending</button>`;
 
             return `
                 <tr class="hover:bg-[#11182A]/70 transition-colors">
@@ -732,9 +840,14 @@ class SvmFleetApp {
                         ${statusTag}
                     </td>
                     <td class="py-3 px-3 text-right">
-                        <button onclick="window.SVM_APP.printReceipt('${log.id}')" class="p-1.5 rounded-lg hover:bg-[#1E273D] text-[#94A3B8] hover:text-white transition-colors cursor-pointer" title="Print Driver Receipt">
-                            <i data-lucide="printer" class="w-4 h-4"></i>
-                        </button>
+                        <div class="flex items-center justify-end gap-1">
+                            <button onclick="window.SVM_APP.openEditSettlementModal('${log.id}')" class="p-1.5 rounded-lg hover:bg-[#1E273D] text-[#6655F5] hover:text-[#8B5CF6] transition-colors cursor-pointer" title="Edit Shift & Settlement">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.SVM_APP.printReceipt('${log.id}')" class="p-1.5 rounded-lg hover:bg-[#1E273D] text-[#94A3B8] hover:text-white transition-colors cursor-pointer" title="Print Driver Receipt">
+                                <i data-lucide="printer" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -759,8 +872,8 @@ class SvmFleetApp {
             }
 
             const statusTag = isSettled
-                ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">✓ Settled</span>`
-                : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30">⏳ Pending</span>`;
+                ? `<button onclick="window.SVM_APP.openEditSettlementModal('${log.id}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 hover:bg-[#10B981]/25 transition-colors cursor-pointer" title="Click to Edit Settlement">✓ Settled</button>`
+                : `<button onclick="window.SVM_APP.openEditSettlementModal('${log.id}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30 hover:bg-[#F59E0B]/25 transition-colors cursor-pointer" title="Click to Settle & Edit">⏳ Pending</button>`;
 
             return `
                 <tr class="hover:bg-[#11182A]/70 transition-colors">
@@ -789,13 +902,28 @@ class SvmFleetApp {
                     <td class="py-3 px-3 text-center">${platformTag}</td>
                     <td class="py-3 px-3 text-center">${statusTag}</td>
                     <td class="py-3 px-3 text-right">
-                        <button onclick="window.SVM_APP.printReceipt('${log.id}')" class="p-1.5 rounded-lg hover:bg-[#1E273D] text-[#94A3B8] hover:text-white transition-colors cursor-pointer" title="Print Driver Receipt">
-                            <i data-lucide="printer" class="w-4 h-4"></i>
-                        </button>
+                        <div class="flex items-center justify-end gap-1">
+                            <button onclick="window.SVM_APP.openEditSettlementModal('${log.id}')" class="p-1.5 rounded-lg hover:bg-[#1E273D] text-[#6655F5] hover:text-[#8B5CF6] transition-colors cursor-pointer" title="Edit Shift & Settlement">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.SVM_APP.printReceipt('${log.id}')" class="p-1.5 rounded-lg hover:bg-[#1E273D] text-[#94A3B8] hover:text-white transition-colors cursor-pointer" title="Print Driver Receipt">
+                                <i data-lucide="printer" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
         }).join("");
+
+        if (tbodyOverview) tbodyOverview.innerHTML = tableRowsHtml;
+        if (tbodyFull) tbodyFull.innerHTML = tableRowsFullHtml;
+
+        const countBadge = document.getElementById("register-records-count");
+        if (countBadge) {
+            let totalGross = 0;
+            logs.forEach(l => { totalGross += (l.earnings || 0); });
+            countBadge.innerText = `Showing ${logs.length} Shift Logs (₹${Math.round(totalGross).toLocaleString('en-IN')})`;
+        }
 
         if (tbodyOverview) tbodyOverview.innerHTML = tableRowsHtml;
         if (tbodyFull) tbodyFull.innerHTML = tableRowsFullHtml;
@@ -1604,14 +1732,277 @@ class SvmFleetApp {
             activeContent.classList.remove("hidden");
         }
 
-        // Invalidate map size on map tab switch
-        if (tabId === "map" || tabId === "overview") {
-            setTimeout(() => {
-                if (this.mapController && this.mapController.map) {
-                    this.mapController.map.invalidateSize();
-                }
-            }, 100);
+        // Invalidate map size on map tab switch or initialize full map
+        if (tabId === "map") {
+            if (!this.fullMapController && typeof HyderabadMapController !== "undefined") {
+                this.fullMapController = new HyderabadMapController("hyderabad-map-full");
+                this.fullMapController.init();
+            } else if (this.fullMapController) {
+                this.fullMapController.invalidateSize();
+            }
+        } else if (tabId === "overview") {
+            if (this.mapController) {
+                this.mapController.invalidateSize();
+            }
+        } else if (tabId === "reports") {
+            this.renderReportsTab();
         }
+    }
+
+    setReportPeriod(period) {
+        this.reportPeriod = period;
+        ["today", "week", "month", "all"].forEach(p => {
+            const btn = document.getElementById(`btn-rep-${p}`);
+            if (btn) {
+                if (p === period) {
+                    btn.className = "rep-period-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#6655F5] text-white transition-all cursor-pointer";
+                } else {
+                    btn.className = "rep-period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all cursor-pointer";
+                }
+            }
+        });
+
+        const badge = document.getElementById("report-period-badge");
+        if (badge) {
+            badge.innerText = period === "today" ? "Daily View (Today)"
+                : period === "week" ? "Weekly Fleet Report"
+                : period === "month" ? "Monthly Report (MTD)"
+                : "All Time Audit";
+        }
+
+        this.renderReportsTab();
+        this.showToast(`Reports updated for ${period.toUpperCase()} period`, "info");
+    }
+
+    renderReportsTab() {
+        if (!window.DEMO_REPO) return;
+        const allLogs = window.DEMO_REPO.getDutyLogs(this.currentHubId);
+        let periodLogs = allLogs;
+
+        if (this.reportPeriod === "today") {
+            periodLogs = allLogs.filter(l => l.loginDate.includes("09 Nov 2026") || l.loginDate === new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }));
+        } else if (this.reportPeriod === "week") {
+            const weekDates = ["03 Nov", "04 Nov", "05 Nov", "06 Nov", "07 Nov", "08 Nov", "09 Nov"];
+            periodLogs = allLogs.filter(l => weekDates.some(d => l.loginDate.includes(d)));
+        } else if (this.reportPeriod === "month") {
+            periodLogs = allLogs.filter(l => l.loginDate.includes("Nov 2026"));
+        }
+
+        let totalGross = 0;
+        let totalComm = 0;
+        let totalFuel = 0;
+        let totalTrips = 0;
+
+        periodLogs.forEach(l => {
+            totalGross += (l.earnings || 0);
+            totalComm += (l.commissionRent || 0);
+            totalFuel += (l.expenditure || 0);
+            totalTrips += (l.trips || 0);
+        });
+
+        const netProfit = totalGross - totalComm - totalFuel;
+        const netMargin = totalGross > 0 ? ((netProfit / totalGross) * 100).toFixed(1) : "0.0";
+        const avgCommRate = totalGross > 0 ? ((totalComm / totalGross) * 100).toFixed(1) : "0.0";
+
+        const grossEl = document.getElementById("report-kpi-gross");
+        const commEl = document.getElementById("report-kpi-comm");
+        const commRateEl = document.getElementById("report-kpi-comm-rate");
+        const fuelEl = document.getElementById("report-kpi-fuel");
+        const profitEl = document.getElementById("report-kpi-profit");
+        const marginEl = document.getElementById("report-kpi-margin");
+        const shiftsEl = document.getElementById("report-kpi-shifts");
+        const tripsEl = document.getElementById("report-kpi-trips");
+
+        if (grossEl) grossEl.innerText = `₹${Math.round(totalGross).toLocaleString('en-IN')}`;
+        if (commEl) commEl.innerText = `₹${Math.round(totalComm).toLocaleString('en-IN')}`;
+        if (commRateEl) commRateEl.innerText = `${avgCommRate}% Avg Slab`;
+        if (fuelEl) fuelEl.innerText = `₹${Math.round(totalFuel).toLocaleString('en-IN')}`;
+        if (profitEl) profitEl.innerText = `₹${Math.round(netProfit).toLocaleString('en-IN')}`;
+        if (marginEl) marginEl.innerText = `${netMargin}% Net Margin`;
+        if (shiftsEl) shiftsEl.innerText = `${periodLogs.length} Shifts`;
+        if (tripsEl) tripsEl.innerText = `${totalTrips.toLocaleString('en-IN')} Completed Trips`;
+
+        // Render Report Table Rows
+        const tbody = document.getElementById("report-table-body");
+        if (tbody) {
+            if (periodLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="11" class="text-center py-6 text-slate-500 font-sans">No shift records found for this period.</td></tr>`;
+            } else {
+                tbody.innerHTML = periodLogs.map((log, idx) => {
+                    const isSettled = log.status === "SETTLED";
+                    return `
+                        <tr class="hover:bg-[#11182A]/70 transition-colors">
+                            <td class="py-2.5 px-3 text-slate-500">${idx + 1}</td>
+                            <td class="py-2.5 px-3 text-white font-mono">${log.loginDate}</td>
+                            <td class="py-2.5 px-3 font-bold text-white">${log.driverName}</td>
+                            <td class="py-2.5 px-3 text-slate-300 font-mono">${log.vehicleNo}</td>
+                            <td class="py-2.5 px-3 text-center text-white font-bold">${log.trips}</td>
+                            <td class="py-2.5 px-3 text-right font-bold text-[#10B981]">₹${Math.round(log.earnings).toLocaleString('en-IN')}</td>
+                            <td class="py-2.5 px-3 text-right text-[#0EA5E9]">₹${Math.round(log.expenditure || 0).toLocaleString('en-IN')}</td>
+                            <td class="py-2.5 px-3 text-right text-[#6655F5] font-bold">₹${Math.round(log.commissionRent).toLocaleString('en-IN')}</td>
+                            <td class="py-2.5 px-3 text-right text-[#F59E0B]">₹${Math.round(log.cashCollection || 0).toLocaleString('en-IN')}</td>
+                            <td class="py-2.5 px-3 text-center">
+                                <button onclick="window.SVM_APP.openEditSettlementModal('${log.id}')" class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isSettled ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30' : 'bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30'} cursor-pointer" title="Click to edit settlement">
+                                    ${isSettled ? '✓ Settled' : '⏳ Pending'}
+                                </button>
+                            </td>
+                            <td class="py-2.5 px-3 text-right">
+                                <button onclick="window.SVM_APP.printReceipt('${log.id}')" class="text-slate-400 hover:text-white p-1 rounded hover:bg-[#1E273D]" title="Print Receipt">
+                                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            }
+        }
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    openEditSettlementModal(logId) {
+        if (!window.DEMO_REPO) return;
+        const logs = window.DEMO_REPO.getDutyLogs();
+        const log = logs.find(l => String(l.id) === String(logId));
+        if (!log) {
+            console.warn("Log not found for ID:", logId);
+            return;
+        }
+
+        const modal = document.getElementById("edit-settlement-modal");
+        if (!modal) return;
+
+        // Populate fields
+        const idEl = document.getElementById("edit-settle-id");
+        const driverEl = document.getElementById("edit-settle-driver-name");
+        const vehEl = document.getElementById("edit-settle-veh-plate");
+        const dateEl = document.getElementById("edit-settle-date-badge");
+        const shiftTypeEl = document.getElementById("edit-settle-shifttype");
+        const statusEl = document.getElementById("edit-settle-status");
+        const tripsEl = document.getElementById("edit-settle-trips");
+        const grossEl = document.getElementById("edit-settle-gross");
+        const fuelEl = document.getElementById("edit-settle-fuel");
+        const cashEl = document.getElementById("edit-settle-cash");
+        const advEl = document.getElementById("edit-settle-advance");
+        const remarksEl = document.getElementById("edit-settle-remarks");
+
+        if (idEl) idEl.value = log.id;
+        if (driverEl) driverEl.innerText = `${log.driverName} (${log.driverPhone || 'N/A'})`;
+        if (vehEl) vehEl.innerText = log.vehicleNo;
+        if (dateEl) dateEl.innerText = `${log.loginDate} • ${log.source || 'Uber'}`;
+
+        if (shiftTypeEl) shiftTypeEl.value = log.shiftType || "12_HOURS";
+        if (statusEl) statusEl.value = log.status || "SETTLED";
+        if (tripsEl) tripsEl.value = log.trips || 12;
+        if (grossEl) grossEl.value = log.earnings || 3000;
+        if (fuelEl) fuelEl.value = log.expenditure || 200;
+        if (cashEl) cashEl.value = log.cashCollection || 2000;
+        if (advEl) advEl.value = log.advance || 0;
+        if (remarksEl) remarksEl.value = log.remarks || "Reconciled at depot counter.";
+
+        // Prevent wheel scrolling on edit modal inputs
+        modal.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
+        });
+
+        this.updateEditModalCalculation();
+
+        modal.classList.add("open");
+        modal.scrollTop = 0;
+        document.body.classList.add("modal-open");
+    }
+
+    closeEditSettlementModal() {
+        const modal = document.getElementById("edit-settlement-modal");
+        if (modal) {
+            modal.classList.remove("open");
+        }
+        document.body.classList.remove("modal-open");
+    }
+
+    updateEditModalCalculation() {
+        try {
+            const shiftType = document.getElementById("edit-settle-shifttype")?.value || "12_HOURS";
+            const trips = parseInt(document.getElementById("edit-settle-trips")?.value) || 0;
+            const gross = parseFloat(document.getElementById("edit-settle-gross")?.value) || 0;
+            const cash = parseFloat(document.getElementById("edit-settle-cash")?.value) || 0;
+            const exp = parseFloat(document.getElementById("edit-settle-fuel")?.value) || 0;
+            const pass = 0;
+            const advance = parseFloat(document.getElementById("edit-settle-advance")?.value) || 0;
+
+            const result = SvmCommissionCalculator.calculate(shiftType, trips, gross, cash, exp, pass, advance);
+
+            const badgeEl = document.getElementById("edit-calc-trips-badge");
+            if (badgeEl) {
+                badgeEl.innerText = result.minTripsMet ? `✓ Target Met (${trips} trips)` : `⚠ Below Minimum (${trips}/${shiftType === "12_HOURS" ? 10 : 18} trips)`;
+                badgeEl.className = result.minTripsMet ? "text-[#10B981] font-bold text-xs" : "text-[#F59E0B] font-bold text-xs";
+            }
+
+            const tierEl = document.getElementById("edit-calc-tier");
+            if (tierEl) tierEl.innerText = result.commissionPercentage > 0 ? `${result.commissionPercentage}% Commission Tier` : "0% (Flat Vehicle Rent)";
+
+            const commAmtEl = document.getElementById("edit-calc-comm-amt");
+            if (commAmtEl) commAmtEl.innerText = `₹${Math.round(result.commissionAmount)}`;
+
+            const credEl = document.getElementById("edit-calc-credit");
+            if (credEl) credEl.innerText = `₹${Math.round(result.driverCredit)} (Comm: ₹${Math.round(result.commissionAmount)} + Fuel: ₹${Math.round(exp)})`;
+
+            const debEl = document.getElementById("edit-calc-debit");
+            if (debEl) debEl.innerText = `₹${Math.round(result.driverDebit)} (Cash: ₹${Math.round(cash)} + Adv: ₹${Math.round(advance)})`;
+
+            const netEl = document.getElementById("edit-calc-net");
+            if (netEl) {
+                if (result.netBalance >= 0) {
+                    netEl.innerText = `+₹${Math.round(result.netBalance)} (Company pays Driver)`;
+                    netEl.className = "text-[#10B981] font-extrabold text-base";
+                } else {
+                    netEl.innerText = `-₹${Math.round(Math.abs(result.netBalance))} (Driver deposits cash to Office)`;
+                    netEl.className = "text-[#F59E0B] font-extrabold text-base";
+                }
+            }
+        } catch (e) {
+            console.warn("Edit modal calculation preview error:", e);
+        }
+    }
+
+    submitEditSettlementForm(e) {
+        e.preventDefault();
+        const logId = document.getElementById("edit-settle-id").value;
+        const shiftType = document.getElementById("edit-settle-shifttype").value;
+        const status = document.getElementById("edit-settle-status").value;
+        const trips = parseInt(document.getElementById("edit-settle-trips").value) || 0;
+        const gross = parseFloat(document.getElementById("edit-settle-gross").value) || 0;
+        const exp = parseFloat(document.getElementById("edit-settle-fuel").value) || 0;
+        const cash = parseFloat(document.getElementById("edit-settle-cash").value) || 0;
+        const advance = parseFloat(document.getElementById("edit-settle-advance").value) || 0;
+        const paymentMode = document.getElementById("edit-settle-payment-mode").value;
+        const remarks = document.getElementById("edit-settle-remarks").value.trim();
+
+        const calc = SvmCommissionCalculator.calculate(shiftType, trips, gross, cash, exp, 0, advance);
+
+        const updatedFields = {
+            shiftType,
+            status,
+            trips,
+            earnings: gross,
+            expenditure: exp,
+            cashCollection: cash,
+            advance,
+            commissionRent: calc.commissionAmount,
+            commissionPercentage: calc.commissionPercentage,
+            netBalance: calc.netBalance,
+            remarks: remarks || `${status === 'SETTLED' ? 'Settled via ' + paymentMode : 'Pending reconciliation'}`,
+            paymentMode
+        };
+
+        if (window.DEMO_REPO) {
+            window.DEMO_REPO.updateDutyLog(logId, updatedFields);
+        }
+
+        this.closeEditSettlementModal();
+        this.renderDutyRegister();
+        this.renderReportsTab();
+        this.renderMetricCards();
+        this.showToast(`Shift settlement #${logId} updated to ${status}! (Demo Sandbox)`, "success");
     }
 
     renderNotifications() {

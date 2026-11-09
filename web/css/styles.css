@@ -283,15 +283,25 @@ select:focus, input:focus, textarea:focus {
 }
 
 /* --------------------------------------------------------------------------
-   Leaflet Map OSM Dark Night Mode
+   Leaflet Map OSM Dark Night Mode (Robust Dimensions & Native Dark Tiles)
    -------------------------------------------------------------------------- */
+#hyderabad-map {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 320px !important;
+}
+
+#hyderabad-map-full {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 560px !important;
+}
+
 .leaflet-container {
     background: #080D1B !important;
     font-family: inherit;
-}
-
-.leaflet-tile {
-    filter: invert(100%) hue-rotate(180deg) brightness(88%) contrast(115%) saturate(40%) !important;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 .leaflet-bar a {

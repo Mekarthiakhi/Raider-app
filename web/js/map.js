@@ -18,7 +18,7 @@ class HyderabadMapController {
         if (this.map) return;
 
         try {
-            // Centered on Hyderabad
+            // Centered on Hyderabad (Moosapet / Ameerpet corridor)
             this.map = L.map(this.containerId, {
                 center: [17.4420, 78.4250],
                 zoom: 12,
@@ -26,10 +26,11 @@ class HyderabadMapController {
                 attributionControl: false
             });
 
-            // Free OpenStreetMap with CSS dark inverted styling
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            // Executive Dark Matter tiles (High performance, crisp night roads & labels)
+            L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
                 maxZoom: 19,
-                subdomains: ['a', 'b', 'c']
+                subdomains: ['a', 'b', 'c', 'd'],
+                attribution: '&copy; CARTO'
             }).addTo(this.map);
 
             // Zoom controls bottom-right
@@ -41,8 +42,21 @@ class HyderabadMapController {
             // Initial load of demo vehicles
             const vehicles = window.DEMO_REPO ? window.DEMO_REPO.getVehicles() : [];
             this.updateVehicles(vehicles);
+
+            // Trigger size invalidation once container is painted
+            setTimeout(() => {
+                if (this.map) this.map.invalidateSize();
+            }, 250);
         } catch (e) {
             console.warn("Leaflet map initialization warning:", e);
+        }
+    }
+
+    invalidateSize() {
+        if (this.map) {
+            setTimeout(() => {
+                this.map.invalidateSize();
+            }, 100);
         }
     }
 
