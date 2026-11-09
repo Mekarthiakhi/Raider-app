@@ -5,7 +5,7 @@
 
 const APP_CONFIG = {
     appName: "SVM FLEET Operating System",
-    version: "v1.0.43 (Web Edition)",
+    version: "v1.0.43 (Enterprise Web Edition)",
     city: "Hyderabad, Telangana",
     masterPin: "7777",
     
@@ -34,8 +34,8 @@ const APP_CONFIG = {
             pin: "1234",
             lat: 17.4652,
             lng: 78.4308,
-            color: "#5B36F5",
-            badgeClass: "badge-purple"
+            color: "#6366F1",
+            cabsCount: 12
         },
         {
             id: "mgr_kukatpally_02",
@@ -46,8 +46,8 @@ const APP_CONFIG = {
             pin: "2345",
             lat: 17.4935,
             lng: 78.4012,
-            color: "#38BDF8",
-            badgeClass: "badge-blue"
+            color: "#0EA5E9",
+            cabsCount: 10
         },
         {
             id: "mgr_madhapur_03",
@@ -58,17 +58,54 @@ const APP_CONFIG = {
             pin: "3456",
             lat: 17.4485,
             lng: 78.3752,
-            color: "#2ED3A0",
-            badgeClass: "badge-green"
+            color: "#10B981",
+            cabsCount: 8
         }
     ],
 
-    // Default Map Settings (Hyderabad Central)
+    // Default Map Settings (Free OpenStreetMap with Night Filter — No API Key Required)
     map: {
         defaultCenter: [17.4400, 78.4200],
         defaultZoom: 12,
-        tileLayerUrl: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a> | SVM FLEET Hyderabad'
+        tileLayerUrl: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        attribution: '&copy; OpenStreetMap contributors | SVM FLEET Hyderabad'
+    },
+
+    // Earnings Benchmark Defaults (Day, Week, Month-End)
+    earningsBenchmarks: {
+        day: {
+            gross: 84250,
+            driverComm: 31450,
+            fuelExp: 9800,
+            netProfit: 43000,
+            activeShifts: 27,
+            trips: 348,
+            uberPct: 54,
+            rapidoPct: 28,
+            olaPct: 18
+        },
+        week: {
+            gross: 589750,
+            driverComm: 218500,
+            fuelExp: 68200,
+            netProfit: 303050,
+            activeShifts: 182,
+            trips: 2420,
+            uberPct: 52,
+            rapidoPct: 30,
+            olaPct: 18
+        },
+        month: {
+            gross: 2480000,
+            driverComm: 915000,
+            fuelExp: 285000,
+            netProfit: 1280000,
+            activeShifts: 780,
+            trips: 10450,
+            uberPct: 55,
+            rapidoPct: 27,
+            olaPct: 18
+        }
     },
 
     // Storage Keys

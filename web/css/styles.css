@@ -1,20 +1,29 @@
-/* SVM FLEET Web Operating System - Design System & Styles */
+/* ============================================================================
+   SVM FLEET Web Operating System — Premium Glassmorphism Design System
+   Hyderabad Commercial Cabs Management (Moosapet • Kukatpally • Madhapur)
+   ============================================================================ */
+
 :root {
-    --bg-dark: #0B0D12;
-    --surface-dark: #12151C;
-    --surface-card: #181C26;
-    --surface-border: #232836;
-    --primary-purple: #5B36F5;
-    --primary-purple-hover: #4a2ae0;
-    --primary-purple-glow: rgba(91, 54, 245, 0.25);
-    --active-green: #2ED3A0;
-    --active-green-glow: rgba(46, 211, 160, 0.2);
-    --earnings-gold: #E9B949;
-    --alert-coral: #FF5C6C;
-    --info-blue: #38BDF8;
-    --text-primary: #F8FAFC;
-    --text-secondary: #94A3B8;
-    --text-muted: #64748B;
+    --bg-base: #080A0F;
+    --bg-subtle: #0D111A;
+    --surface-glass: rgba(18, 22, 33, 0.75);
+    --surface-glass-hover: rgba(26, 32, 48, 0.85);
+    --surface-border: rgba(255, 255, 255, 0.08);
+    --surface-border-hover: rgba(99, 102, 241, 0.4);
+    
+    --accent-primary: #6366F1;
+    --accent-primary-hover: #4F46E5;
+    --accent-glow: rgba(99, 102, 241, 0.3);
+
+    --color-emerald: #10B981;
+    --color-emerald-glow: rgba(16, 185, 129, 0.25);
+    --color-amber: #F59E0B;
+    --color-coral: #EF4444;
+    --color-sky: #0EA5E9;
+
+    --text-white: #F8FAFC;
+    --text-muted: #94A3B8;
+    --text-dim: #64748B;
 }
 
 * {
@@ -24,214 +33,219 @@
 }
 
 body {
-    background-color: var(--bg-dark);
-    color: var(--text-primary);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-base);
+    background-image: 
+        radial-gradient(at 15% 15%, rgba(99, 102, 241, 0.08) 0px, transparent 40%),
+        radial-gradient(at 85% 85%, rgba(16, 185, 129, 0.05) 0px, transparent 40%);
+    background-attachment: fixed;
+    color: var(--text-white);
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
 }
 
-/* Glassmorphism Cards */
-.glass-card {
-    background: rgba(24, 28, 38, 0.82);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+/* --------------------------------------------------------------------------
+   Glassmorphism Surfaces
+   -------------------------------------------------------------------------- */
+.glass-panel {
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--surface-border);
     border-radius: 16px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.glass-card:hover {
-    border-color: rgba(91, 54, 245, 0.4);
-    box-shadow: 0 10px 40px 0 rgba(91, 54, 245, 0.15);
+.glass-panel:hover {
+    border-color: var(--surface-border-hover);
+    box-shadow: 0 16px 36px -12px rgba(99, 102, 241, 0.18);
 }
 
-.glass-panel {
-    background: rgba(18, 21, 28, 0.95);
-    border: 1px solid var(--surface-border);
-    border-radius: 14px;
+.glass-panel-elevated {
+    background: rgba(22, 27, 40, 0.88);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.7);
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-::-webkit-scrollbar-track {
-    background: var(--surface-dark);
-}
-::-webkit-scrollbar-thumb {
-    background: #334155;
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-purple);
+/* --------------------------------------------------------------------------
+   Custom Dark Select & Inputs (Fixes ugly browser white dropdowns)
+   -------------------------------------------------------------------------- */
+select, input, textarea {
+    background-color: #0E121C !important;
+    color: var(--text-white) !important;
+    border: 1px solid var(--surface-border) !important;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Leaflet Dark Theme Overrides */
+select option {
+    background-color: #0D111A !important;
+    color: #F8FAFC !important;
+    padding: 10px !important;
+}
+
+select:focus, input:focus, textarea:focus {
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Leaflet OSM Dark Night Mode (Zero Watermark & Zero API Keys!)
+   -------------------------------------------------------------------------- */
 .leaflet-container {
-    background-color: #0b0d12 !important;
+    background: #080A0F !important;
     font-family: inherit;
 }
-.leaflet-bar a {
-    background-color: var(--surface-card) !important;
-    border-color: var(--surface-border) !important;
-    color: var(--text-primary) !important;
-}
-.leaflet-bar a:hover {
-    background-color: var(--primary-purple) !important;
-    color: #fff !important;
-}
-.leaflet-popup-content-wrapper {
-    background: var(--surface-card) !important;
-    color: var(--text-primary) !important;
-    border: 1px solid var(--surface-border);
-    border-radius: 12px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
-}
-.leaflet-popup-tip {
-    background: var(--surface-card) !important;
+
+/* Inverts standard OSM tiles into a beautiful crisp night dark mode */
+.leaflet-tile {
+    filter: invert(100%) hue-rotate(180deg) brightness(88%) contrast(115%) saturate(40%) !important;
 }
 
-/* Custom Vehicle Map Markers */
+.leaflet-bar a {
+    background-color: #121621 !important;
+    border-color: var(--surface-border) !important;
+    color: var(--text-white) !important;
+}
+
+.leaflet-popup-content-wrapper {
+    background: #121621 !important;
+    color: var(--text-white) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
+}
+
+.leaflet-popup-tip {
+    background: #121621 !important;
+}
+
+/* Custom Vehicle Pin */
 .cab-marker {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: var(--surface-card);
-    border: 2px solid var(--primary-purple);
-    box-shadow: 0 0 12px var(--primary-purple-glow);
+    background: #121621;
+    border: 2px solid var(--accent-primary);
+    box-shadow: 0 0 12px var(--accent-glow);
     cursor: pointer;
     transition: transform 0.2s ease;
 }
 .cab-marker.active {
-    border-color: var(--active-green);
-    box-shadow: 0 0 14px var(--active-green-glow);
+    border-color: var(--color-emerald);
+    box-shadow: 0 0 14px var(--color-emerald-glow);
 }
 .cab-marker.idle {
-    border-color: var(--earnings-gold);
+    border-color: var(--color-amber);
 }
 .cab-marker:hover {
-    transform: scale(1.18);
+    transform: scale(1.2);
     z-index: 9999 !important;
 }
 
-/* Pulsing Online Dot */
+/* --------------------------------------------------------------------------
+   Skeleton Shimmer Loaders
+   -------------------------------------------------------------------------- */
+.skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.03) 0%,
+        rgba(255, 255, 255, 0.09) 50%,
+        rgba(255, 255, 255, 0.03) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s infinite ease-in-out;
+    border-radius: 8px;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* --------------------------------------------------------------------------
+   Pulsing Status Dots
+   -------------------------------------------------------------------------- */
 .pulse-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: var(--active-green);
-    box-shadow: 0 0 0 0 rgba(46, 211, 160, 0.7);
+    background-color: var(--color-emerald);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
     animation: pulse 1.8s infinite;
 }
 
 @keyframes pulse {
     0% {
         transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(46, 211, 160, 0.7);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
     }
     70% {
         transform: scale(1);
-        box-shadow: 0 0 0 8px rgba(46, 211, 160, 0);
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
     }
     100% {
         transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(46, 211, 160, 0);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
     }
 }
 
-/* Print Styles for A4 Statement Export */
+/* --------------------------------------------------------------------------
+   Modal Backdrop & Window (Reliable z-index & positioning)
+   -------------------------------------------------------------------------- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    align-items: center;
+    justify-content: center;
+    background: rgba(4, 6, 10, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.modal-overlay.open {
+    display: flex !important;
+}
+
+/* --------------------------------------------------------------------------
+   Custom Scrollbar
+   -------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-base);
+}
+::-webkit-scrollbar-thumb {
+    background: #232A3B;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Print Styles for A4 Statement Export
+   -------------------------------------------------------------------------- */
 @media print {
     body {
         background-color: #ffffff !important;
         color: #000000 !important;
     }
-    .no-print, header, aside, .map-container, .role-selector, .quick-actions {
+    .no-print, header, nav, .map-container, .role-selector, button {
         display: none !important;
     }
-    .print-area {
-        display: block !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    .glass-card {
-        border: 1px solid #ddd !important;
-        background: #fff !important;
-        box-shadow: none !important;
-        color: #000 !important;
-    }
 }
-
-/* Material 3 & GlassCard Mobile Enhancements */
-.pill-badge {
-    border-radius: 9999px;
-    padding: 3px 10px;
-    font-size: 11px;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.metric-matrix {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    background: rgba(18, 21, 28, 0.9);
-    border: 1px solid var(--surface-border);
-    border-radius: 12px;
-    padding: 10px;
-    gap: 8px;
-    text-align: center;
-}
-
-.metric-item-title {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.metric-item-value {
-    font-size: 15px;
-    font-weight: 800;
-    margin-top: 2px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-
-/* Tier Glow Badges */
-.tier-40 {
-    background: rgba(46, 211, 160, 0.15);
-    color: #2ED3A0;
-    border: 1px solid rgba(46, 211, 160, 0.35);
-}
-
-.tier-35 {
-    background: rgba(91, 54, 245, 0.15);
-    color: #a78bfa;
-    border: 1px solid rgba(91, 54, 245, 0.35);
-}
-
-.tier-30 {
-    background: rgba(56, 189, 248, 0.15);
-    color: #38BDF8;
-    border: 1px solid rgba(56, 189, 248, 0.35);
-}
-
-.tier-25 {
-    background: rgba(233, 185, 73, 0.15);
-    color: #E9B949;
-    border: 1px solid rgba(233, 185, 73, 0.35);
-}
-
-.tier-none {
-    background: rgba(148, 163, 184, 0.1);
-    color: #94A3B8;
-    border: 1px solid rgba(148, 163, 184, 0.2);
-}
-
