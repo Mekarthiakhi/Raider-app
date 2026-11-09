@@ -1,6 +1,7 @@
 /**
- * SVM FLEET Operating System (Web Portal)
- * Hyderabad Live Map Controller (Leaflet JS + Free OpenStreetMap Night Tiles)
+ * SVM FLEET Operating System (Client Demo Edition)
+ * Hyderabad Fleet Live Map Controller (Leaflet JS + Free OpenStreetMap Dark Mode)
+ * Supports Active (18), Idle (7), and Offline (5) Status Legend
  */
 
 class HyderabadMapController {
@@ -9,36 +10,37 @@ class HyderabadMapController {
         this.map = null;
         this.markers = new Map();
         this.hubMarkers = [];
-        this.simulationTimer = null;
     }
 
     init() {
-        if (!document.getElementById(this.containerId)) return;
+        const el = document.getElementById(this.containerId);
+        if (!el) return;
         if (this.map) return;
 
         try {
-            // Initialize Leaflet Map centered on Hyderabad
+            // Centered on Hyderabad
             this.map = L.map(this.containerId, {
-                center: APP_CONFIG.map.defaultCenter,
-                zoom: APP_CONFIG.map.defaultZoom,
+                center: [17.4420, 78.4250],
+                zoom: 12,
                 zoomControl: false,
                 attributionControl: false
             });
 
-            // Use Standard Free OpenStreetMap with CSS Dark Invert (Zero Watermark / No API Key!)
-            L.tileLayer(APP_CONFIG.map.tileLayerUrl, {
+            // Free OpenStreetMap with CSS dark inverted styling
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 maxZoom: 19,
                 subdomains: ['a', 'b', 'c']
             }).addTo(this.map);
 
-            // Add Zoom Control to bottom-right
+            // Zoom controls bottom-right
             L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-            // Render Hub Bases (Moosapet, Kukatpally, Madhapur)
+            // Render 3 Operational Hubs
             this.renderHubs();
 
-            // Start live GPS drift simulation
-            this.startLiveSimulation();
+            // Initial load of demo vehicles
+            const vehicles = window.DEMO_REPO ? window.DEMO_REPO.getVehicles() : [];
+            this.updateVehicles(vehicles);
         } catch (e) {
             console.warn("Leaflet map initialization warning:", e);
         }
@@ -47,13 +49,19 @@ class HyderabadMapController {
     renderHubs() {
         if (!this.map) return;
 
-        APP_CONFIG.hubs.forEach(hub => {
-            // Pulse circle around hub
+        const hubs = (window.DEMO_REPO ? window.DEMO_REPO.getHubs() : null) || [
+            { id: "mgr_moosapet_01", name: "Moosapet Central Hub", shortName: "Moosapet", lat: 17.4652, lng: 78.4308, color: "#6655F5", cabsCount: 12 },
+            { id: "mgr_kukatpally_02", name: "Kukatpally Y-Junction Hub", shortName: "Kukatpally", lat: 17.4935, lng: 78.4012, color: "#3185F6", cabsCount: 10 },
+            { id: "mgr_madhapur_03", name: "Madhapur Hitec City Hub", shortName: "Madhapur", lat: 17.4485, lng: 78.3752, color: "#10B981", cabsCount: 8 }
+        ];
+
+        hubs.forEach(hub => {
+            // Radius circle around hub
             const circle = L.circle([hub.lat, hub.lng], {
                 color: hub.color,
                 fillColor: hub.color,
                 fillOpacity: 0.12,
-                radius: 1200,
+                radius: 1400,
                 weight: 1.5,
                 dashArray: "4, 6"
             }).addTo(this.map);
@@ -74,9 +82,9 @@ class HyderabadMapController {
             marker.bindPopup(`
                 <div style="padding: 6px; font-family: inherit;">
                     <div style="font-weight: 800; font-size: 14px; color: ${hub.color}; margin-bottom: 4px;">${hub.name}</div>
-                    <div style="font-size: 12px; color: #94A3B8;">Manager: <strong style="color: #F8FAFC;">${hub.managerName}</strong></div>
-                    <div style="font-size: 12px; color: #94A3B8;">Contact: <strong style="color: #F8FAFC;">${hub.phone}</strong></div>
-                    <div style="font-size: 12px; color: #94A3B8;">Fleet: <strong style="color: #10B981;">${hub.cabsCount} Cabs Active</strong></div>
+                    <div style="font-size: 12px; color: #94A3B8;">Manager: <strong style="color: #F8FAFC;">${hub.managerName || 'Officer in Charge'}</strong></div>
+                    <div style="font-size: 12px; color: #94A3B8;">Contact: <strong style="color: #F8FAFC;">${hub.phone || 'Depot'}</strong></div>
+                    <div style="font-size: 12px; color: #94A3B8;">Fleet Assigned: <strong style="color: #10B981;">${hub.cabsCount} Cabs</strong></div>
                 </div>
             `);
 
@@ -97,56 +105,44 @@ class HyderabadMapController {
         }
 
         vehicles.forEach(vehicle => {
-            const isActive = vehicle.status === "ACTIVE";
-            const statusClass = isActive ? "active" : "idle";
-            const platformBadge = vehicle.platform === "Uber" ? "background: #000; color: #fff;"
-                : vehicle.platform === "Rapido" ? "background: #F59E0B; color: #000;"
-                : vehicle.platform === "Ola" ? "background: #10B981; color: #fff;" : "background: #475569; color: #fff;";
+            const statusLower = (vehicle.status || "active").toLowerCase();
+            const markerClass = statusLower === "active" ? "active" : statusLower === "idle" ? "idle" : "offline";
+            const iconSymbol = statusLower === "active" ? "🟢" : statusLower === "idle" ? "🟡" : "🔴";
 
-            const customIcon = L.divIcon({
-                className: 'custom-cab-pin',
+            const cabIcon = L.divIcon({
+                className: 'cab-pin-wrapper',
                 html: `
-                    <div class="cab-marker ${statusClass}" title="${vehicle.regNo}">
-                        <span style="font-size: 15px;">🚕</span>
+                    <div class="cab-marker ${markerClass}" title="${vehicle.regNo} - ${vehicle.driverName || 'Unassigned'}">
+                        <span style="font-size: 14px;">🚕</span>
                     </div>
                 `,
-                iconSize: [36, 36],
-                iconAnchor: [18, 18]
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
             });
 
             const popupContent = `
-                <div style="min-width: 220px; font-family: inherit;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; margin-bottom: 8px;">
-                        <span style="font-weight: 800; font-size: 13px; color: #F8FAFC; letter-spacing: 0.5px; font-family: monospace;">${vehicle.regNo}</span>
-                        <span style="font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 800; ${platformBadge}">
-                            ${vehicle.platform}
-                        </span>
+                <div style="padding: 8px; font-family: inherit; min-width: 180px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <strong style="font-size: 13px; font-family: monospace; color: #F8FAFC;">${vehicle.regNo}</strong>
+                        <span style="font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: #162038; color: #8B5CF6;">${vehicle.platform || 'Fleet'}</span>
                     </div>
-                    <div style="font-size: 12px; color: #94A3B8; margin-bottom: 3px;">Model: <strong style="color: #F8FAFC;">${vehicle.model}</strong></div>
-                    <div style="font-size: 12px; color: #94A3B8; margin-bottom: 3px;">Driver: <strong style="color: #F8FAFC;">${vehicle.driverName}</strong></div>
-                    <div style="font-size: 12px; color: #94A3B8; margin-bottom: 4px;">Zone: <strong style="color: #38BDF8;">${vehicle.locationName}</strong></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 6px; background: rgba(255,255,255,0.06); padding: 5px 8px; border-radius: 6px;">
-                        <span>Speed: <strong style="color: #10B981;">${vehicle.speed} km/h</strong></span>
-                        <span>Fuel: <strong style="color: #F59E0B;">${vehicle.fuel}%</strong></span>
+                    <div style="font-size: 11px; color: #94A3B8;">Model: <span style="color: #F8FAFC;">${vehicle.model}</span></div>
+                    <div style="font-size: 11px; color: #94A3B8;">Driver: <span style="color: #F8FAFC; font-weight: 600;">${vehicle.driverName || 'No Driver'}</span></div>
+                    <div style="font-size: 11px; color: #94A3B8;">Location: <span style="color: #0EA5E9;">${vehicle.locationName || 'Hyderabad'}</span></div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 6px; padding-top: 6px; border-top: 1px solid #263149; font-size: 11px;">
+                        <span>Speed: <strong style="color: #10B981;">${vehicle.speed || 0} km/h</strong></span>
+                        <span>Fuel: <strong style="color: #F59E0B;">${vehicle.fuel || 80}%</strong></span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 4px; padding: 2px 6px;">
-                        <span>Today Trips: <strong>${vehicle.tripsToday}</strong></span>
-                        <span>Gross: <strong style="color: #10B981;">₹${vehicle.todayEarnings}</strong></span>
-                    </div>
-                    <button onclick="window.SVM_APP.openManualEntryModal('${vehicle.regNo}', '${vehicle.driverName}')" 
-                        style="width: 100%; margin-top: 10px; background: #6366F1; color: #fff; font-size: 11px; font-weight: 800; padding: 7px 0; border: none; border-radius: 8px; cursor: pointer;">
-                        📝 Log Shift Entry
-                    </button>
                 </div>
             `;
 
             if (this.markers.has(vehicle.id)) {
                 const marker = this.markers.get(vehicle.id);
                 marker.setLatLng([vehicle.lat, vehicle.lng]);
-                marker.setIcon(customIcon);
-                marker.setPopupContent(popupContent);
+                marker.setIcon(cabIcon);
+                marker.getPopup().setContent(popupContent);
             } else {
-                const marker = L.marker([vehicle.lat, vehicle.lng], { icon: customIcon }).addTo(this.map);
+                const marker = L.marker([vehicle.lat, vehicle.lng], { icon: cabIcon }).addTo(this.map);
                 marker.bindPopup(popupContent);
                 this.markers.set(vehicle.id, marker);
             }
@@ -155,39 +151,15 @@ class HyderabadMapController {
 
     focusHub(hubId) {
         if (!this.map) return;
-        if (!hubId || hubId === "ALL") {
-            this.map.flyTo(APP_CONFIG.map.defaultCenter, APP_CONFIG.map.defaultZoom, { duration: 1.2 });
+        const hubs = window.DEMO_REPO ? window.DEMO_REPO.getHubs() : [];
+        if (hubId === "ALL" || !hubId) {
+            this.map.flyTo([17.4420, 78.4250], 12, { duration: 1.2 });
             return;
         }
-        const hub = APP_CONFIG.hubs.find(h => h.id === hubId);
+        const hub = hubs.find(h => h.id === hubId);
         if (hub) {
-            this.map.flyTo([hub.lat, hub.lng], 13.5, { duration: 1.2 });
+            this.map.flyTo([hub.lat, hub.lng], 14, { duration: 1.2 });
         }
-    }
-
-    startLiveSimulation() {
-        if (this.simulationTimer) clearInterval(this.simulationTimer);
-
-        this.simulationTimer = setInterval(() => {
-            const vehicles = FleetDataRepository.getVehicles();
-            let changed = false;
-
-            vehicles.forEach(v => {
-                if (v.status === "ACTIVE" && v.speed > 0) {
-                    const deltaLat = (Math.random() - 0.5) * 0.0006;
-                    const deltaLng = (Math.random() - 0.5) * 0.0006;
-                    v.lat = Math.round((v.lat + deltaLat) * 10000) / 10000;
-                    v.lng = Math.round((v.lng + deltaLng) * 10000) / 10000;
-                    v.speed = Math.max(15, Math.min(65, Math.round(v.speed + (Math.random() * 6 - 3))));
-                    changed = true;
-                }
-            });
-
-            if (changed && window.SVM_APP) {
-                const activeVehicles = window.SVM_APP.getCurrentFilteredVehicles();
-                this.updateVehicles(activeVehicles);
-            }
-        }, 4000);
     }
 }
 

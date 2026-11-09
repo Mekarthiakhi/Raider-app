@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVM FLEET | Commercial Fleet Operating System</title>
+    <title>SVM FLEET | Enterprise Fleet Operations Suite (Demo)</title>
     
-    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <!-- Google Fonts: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,467 +20,935 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Supabase JS Client (v2 CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <!-- Custom Glassmorphism Stylesheet (Single Source of Truth with Cache-Busting Version) -->
-    <link rel="stylesheet" href="css/styles.css?v=20261109_v3_executive">
+    <link rel="stylesheet" href="css/styles.css?v=20261110_demo_v4">
 </head>
-<body class="bg-[#080A0F] text-slate-100 min-h-screen flex flex-col font-sans selection:bg-[#6366F1] selection:text-white">
+<body class="bg-[#080D1B] text-slate-100 min-h-screen flex font-sans selection:bg-[#6655F5] selection:text-white">
 
-    <!-- Top Navigation Bar -->
-    <header class="sticky top-0 z-50 glass-panel rounded-none border-t-0 border-x-0 border-b border-white/10 px-4 lg:px-8 py-3.5 backdrop-blur-2xl">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+    <!-- ====================================================================== -->
+    <!-- LEFT SIDEBAR NAVIGATION (Matching Client Mockup media_1794250116022)   -->
+    <!-- ====================================================================== -->
+    <aside id="app-sidebar" class="w-64 bg-[#0B1020] border-r border-[#1E273D] flex flex-col justify-between shrink-0 min-h-screen sticky top-0 h-screen z-30 transition-all duration-300">
+        
+        <!-- Top: Brand Header & Navigation Menu -->
+        <div class="p-5 flex flex-col gap-5 overflow-y-auto">
             
-            <!-- Brand & Hub Status -->
-            <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+            <!-- Logo Branding & DEMO MODE Tag -->
+            <div class="flex flex-col gap-2.5">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6366F1] via-indigo-600 to-purple-600 flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-500/30 border border-white/20">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6655F5] to-[#8B5CF6] flex items-center justify-center font-black text-xl shadow-lg shadow-[#6655F5]/35 border border-white/20 shrink-0">
                         🚕
                     </div>
                     <div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-extrabold text-lg tracking-wider text-white">SVM FLEET</span>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-900/60 text-indigo-300 border border-indigo-500/40 font-mono shadow-sm">
-                                v2.5 PRO
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-black text-base tracking-tight text-white">SVM Fleet</span>
+                            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#6655F5]/30 text-[#8B5CF6] border border-[#6655F5]/40 font-mono">
+                                v2.0 PRO
                             </span>
                         </div>
-                        <p class="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-                            <span class="pulse-dot"></span> Moosapet Central • Kukatpally • Madhapur
+                        <p class="text-[11px] text-[#94A3B8] font-medium tracking-wide">
+                            Fleet Command Center
                         </p>
                     </div>
                 </div>
 
-                <!-- Live Cloud DB Indicator (Mobile Visible) -->
-                <div id="db-cloud-indicator" class="flex md:hidden items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-950/40 border border-indigo-500/30">
-                    <span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
-                    <span class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Connecting...</span>
+                <!-- Amber Demo Mode Pill Badge in Sidebar -->
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F59E0B]/15 border border-[#F59E0B]/30 text-[#F59E0B] text-[10px] font-extrabold tracking-wider w-fit">
+                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                    <span>DEMO MODE</span>
                 </div>
             </div>
 
-            <!-- Role Selector & Quick Actions -->
-            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
-                <!-- Live Cloud DB Indicator (Desktop) -->
-                <div id="db-cloud-indicator-desktop" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-950/40 border border-indigo-500/30">
-                    <span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
-                    <span class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Connecting...</span>
-                </div>
-
-                <!-- Custom Styled Role Switcher -->
-                <div class="flex items-center gap-2 bg-[#0E121C] border border-white/10 rounded-xl px-3 py-1.5 shadow-sm">
-                    <i data-lucide="shield" class="w-4 h-4 text-indigo-400"></i>
-                    <select id="role-selector" class="bg-transparent text-xs font-bold text-slate-200 outline-none cursor-pointer">
-                        <!-- Populated by JS -->
-                    </select>
-                </div>
-
-                <!-- Direct Open Manual Shift Entry Button (Single binding via JS listener) -->
-                <button id="btn-open-manual-entry" type="button" class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-500/30 transition-all border border-indigo-400/30 active:scale-95 cursor-pointer">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                    <span>+ Manual Shift Entry</span>
+            <!-- Navigation Links -->
+            <nav class="flex flex-col gap-1.5" id="sidebar-nav">
+                <button type="button" data-nav-tab="overview" class="sidebar-link active">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-white"></i>
+                    <span>Dashboard</span>
                 </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Workspace Container -->
-    <main class="max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex-1 flex flex-col gap-6">
-
-        <!-- Navigation Tabs & Hub Scoping Filter -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
-            <!-- Navigation Tabs -->
-            <nav class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
-                <button data-nav-tab="overview" class="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs bg-[#6366F1] text-white shadow-lg shadow-indigo-500/25">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Fleet Overview
+                <button type="button" data-nav-tab="register" class="sidebar-link">
+                    <i data-lucide="calendar" class="w-4 h-4 text-[#94A3B8]"></i>
+                    <span>Duty Register</span>
                 </button>
-                <button data-nav-tab="register" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs text-slate-400 hover:text-white hover:bg-slate-800/40">
-                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Duty Register (Manual & Auto)
+                <button type="button" data-nav-tab="map" class="sidebar-link">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-[#94A3B8]"></i>
+                    <span>Live Map</span>
                 </button>
-                <button data-nav-tab="map" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs text-slate-400 hover:text-white hover:bg-slate-800/40">
-                    <i data-lucide="map" class="w-4 h-4"></i> Hyderabad Live Map
+                <button type="button" data-nav-tab="cars" class="sidebar-link">
+                    <i data-lucide="car" class="w-4 h-4 text-[#94A3B8]"></i>
+                    <span>Vehicles</span>
                 </button>
-                <button data-nav-tab="cars" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs text-slate-400 hover:text-white hover:bg-slate-800/40">
-                    <i data-lucide="car" class="w-4 h-4"></i> Vehicles (30)
+                <button type="button" data-nav-tab="drivers" class="sidebar-link">
+                    <i data-lucide="users" class="w-4 h-4 text-[#94A3B8]"></i>
+                    <span>Drivers</span>
                 </button>
-                <button data-nav-tab="drivers" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs text-slate-400 hover:text-white hover:bg-slate-800/40">
-                    <i data-lucide="users" class="w-4 h-4"></i> Drivers (30)
+                <button type="button" data-nav-tab="reports" class="sidebar-link flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="file-text" class="w-4 h-4 text-[#94A3B8]"></i>
+                        <span>Reports</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748B]"></i>
+                </button>
+                <button type="button" data-nav-tab="settlements" class="sidebar-link">
+                    <i data-lucide="credit-card" class="w-4 h-4 text-[#94A3B8]"></i>
+                    <span>Settlements</span>
+                </button>
+                <button type="button" data-nav-tab="policy" class="sidebar-link">
+                    <i data-lucide="sliders" class="w-4 h-4 text-[#94A3B8]"></i>
+                    <span>Policy & Tiers</span>
+                </button>
+                <button type="button" data-nav-tab="analytics" class="sidebar-link">
+                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-[#94A3B8]"></i>
+                    <span>Analytics</span>
+                </button>
+                <button type="button" data-nav-tab="settings" class="sidebar-link">
+                    <i data-lucide="settings" class="w-4 h-4 text-[#94A3B8]"></i>
+                    <span>Settings</span>
                 </button>
             </nav>
-
-            <!-- Hub Filter Pills -->
-            <div id="hub-filter-pills" class="flex items-center gap-2 overflow-x-auto">
-                <!-- Populated dynamically -->
-            </div>
         </div>
 
-        <!-- ------------------------------------------------------------------ -->
-        <!-- TIMEFRAME EARNINGS SELECTOR: DAY | WEEK | MONTH END                -->
-        <!-- ------------------------------------------------------------------ -->
-        <div class="glass-panel p-5 border border-white/10">
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+        <!-- Bottom: Glowing Purple Car Graphic & Demo Disclaimer Card -->
+        <div class="p-4 relative overflow-hidden flex flex-col items-center gap-2 border-t border-[#1E273D]/60 bg-[#080D1B]/50">
+            <!-- Stylized Car Graphic with Purple Neon Glow -->
+            <div class="w-full relative py-1">
+                <svg viewBox="0 0 280 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto drop-shadow-[0_0_16px_rgba(102,85,245,0.6)]">
+                    <ellipse cx="140" cy="110" rx="105" ry="8" fill="#6655F5" fill-opacity="0.4" filter="blur(6px)"/>
+                    <path d="M22 88C22 84 25 80 32 77L54 70C60 68 66 63 78 54L102 34C110 26 120 22 142 22H192C208 22 218 28 228 39L248 61C258 65 264 70 266 76C268 81 266 86 262 89L254 91C252 80 238 72 222 72C206 72 192 80 190 91H100C98 80 84 72 68 72C52 72 38 80 36 91L24 90C22 90 22 89 22 88Z" fill="url(#car-body-grad)" stroke="#6655F5" stroke-width="1.5"/>
+                    <path d="M106 38C112 32 120 30 135 30H165V56H86L106 38Z" fill="#141B30" stroke="#475569" stroke-width="1" opacity="0.9"/>
+                    <path d="M172 30H190C202 30 210 34 218 44L229 56H172V30Z" fill="#141B30" stroke="#475569" stroke-width="1" opacity="0.9"/>
+                    <polygon points="262,78 280,74 280,86 260,84" fill="#E0E7FF" opacity="0.85" filter="drop-shadow(0 0 8px #818CF8)"/>
+                    <circle cx="68" cy="90" r="16" fill="#0B1020" stroke="#334155" stroke-width="2.5"/>
+                    <circle cx="68" cy="90" r="8" fill="#1E293B" stroke="#6655F5" stroke-width="1.5"/>
+                    <circle cx="222" cy="90" r="16" fill="#0B1020" stroke="#334155" stroke-width="2.5"/>
+                    <circle cx="222" cy="90" r="8" fill="#1E293B" stroke="#6655F5" stroke-width="1.5"/>
+                    <defs>
+                        <linearGradient id="car-body-grad" x1="20" y1="22" x2="260" y2="95" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#1A2138"/>
+                            <stop offset="0.5" stop-color="#2D1B4E"/>
+                            <stop offset="1" stop-color="#111827"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+
+            <!-- Demo Disclaimer Card matching screenshot -->
+            <div class="w-full p-2.5 rounded-xl bg-[#11182A] border border-[#263149] flex items-start gap-2.5">
+                <i data-lucide="info" class="w-4 h-4 text-[#6655F5] shrink-0 mt-0.5"></i>
                 <div>
-                    <h3 class="font-extrabold text-base text-white flex items-center gap-2">
-                        <i data-lucide="trending-up" class="w-5 h-5 text-indigo-400"></i>
-                        <span>Fleet Earnings & Profitability Benchmark</span>
-                    </h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Commercial revenue across Uber, Rapido, and Ola cabs</p>
-                </div>
-
-                <!-- 3-Segment Timeframe Switcher: Day | Week | Month End -->
-                <div class="flex items-center bg-[#0E121C] border border-white/10 rounded-xl p-1">
-                    <button id="timeframe-day-btn" onclick="window.SVM_APP.setTimeframe('day')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#6366F1] text-white shadow-md transition-all">
-                        📅 Today (Day)
-                    </button>
-                    <button id="timeframe-week-btn" onclick="window.SVM_APP.setTimeframe('week')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
-                        📆 This Week (7 Days)
-                    </button>
-                    <button id="timeframe-month-btn" onclick="window.SVM_APP.setTimeframe('month')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
-                        🗓️ Month End (MTD)
-                    </button>
-                </div>
-            </div>
-
-            <!-- Dynamic Benchmark KPI Metric Cards -->
-            <div id="kpi-metrics-container" class="grid grid-cols-2 md:grid-cols-5 gap-3.5">
-                <!-- Skeleton Shimmer Loader (Visible while initializing) -->
-                <div class="glass-panel p-4 skeleton-shimmer h-24"></div>
-                <div class="glass-panel p-4 skeleton-shimmer h-24"></div>
-                <div class="glass-panel p-4 skeleton-shimmer h-24"></div>
-                <div class="glass-panel p-4 skeleton-shimmer h-24"></div>
-                <div class="glass-panel p-4 skeleton-shimmer h-24 col-span-2 md:col-span-1"></div>
-            </div>
-
-            <!-- Platform Distribution Bar (Uber, Rapido, Ola) -->
-            <div class="mt-4 pt-3.5 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
-                <div class="flex items-center gap-4 text-slate-300">
-                    <span class="flex items-center gap-1.5">
-                        <span class="w-3 h-3 rounded-full bg-slate-900 border border-slate-700"></span> Uber: <strong id="pct-uber" class="text-white font-mono">54%</strong>
-                    </span>
-                    <span class="flex items-center gap-1.5">
-                        <span class="w-3 h-3 rounded-full bg-amber-500"></span> Rapido: <strong id="pct-rapido" class="text-white font-mono">28%</strong>
-                    </span>
-                    <span class="flex items-center gap-1.5">
-                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span> Ola: <strong id="pct-ola" class="text-white font-mono">18%</strong>
-                    </span>
-                </div>
-                <div class="text-slate-400 text-[11px]">
-                    Net Fleet Margin Formula: <span class="font-mono text-emerald-400">Gross − Driver Cuts − Fuel/Running</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- ------------------------------------------------------------------ -->
-        <!-- VIEW 1: FLEET OVERVIEW TAB                                         -->
-        <!-- ------------------------------------------------------------------ -->
-        <div data-tab-content="overview" class="flex flex-col gap-6">
-
-            <!-- Split Map & Live Telemetry Feed -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Live Hyderabad Map (2 cols) -->
-                <div class="lg:col-span-2 glass-panel p-4 flex flex-col h-[460px]">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="map-pin" class="w-4 h-4 text-indigo-400"></i>
-                            <h3 class="font-bold text-sm text-white">Live Hyderabad Fleet Map</h3>
-                        </div>
-                        <span class="text-xs text-slate-400 flex items-center gap-1">
-                            <span class="pulse-dot"></span> Zero Watermark OpenStreetMap
-                        </span>
-                    </div>
-                    <!-- Map Container with Dark Invert Filter -->
-                    <div id="hyderabad-map" class="flex-1 rounded-xl overflow-hidden border border-white/10"></div>
-                </div>
-
-                <!-- Live Telemetry Shift Stream (1 col) -->
-                <div class="glass-panel p-4 flex flex-col h-[460px]">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
-                            <h3 class="font-bold text-sm text-white">Incoming Shift Telemetry</h3>
-                        </div>
-                        <span class="text-[10px] px-2 py-0.5 rounded bg-amber-900/40 text-amber-300 border border-amber-500/30 font-semibold">
-                            Uber • Rapido • Ola
-                        </span>
-                    </div>
-                    <p class="text-xs text-slate-400 mb-3">
-                        Captured from driver smartphone companion. Click <strong>1-Tap Auto-Aggregate</strong> to save into the master database.
+                    <div class="text-[11px] font-bold text-white leading-tight">Demo Environment</div>
+                    <p class="text-[10px] text-[#94A3B8] mt-0.5 leading-snug">
+                        This is a demo with sample data for UI showcase only.
                     </p>
-                    <div id="telemetry-pending-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1">
-                        <!-- Populated dynamically -->
-                    </div>
                 </div>
             </div>
-
-            <!-- Recent Duty Register Preview -->
-            <div class="glass-panel p-5">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 class="font-bold text-base text-white">Moosapet Hub Duty Register (Recent Entries)</h3>
-                        <p class="text-xs text-slate-400">Daily commission & cash settlement logbook</p>
-                    </div>
-                    <button onclick="window.SVM_APP.switchTab('register')" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1">
-                        <span>Open Full Register</span> <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-white/10 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                <th class="py-2.5 px-4">Driver & Mobile</th>
-                                <th class="py-2.5 px-4">Vehicle</th>
-                                <th class="py-2.5 px-4 text-center">Trips</th>
-                                <th class="py-2.5 px-4 text-right">Earned (Gross)</th>
-                                <th class="py-2.5 px-4 text-right">Fuel/Exp</th>
-                                <th class="py-2.5 px-4 text-right">Cash Coll.</th>
-                                <th class="py-2.5 px-4 text-right">Commission</th>
-                                <th class="py-2.5 px-4 text-center">Source</th>
-                                <th class="py-2.5 px-4 text-center">Status</th>
-                                <th class="py-2.5 px-4 text-right">Receipt</th>
-                            </tr>
-                        </thead>
-                        <tbody id="register-table-body">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
         </div>
 
-        <!-- ------------------------------------------------------------------ -->
-        <!-- VIEW 2: FULL DUTY REGISTER TAB (Mobile Cards + Dense Table)        -->
-        <!-- ------------------------------------------------------------------ -->
-        <div data-tab-content="register" class="hidden flex flex-col gap-5">
-            
-            <!-- Collapsible Commission Rules Banner -->
-            <div class="glass-panel p-4 border-l-4 border-l-[#6366F1]">
-                <div class="flex items-center justify-between cursor-pointer" onclick="document.getElementById('commission-rules-content').classList.toggle('hidden')">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
-                        <h4 class="font-bold text-sm text-white">Official SVM FLEET Commission Policy & Tiers</h4>
-                        <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded font-mono">Moosapet Rules</span>
-                    </div>
-                    <span class="text-xs text-indigo-400 font-semibold flex items-center gap-1">
-                        <span>Toggle Policy Matrix</span> <i data-lucide="chevron-down" class="w-4 h-4"></i>
-                    </span>
-                </div>
-                
-                <div id="commission-rules-content" class="hidden mt-4 pt-4 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div class="p-3.5 rounded-xl bg-[#0E121C] border border-white/10">
-                        <h5 class="font-bold text-emerald-400 mb-2 flex items-center gap-1.5">
-                            <i data-lucide="clock" class="w-3.5 h-3.5"></i> 12 Hrs Shift (Minimum 10 Trips)
-                        </h5>
-                        <ul class="space-y-1.5 text-slate-300 font-mono">
-                            <li class="flex justify-between"><span>₹3,500 Above</span><strong class="text-emerald-400">40% Commission</strong></li>
-                            <li class="flex justify-between"><span>₹2,500 to ₹3,500</span><strong class="text-indigo-400">35% Commission</strong></li>
-                            <li class="flex justify-between"><span>₹2,000 to ₹2,500</span><strong class="text-sky-400">30% Commission</strong></li>
-                            <li class="flex justify-between"><span>₹1,500 to ₹2,000</span><strong class="text-amber-400">25% Commission</strong></li>
-                            <li class="flex justify-between"><span>Below ₹1,500 or &lt;10 trips</span><strong class="text-slate-500">0% (Flat Vehicle Rent)</strong></li>
-                        </ul>
-                    </div>
+    </aside>
 
-                    <div class="p-3.5 rounded-xl bg-[#0E121C] border border-white/10">
-                        <h5 class="font-bold text-sky-400 mb-2 flex items-center gap-1.5">
-                            <i data-lucide="clock-4" class="w-3.5 h-3.5"></i> 24 Hrs Shift (Minimum 18 Trips)
-                        </h5>
-                        <ul class="space-y-1.5 text-slate-300 font-mono">
-                            <li class="flex justify-between"><span>₹6,500 Above</span><strong class="text-emerald-400">40% Commission</strong></li>
-                            <li class="flex justify-between"><span>₹5,000 to ₹6,500</span><strong class="text-indigo-400">35% Commission</strong></li>
-                            <li class="flex justify-between"><span>₹4,000 to ₹5,000</span><strong class="text-sky-400">30% Commission</strong></li>
-                            <li class="flex justify-between"><span>₹2,500 to ₹4,000</span><strong class="text-amber-400">25% Commission</strong></li>
-                            <li class="flex justify-between"><span>Below ₹2,500 or &lt;18 trips</span><strong class="text-slate-500">0% (Flat Vehicle Rent)</strong></li>
-                        </ul>
-                    </div>
+    <!-- ====================================================================== -->
+    <!-- MAIN CONTENT AREA                                                      -->
+    <!-- ====================================================================== -->
+    <div class="flex-1 flex flex-col min-w-0 bg-[#080D1B]">
+
+        <!-- Top App Bar -->
+        <header class="h-16 bg-[#0B1020] border-b border-[#1E273D] flex items-center justify-between px-6 sticky top-0 z-40">
+            
+            <!-- Left: Branch / Hub Dropdown Selector -->
+            <div class="flex items-center gap-3">
+                <div class="relative flex items-center">
+                    <span class="absolute left-3 text-sm pointer-events-none">📍</span>
+                    <select id="top-branch-selector" onchange="window.SVM_APP.filterHub(this.value)" class="bg-[#11182A] border border-[#263149] rounded-xl pl-8 pr-8 py-2 text-xs font-bold text-white cursor-pointer shadow-sm appearance-none hover:border-[#6655F5] transition-colors">
+                        <option value="ALL" selected>Hyderabad (All Hubs)</option>
+                        <option value="mgr_moosapet_01">Moosapet Central Hub</option>
+                        <option value="mgr_kukatpally_02">Kukatpally Y-Junction</option>
+                        <option value="mgr_madhapur_03">Madhapur Hitec City</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748B] absolute right-3 pointer-events-none"></i>
                 </div>
             </div>
 
-            <!-- Controls: Search, Filter Chips & View Mode Toggle -->
-            <div class="glass-panel p-5">
-                <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-5">
-                    
-                    <!-- Search Input -->
-                    <div class="relative w-full md:w-80">
-                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-500"></i>
-                        <input id="register-search" type="text" placeholder="Search Driver, phone, or car (e.g. 3368)..."
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+            <!-- Middle: Global Search Bar with Ctrl+K -->
+            <div class="relative w-80 md:w-96 hidden md:block">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-2.5 text-[#64748B]"></i>
+                <input id="global-search-input" type="text" placeholder="Search driver, vehicle, trip, or shift... (Ctrl + K)"
+                    class="w-full bg-[#11182A] border border-[#263149] rounded-xl pl-10 pr-16 py-2 text-xs text-white placeholder-[#64748B] focus:border-[#6655F5] focus:outline-none transition-colors" />
+                <span class="absolute right-2.5 top-2 px-1.5 py-0.5 rounded bg-[#162038] text-[10px] font-mono text-[#64748B] border border-[#263149]">Ctrl + K</span>
+            </div>
+
+            <!-- Right: Live Cloud DB Badge, Notification Bell, User Profile -->
+            <div class="flex items-center gap-3.5">
+                
+                <!-- Cloud Status Indicator -->
+                <div id="db-cloud-indicator" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981]">
+                    <span class="pulse-dot"></span>
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider">CLOUD DB LIVE</span>
+                </div>
+
+                <!-- Notification Bell with unread badge 1 -->
+                <button type="button" class="relative p-2 rounded-xl bg-[#11182A] border border-[#263149] text-slate-400 hover:text-white transition-colors cursor-pointer" title="Telemetry Alerts">
+                    <i data-lucide="bell" class="w-4 h-4"></i>
+                    <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#6655F5] text-white text-[9px] font-bold flex items-center justify-center">1</span>
+                </button>
+
+                <!-- User Profile Pill matching screenshot -->
+                <div class="flex items-center gap-2.5 bg-[#11182A] border border-[#263149] rounded-xl px-3 py-1.5 shadow-sm">
+                    <div class="w-7 h-7 rounded-full bg-[#6655F5] flex items-center justify-center font-bold text-xs text-white shadow-md shadow-[#6655F5]/30">
+                        SF
+                    </div>
+                    <div class="text-left hidden lg:block">
+                        <div class="text-xs font-bold text-white leading-tight">Fleet Owner</div>
+                        <div class="text-[10px] text-[#94A3B8]">SVM Fleet (Demo)</div>
+                    </div>
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- Main Workspace Canvas -->
+        <main class="flex-1 p-6 lg:p-8 space-y-6 overflow-y-auto">
+
+            <!-- ============================================================== -->
+            <!-- VIEW 1: FLEET COMMAND CENTER / DASHBOARD                       -->
+            <!-- ============================================================== -->
+            <div data-tab-content="overview" class="flex flex-col gap-6">
+
+                <!-- Greeting Header & Action Row -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2.5 flex-wrap">
+                            <h1 id="greeting-title" class="text-2xl lg:text-3xl font-black text-white tracking-tight flex items-center gap-2">
+                                <span>☀️ Good Morning, Fleet Owner</span> <span class="text-2xl">👋</span>
+                            </h1>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#F59E0B]/15 border border-[#F59E0B]/30 text-[#F59E0B] text-[10px] font-extrabold tracking-wider">
+                                <i data-lucide="alert-triangle" class="w-3 h-3"></i> DEMO MODE
+                            </span>
+                        </div>
+                        <p id="greeting-subtitle" class="text-xs text-[#94A3B8] mt-1 font-medium">
+                            Here's your fleet performance for today.
+                        </p>
                     </div>
 
-                    <!-- Filter Chips (All, 12h, 24h, Open) -->
-                    <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
-                        <button onclick="window.SVM_APP.setShiftFilter('ALL')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#6366F1] text-white border-[#6366F1]">
-                            All Shifts
-                        </button>
-                        <button onclick="window.SVM_APP.setShiftFilter('12_HOURS')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-white/10 bg-slate-900 text-slate-400 hover:text-white">
-                            12h Shift
-                        </button>
-                        <button onclick="window.SVM_APP.setShiftFilter('24_HOURS')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-white/10 bg-slate-900 text-slate-400 hover:text-white">
-                            24h Shift
-                        </button>
-                        <button onclick="window.SVM_APP.setShiftFilter('OPEN')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-white/10 bg-slate-900 text-slate-400 hover:text-white">
-                            Pending
-                        </button>
-                    </div>
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <!-- Date Selector Pill Dropdown -->
+                        <div class="relative flex items-center">
+                            <span class="absolute left-3 text-xs pointer-events-none">📅</span>
+                            <select id="timeframe-date-select" class="bg-[#11182A] border border-[#263149] rounded-xl pl-8 pr-8 py-2 text-xs font-bold text-white cursor-pointer shadow-sm appearance-none hover:border-[#6655F5] transition-colors">
+                                <option value="today" selected>Today, 09 Nov 2026</option>
+                                <option value="yesterday">Yesterday, 08 Nov 2026</option>
+                                <option value="custom">Select Custom Date Range...</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748B] absolute right-3 pointer-events-none"></i>
+                        </div>
 
-                    <!-- Actions: View Toggle + Export + New Shift -->
-                    <div class="flex items-center gap-2 w-full md:w-auto justify-end">
-                        <div class="flex items-center bg-[#0E121C] border border-white/10 rounded-xl p-0.5">
-                            <button id="view-mode-cards-btn" onclick="window.SVM_APP.setRegisterViewMode('cards')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#6366F1] text-white flex items-center gap-1">
-                                <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> Cards
+                        <!-- Timeframe Quick Pills (Today / This Week / This Month) -->
+                        <div class="flex items-center bg-[#11182A] border border-[#263149] rounded-xl p-0.5">
+                            <button id="tf-btn-today" type="button" onclick="window.SVM_APP.setTimeframe('day')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#6655F5] text-white shadow-sm transition-all">
+                                Today
                             </button>
-                            <button id="view-mode-table-btn" onclick="window.SVM_APP.setRegisterViewMode('table')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1">
-                                <i data-lucide="table" class="w-3.5 h-3.5"></i> Table
+                            <button id="tf-btn-week" type="button" onclick="window.SVM_APP.setTimeframe('week')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] hover:text-white transition-all">
+                                This Week
+                            </button>
+                            <button id="tf-btn-month" type="button" onclick="window.SVM_APP.setTimeframe('month')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] hover:text-white transition-all">
+                                This Month
                             </button>
                         </div>
 
-                        <button onclick="window.SVM_APP.exportCSV()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-white/10">
-                            <i data-lucide="download" class="w-4 h-4"></i> CSV
-                        </button>
-                        <button onclick="window.SVM_APP.openManualEntryModal()" class="px-3.5 py-2 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-500/25">
-                            <i data-lucide="plus" class="w-4 h-4"></i> + Add Shift
+                        <!-- Add Shift Button (Unified modal trigger) -->
+                        <button id="btn-open-manual-entry" type="button" class="px-4 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#6655F5]/35 transition-all border border-white/20 active:scale-95 cursor-pointer">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>+ Add Shift</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- 1. MOBILE APP STYLE CARDS CONTAINER -->
-                <div id="register-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 5 KPI Cards (Exact match to reference mockup media_1794250116022) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+                    
+                    <!-- KPI 1: Total Vehicles (Purple) -->
+                    <div class="kpi-card-purple p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
+                        <div class="flex items-center justify-between">
+                            <div class="w-9 h-9 rounded-xl bg-[#6655F5]/25 border border-[#6655F5]/40 flex items-center justify-center text-[#8B5CF6]">
+                                <i data-lucide="car" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-xs font-bold text-[#10B981] flex items-center gap-1">
+                                ↑ +11% <span class="text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider block">Total Vehicles</span>
+                            <span id="kpi-total-cabs" class="text-2xl font-black text-white mt-0.5 block font-mono">30</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI 2: Active Drivers (Blue) -->
+                    <div class="kpi-card-blue p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
+                        <div class="flex items-center justify-between">
+                            <div class="w-9 h-9 rounded-xl bg-[#3185F6]/25 border border-[#3185F6]/40 flex items-center justify-center text-[#3185F6]">
+                                <i data-lucide="users" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-xs font-bold text-[#10B981] flex items-center gap-1">
+                                ↑ +8% <span class="text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider block">Active Drivers</span>
+                            <span id="kpi-active-drivers" class="text-2xl font-black text-white mt-0.5 block font-mono">27</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI 3: Total Trips (Amber) -->
+                    <div class="kpi-card-amber p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
+                        <div class="flex items-center justify-between">
+                            <div class="w-9 h-9 rounded-xl bg-[#F59E0B]/25 border border-[#F59E0B]/40 flex items-center justify-center text-[#F59E0B]">
+                                <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-xs font-bold text-[#10B981] flex items-center gap-1">
+                                ↑ +14% <span class="text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider block">Total Trips</span>
+                            <span id="kpi-total-trips" class="text-2xl font-black text-white mt-0.5 block font-mono">326</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI 4: Gross Earnings (Teal/Cyan) -->
+                    <div class="kpi-card-teal p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
+                        <div class="flex items-center justify-between">
+                            <div class="w-9 h-9 rounded-xl bg-[#0EA5E9]/25 border border-[#0EA5E9]/40 flex items-center justify-center text-[#0EA5E9]">
+                                <i data-lucide="wallet" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-xs font-bold text-[#10B981] flex items-center gap-1">
+                                ↑ +12% <span class="text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider block">Gross Earnings</span>
+                            <span id="kpi-gross-earnings" class="text-2xl font-black text-white mt-0.5 block font-mono">₹1,24,860</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI 5: Net Fleet Profit (Emerald) -->
+                    <div class="kpi-card-emerald p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
+                        <div class="flex items-center justify-between">
+                            <div class="w-9 h-9 rounded-xl bg-[#10B981]/25 border border-[#10B981]/40 flex items-center justify-center text-[#10B981]">
+                                <i data-lucide="trending-up" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-xs font-bold text-[#10B981] flex items-center gap-1">
+                                ↑ +16% <span class="text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider block">Net Fleet Profit</span>
+                            <span id="kpi-net-profit" class="text-2xl font-black text-[#10B981] mt-0.5 block font-mono">₹38,420</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Row 2: Charts Row (Earnings & Profitability Trend + Platform Earnings Split) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Left: Earnings & Profitability Trend (65% width / 2 cols) -->
+                    <div class="lg:col-span-2 saas-card p-5 flex flex-col justify-between h-[340px]">
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-[#6655F5]"></i>
+                                    <span>Earnings & Profitability Trend</span>
+                                </h3>
+                                <p class="text-[11px] text-[#94A3B8] mt-0.5">Gross earnings, expenses and net profit</p>
+                            </div>
+
+                            <!-- Daily / Weekly / Monthly Switcher -->
+                            <div class="flex items-center bg-[#080D1B] border border-[#263149] rounded-lg p-0.5 text-xs">
+                                <button id="chart-tf-daily" type="button" onclick="window.SVM_APP.renderTrendChart('daily')" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-[#6655F5] text-white">
+                                    Daily
+                                </button>
+                                <button id="chart-tf-weekly" type="button" onclick="window.SVM_APP.renderTrendChart('weekly')" class="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#94A3B8] hover:text-white">
+                                    Weekly
+                                </button>
+                                <button id="chart-tf-monthly" type="button" onclick="window.SVM_APP.renderTrendChart('monthly')" class="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#94A3B8] hover:text-white">
+                                    Monthly
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Interactive SVG Area & Column Chart Container -->
+                        <div id="trend-chart-container" class="flex-1 w-full relative py-2">
+                            <!-- Populated dynamically via JS SVG rendering -->
+                        </div>
+
+                        <!-- Chart Legends -->
+                        <div class="flex items-center justify-center gap-6 pt-2 border-t border-[#1E273D] text-[11px]">
+                            <span class="flex items-center gap-1.5 text-slate-300">
+                                <span class="w-3 h-3 rounded-full bg-[#6655F5]"></span> Gross Earnings
+                            </span>
+                            <span class="flex items-center gap-1.5 text-slate-300">
+                                <span class="w-3 h-3 rounded-md bg-[#10B981]"></span> Net Profit
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Platform Earnings Split (35% width / 1 col) -->
+                    <div class="saas-card p-5 flex flex-col justify-between h-[340px]">
+                        <div>
+                            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                                <i data-lucide="pie-chart" class="w-4 h-4 text-[#8B5CF6]"></i>
+                                <span>Platform Earnings (Today)</span>
+                            </h3>
+                            <p class="text-[11px] text-[#94A3B8] mt-0.5">Aggregated fare split across commercial partners</p>
+                        </div>
+
+                        <!-- Donut Chart & Legend Centerpiece -->
+                        <div class="flex items-center justify-between gap-4 py-2">
+                            <!-- SVG Donut Chart with Center Total -->
+                            <div class="relative w-36 h-36 shrink-0 flex items-center justify-center">
+                                <svg viewBox="0 0 100 100" class="w-full h-full transform -rotate-90">
+                                    <!-- Background circle track -->
+                                    <circle cx="50" cy="50" r="38" stroke="#1E273D" stroke-width="14" fill="transparent" />
+                                    <!-- Uber (54%) -->
+                                    <circle cx="50" cy="50" r="38" stroke="#6655F5" stroke-width="14" stroke-dasharray="128.9 238.8" stroke-dashoffset="0" fill="transparent" />
+                                    <!-- Rapido (28%) -->
+                                    <circle cx="50" cy="50" r="38" stroke="#F59E0B" stroke-width="14" stroke-dasharray="66.8 238.8" stroke-dashoffset="-128.9" fill="transparent" />
+                                    <!-- Ola (18%) -->
+                                    <circle cx="50" cy="50" r="38" stroke="#10B981" stroke-width="14" stroke-dasharray="43 238.8" stroke-dashoffset="-195.7" fill="transparent" />
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                    <span class="text-xs font-black text-white font-mono">₹1,24,860</span>
+                                    <span class="text-[9px] text-[#94A3B8] uppercase tracking-wider font-semibold">Gross</span>
+                                </div>
+                            </div>
+
+                            <!-- Legend List with Values -->
+                            <div class="flex flex-col gap-3 flex-1 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-[#6655F5]"></span>
+                                        <span class="font-bold text-white">Uber</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="font-mono text-slate-300 font-bold">54%</span>
+                                        <span class="text-[#94A3B8] font-mono block text-[10px]">₹67,424</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B]"></span>
+                                        <span class="font-bold text-white">Rapido</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="font-mono text-slate-300 font-bold">28%</span>
+                                        <span class="text-[#94A3B8] font-mono block text-[10px]">₹34,961</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span>
+                                        <span class="font-bold text-white">Ola</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="font-mono text-slate-300 font-bold">18%</span>
+                                        <span class="text-[#94A3B8] font-mono block text-[10px]">₹22,475</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-[10px] text-[#64748B] text-center pt-2 border-t border-[#1E273D] font-mono">
+                            Auto-reconciled from driver companion telemetries
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Row 3: Live Hyderabad Map (2 cols) + Incoming Shift Telemetry (1 col) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Live Hyderabad Fleet Map (2 cols) -->
+                    <div class="lg:col-span-2 saas-card p-5 flex flex-col h-[400px]">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                            <div>
+                                <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-[#6655F5]"></i>
+                                    <span>Live Hyderabad Fleet Map</span>
+                                </h3>
+                                <p class="text-[11px] text-[#94A3B8] mt-0.5">Real-time fleet status across all hubs (Demo Data)</p>
+                            </div>
+
+                            <!-- Legend Pills matching screenshot -->
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 text-[10px] font-bold">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span> Active (18)
+                                </span>
+                                <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30 text-[10px] font-bold">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span> Idle (7)
+                                </span>
+                                <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30 text-[10px] font-bold">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></span> Offline (5)
+                                </span>
+                                <button type="button" onclick="window.SVM_APP.switchTab('map')" class="text-[#94A3B8] hover:text-white transition-colors" title="Expand Full Map">
+                                    <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Map Canvas Container with OpenStreetMap Dark Invert Filter -->
+                        <div id="hyderabad-map" class="flex-1 rounded-xl overflow-hidden border border-[#263149] relative"></div>
+                    </div>
+
+                    <!-- Incoming Shift Telemetry (1 col) -->
+                    <div class="saas-card p-5 flex flex-col justify-between h-[400px]">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="zap" class="w-4 h-4 text-[#6655F5]"></i>
+                                    <h3 class="font-bold text-sm text-white">Incoming Shift Telemetry</h3>
+                                </div>
+                                <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 text-[10px] font-bold">
+                                    <span class="pulse-dot"></span> Live
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-[#94A3B8] mb-3">
+                                Real-time updates from driver companion app (Demo)
+                            </p>
+                        </div>
+
+                        <!-- Telemetry Stream List (Driver A, B, C, D) -->
+                        <div id="telemetry-pending-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+
+                        <!-- Manual Entry Action Trigger at bottom of Telemetry -->
+                        <div class="mt-3 pt-3 border-t border-[#263149]">
+                            <button type="button" onclick="window.SVM_APP.openManualEntryModal()" class="w-full py-2 rounded-xl bg-[#161F33] hover:bg-[#1E273D] border border-[#263149] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
+                                <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-[#6655F5]"></i>
+                                <span>+ Manual Shift Entry</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Row: Duty Register (Recent Entries) Table -->
+                <div class="saas-card p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-bold text-base text-white flex items-center gap-2">
+                                <i data-lucide="clipboard-list" class="w-4 h-4 text-[#6655F5]"></i>
+                                <span>Moosapet Hub Duty Register (Recent Entries)</span>
+                            </h3>
+                            <p class="text-xs text-[#94A3B8] mt-0.5">Daily commission & cash settlement logbook</p>
+                        </div>
+                        <button onclick="window.SVM_APP.switchTab('register')" class="px-3.5 py-1.5 rounded-xl bg-[#161F33] hover:bg-[#1E273D] border border-[#263149] text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer">
+                            <span>Open Full Register</span>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#6655F5]"></i>
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-[#263149] text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                                    <th class="py-3 px-3">#</th>
+                                    <th class="py-3 px-4">Driver & Mobile</th>
+                                    <th class="py-3 px-4">Vehicle</th>
+                                    <th class="py-3 px-3 text-center">Trips</th>
+                                    <th class="py-3 px-4 text-right">Earned (Gross)</th>
+                                    <th class="py-3 px-4 text-right">Fuel/Exp</th>
+                                    <th class="py-3 px-4 text-right">Cash Coll.</th>
+                                    <th class="py-3 px-4 text-right">Commission</th>
+                                    <th class="py-3 px-3 text-center">Source</th>
+                                    <th class="py-3 px-3 text-center">Status</th>
+                                    <th class="py-3 px-3 text-right">Receipt</th>
+                                </tr>
+                            </thead>
+                            <tbody id="register-table-body" class="divide-y divide-[#1E273D]">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- VIEW 2: FULL DUTY REGISTER TAB (14 Enterprise Columns)         -->
+            <!-- ============================================================== -->
+            <div data-tab-content="register" class="hidden flex flex-col gap-5">
+                <div class="saas-card p-5">
+                    
+                    <!-- Search & Filter Controls -->
+                    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-5">
+                        
+                        <!-- Search Input -->
+                        <div class="relative w-full lg:w-72">
+                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-[#64748B]"></i>
+                            <input id="register-search" type="text" placeholder="Search Driver, phone, or car..."
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-[#64748B] focus:border-[#6655F5]" />
+                        </div>
+
+                        <!-- Filter Chips & Platform Filter -->
+                        <div class="flex items-center gap-2 overflow-x-auto w-full lg:w-auto">
+                            <button onclick="window.SVM_APP.setShiftFilter('ALL')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#6655F5] text-white border-[#6655F5]">
+                                All Shifts
+                            </button>
+                            <button onclick="window.SVM_APP.setShiftFilter('12_HOURS')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white">
+                                12h Shifts
+                            </button>
+                            <button onclick="window.SVM_APP.setShiftFilter('24_HOURS')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white">
+                                24h Shifts
+                            </button>
+                            <button onclick="window.SVM_APP.setShiftFilter('PENDING')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white">
+                                Pending
+                            </button>
+                            <button onclick="window.SVM_APP.setShiftFilter('SETTLED')" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white">
+                                Settled
+                            </button>
+                        </div>
+
+                        <!-- Actions: View Toggle + CSV Export + Add Shift -->
+                        <div class="flex items-center gap-2.5 w-full lg:w-auto justify-end">
+                            <!-- Table vs Cards Toggle -->
+                            <div class="flex items-center bg-[#080D1B] border border-[#263149] rounded-xl p-0.5">
+                                <button id="view-mode-table-btn" type="button" onclick="window.SVM_APP.setRegisterViewMode('table')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#6655F5] text-white flex items-center gap-1 cursor-pointer">
+                                    <i data-lucide="table" class="w-3.5 h-3.5"></i> Table
+                                </button>
+                                <button id="view-mode-cards-btn" type="button" onclick="window.SVM_APP.setRegisterViewMode('cards')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer">
+                                    <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> Cards
+                                </button>
+                            </div>
+
+                            <button onclick="window.SVM_APP.exportCSV()" class="px-3.5 py-2 rounded-xl bg-[#161F33] hover:bg-[#1E273D] text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-[#263149] transition-colors cursor-pointer">
+                                <i data-lucide="download" class="w-4 h-4 text-[#10B981]"></i>
+                                <span>Export CSV</span>
+                            </button>
+                            <button onclick="window.SVM_APP.openManualEntryModal()" class="px-4 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#6655F5]/25 cursor-pointer">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>+ Add Shift</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 14-Column Master Data Table Container -->
+                    <div id="register-table-container" class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-[#263149] text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                                    <th class="py-3 px-3">S.No</th>
+                                    <th class="py-3 px-4">Driver</th>
+                                    <th class="py-3 px-4">Mobile</th>
+                                    <th class="py-3 px-4">Vehicle Reg</th>
+                                    <th class="py-3 px-3">Hub</th>
+                                    <th class="py-3 px-3">Shift Date</th>
+                                    <th class="py-3 px-3 text-center">Trips</th>
+                                    <th class="py-3 px-4 text-right">Gross</th>
+                                    <th class="py-3 px-4 text-right">Fuel Exp</th>
+                                    <th class="py-3 px-4 text-right">Cash Coll.</th>
+                                    <th class="py-3 px-4 text-right">Commission</th>
+                                    <th class="py-3 px-3 text-center">Platform</th>
+                                    <th class="py-3 px-3 text-center">Status</th>
+                                    <th class="py-3 px-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="register-table-body-full" class="divide-y divide-[#1E273D]">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Cards View Container (Shown when Cards mode is selected) -->
+                    <div id="register-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 hidden">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- VIEW 3: FULL HYDERABAD MAP TAB                                 -->
+            <!-- ============================================================== -->
+            <div data-tab-content="map" class="hidden flex flex-col gap-4">
+                <div class="saas-card p-4 h-[650px] flex flex-col">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-base text-white flex items-center gap-2">
+                            <i data-lucide="map" class="w-5 h-5 text-[#6655F5]"></i> Hyderabad Citywide Fleet Radar
+                        </h3>
+                        <div class="text-xs text-slate-400 flex items-center gap-4">
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#10B981]"></span> Active (18)</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#F59E0B]"></span> Idle (7)</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#EF4444]"></span> Offline (5)</span>
+                        </div>
+                    </div>
+                    <div id="hyderabad-map-full" class="flex-1 rounded-xl overflow-hidden border border-[#263149]"></div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- VIEW 4: VEHICLES TAB                                           -->
+            <!-- ============================================================== -->
+            <div data-tab-content="cars" class="hidden flex flex-col gap-4">
+                <div class="flex justify-between items-center mb-2">
+                    <div>
+                        <h3 class="font-bold text-lg text-white">SVM Fleet Vehicles (30 Commercial Cabs)</h3>
+                        <p class="text-xs text-[#94A3B8]">Active commercial fleet across Uber, Rapido, and Ola</p>
+                    </div>
+                    <button type="button" onclick="window.SVM_APP.openAddVehicleModal()" class="px-3.5 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#6655F5]/25 cursor-pointer">
+                        <i data-lucide="plus" class="w-4 h-4"></i> + Add Vehicle
+                    </button>
+                </div>
+                <div id="cars-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <!-- Populated dynamically -->
                 </div>
-
-                <!-- 2. DESKTOP TABLE CONTAINER -->
-                <div id="register-table-container" class="hidden overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-white/10 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                <th class="py-2.5 px-4">Driver Name & Phone</th>
-                                <th class="py-2.5 px-4">Vehicle Reg No</th>
-                                <th class="py-2.5 px-4 text-center">Trips</th>
-                                <th class="py-2.5 px-4 text-right">Gross Earned</th>
-                                <th class="py-2.5 px-4 text-right">Fuel / Exp</th>
-                                <th class="py-2.5 px-4 text-right">Cash Coll.</th>
-                                <th class="py-2.5 px-4 text-right">Commission</th>
-                                <th class="py-2.5 px-4 text-right">Net Balance</th>
-                                <th class="py-2.5 px-4 text-center">Source</th>
-                                <th class="py-2.5 px-4 text-center">Status</th>
-                                <th class="py-2.5 px-4 text-right">Receipt</th>
-                            </tr>
-                        </thead>
-                        <tbody id="register-table-body-full">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-
             </div>
 
-        </div>
-
-        <!-- ------------------------------------------------------------------ -->
-        <!-- VIEW 3: FULL HYDERABAD MAP TAB                                     -->
-        <!-- ------------------------------------------------------------------ -->
-        <div data-tab-content="map" class="hidden flex flex-col gap-4">
-            <div class="glass-panel p-4 h-[650px] flex flex-col">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="font-bold text-base text-white flex items-center gap-2">
-                        <i data-lucide="map" class="w-5 h-5 text-indigo-400"></i> Hyderabad Citywide Fleet Radar
-                    </h3>
-                    <div class="text-xs text-slate-400 flex items-center gap-4">
-                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#10B981]"></span> Active Trip</span>
-                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#F59E0B]"></span> Idle / Yard</span>
-                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#6366F1]"></span> Hub Station</span>
+            <!-- ============================================================== -->
+            <!-- VIEW 5: DRIVERS TAB                                            -->
+            <!-- ============================================================== -->
+            <div data-tab-content="drivers" class="hidden flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                    <div>
+                        <h3 class="font-extrabold text-lg text-white flex items-center gap-2">
+                            <i data-lucide="users" class="w-5 h-5 text-[#6655F5]"></i>
+                            <span>Fleet Drivers & Roster Directory</span>
+                        </h3>
+                        <p class="text-xs text-[#94A3B8]">Profiles with ratings, direct phone call links, active cars, and duty registers</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="window.SVM_APP.openAddDriverModal()" class="px-3.5 py-2 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#10B981]/25 transition-all cursor-pointer">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i> + Add Driver
+                        </button>
+                        <button onclick="window.SVM_APP.openAddManagerModal()" class="px-3.5 py-2 rounded-xl bg-[#161F33] border border-[#263149] hover:border-[#6655F5] text-slate-200 text-xs font-bold flex items-center gap-1.5 hover:bg-[#1E273D] transition-all cursor-pointer">
+                            <i data-lucide="shield-plus" class="w-4 h-4 text-[#6655F5]"></i> + Add Hub Manager
+                        </button>
                     </div>
                 </div>
-                <div id="hyderabad-map-full" class="flex-1 rounded-xl overflow-hidden border border-white/10"></div>
-            </div>
-        </div>
-
-        <!-- ------------------------------------------------------------------ -->
-        <!-- VIEW 4: VEHICLES TAB                                               -->
-        <!-- ------------------------------------------------------------------ -->
-        <div data-tab-content="cars" class="hidden flex flex-col gap-4">
-            <div class="flex justify-between items-center mb-2">
-                <div>
-                    <h3 class="font-bold text-lg text-white">SVM Fleet Vehicles (30 Commercial Cabs)</h3>
-                    <p class="text-xs text-slate-400">Active commercial vehicles across Uber, Rapido, and Ola</p>
+                <div id="drivers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Populated dynamically -->
                 </div>
             </div>
-            <div id="cars-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <!-- Populated dynamically -->
-            </div>
-        </div>
 
-        <!-- ------------------------------------------------------------------ -->
-        <!-- VIEW 5: DRIVERS TAB                                                -->
-        <!-- ------------------------------------------------------------------ -->
-        <div data-tab-content="drivers" class="hidden flex flex-col gap-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-                <div>
-                    <h3 class="font-extrabold text-lg text-white flex items-center gap-2">
-                        <i data-lucide="users" class="w-5 h-5 text-indigo-400"></i>
-                        <span>Fleet Drivers & Roster Directory</span>
+            <!-- ============================================================== -->
+            <!-- VIEW 6: REPORTS & FINANCIAL AUDIT TAB                          -->
+            <!-- ============================================================== -->
+            <div data-tab-content="reports" class="hidden flex flex-col gap-5">
+                <div class="saas-card p-6">
+                    <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <i data-lucide="file-text" class="w-5 h-5 text-[#6655F5]"></i> Fleet Financial Audit & Performance Reports
                     </h3>
-                    <p class="text-xs text-slate-400">Driver profiles with ratings, direct phone call links, active cars, and duty registers</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="window.SVM_APP.openAddDriverModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer">
-                        <i data-lucide="user-plus" class="w-4 h-4"></i> + Add Driver
-                    </button>
-                    <button onclick="window.SVM_APP.openAddManagerModal()" class="px-3.5 py-2 rounded-xl bg-[#0E121C] border border-white/10 hover:border-indigo-400 text-slate-200 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-800 transition-all cursor-pointer">
-                        <i data-lucide="shield-plus" class="w-4 h-4 text-indigo-400"></i> + Add Hub Manager
+                    <p class="text-xs text-[#94A3B8] mb-6">Aggregated gross revenues, driver commission disbursements, and operational net margins across Hyderabad hubs.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                            <span class="text-xs text-[#94A3B8]">Monthly Fleet Turnover</span>
+                            <div class="text-2xl font-black text-white mt-1">₹37,45,800</div>
+                            <span class="text-[11px] text-[#10B981] mt-1 block font-mono">↑ 18.4% vs last month</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                            <span class="text-xs text-[#94A3B8]">Driver Commission Paid</span>
+                            <div class="text-2xl font-black text-[#6655F5] mt-1">₹14,23,400</div>
+                            <span class="text-[11px] text-[#94A3B8] mt-1 block font-mono">38.0% avg commission tier</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                            <span class="text-xs text-[#94A3B8]">Net Operating Profit</span>
+                            <div class="text-2xl font-black text-[#10B981] mt-1">₹16,84,200</div>
+                            <span class="text-[11px] text-[#10B981] mt-1 block font-mono">44.9% Net Fleet Margin</span>
+                        </div>
+                    </div>
+
+                    <button onclick="window.SVM_APP.exportCSV()" class="px-4 py-2.5 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-[#6655F5]/30 cursor-pointer">
+                        <i data-lucide="download" class="w-4 h-4"></i> Download Full CSV Statement
                     </button>
                 </div>
             </div>
-            <div id="drivers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Populated dynamically -->
+
+            <!-- ============================================================== -->
+            <!-- VIEW 7: SETTLEMENTS TAB                                        -->
+            <!-- ============================================================== -->
+            <div data-tab-content="settlements" class="hidden flex flex-col gap-5">
+                <div class="saas-card p-6">
+                    <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <i data-lucide="credit-card" class="w-5 h-5 text-[#6655F5]"></i> Daily Cash & UPI Handover Settlements
+                    </h3>
+                    <p class="text-xs text-[#94A3B8] mb-6">Manage end-of-shift driver reconciliations, fuel vouchers, cash collections, and pending balances.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-white">Pending Handover Total</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] bg-[#F59E0B]/20 text-[#F59E0B] font-bold">Awaiting Hub Officer</span>
+                            </div>
+                            <div class="text-3xl font-black text-[#F59E0B] font-mono">₹4,250</div>
+                            <p class="text-xs text-[#94A3B8] mt-2">2 drivers currently completing physical cash handover at Moosapet depot.</p>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-white">Settled Today via UPI / Bank</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] bg-[#10B981]/20 text-[#10B981] font-bold">100% Cleared</span>
+                            </div>
+                            <div class="text-3xl font-black text-[#10B981] font-mono">₹81,200</div>
+                            <p class="text-xs text-[#94A3B8] mt-2">Direct company payouts executed to driver UPI IDs.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-    </main>
+            <!-- ============================================================== -->
+            <!-- VIEW 8: POLICY & TIERS TAB                                     -->
+            <!-- ============================================================== -->
+            <div data-tab-content="policy" class="hidden flex flex-col gap-5">
+                <div class="saas-card p-6">
+                    <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-[#6655F5]"></i> SVM FLEET Official Commission Policy
+                    </h3>
+                    <p class="text-xs text-[#94A3B8] mb-6">Standard operational commission structure for Moosapet, Kukatpally, and Madhapur fleet cabs.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="p-5 rounded-2xl bg-[#080D1B] border border-[#263149]">
+                            <h4 class="font-bold text-sm text-[#10B981] mb-3 flex items-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4"></i> 12 Hours Shift Policy (Min 10 Trips)
+                            </h4>
+                            <div class="space-y-2 text-xs font-mono">
+                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹3,500 and Above</span><strong class="text-[#10B981]">40% Commission</strong></div>
+                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹2,500 to ₹3,500</span><strong class="text-[#6655F5]">35% Commission</strong></div>
+                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹2,000 to ₹2,500</span><strong class="text-[#0EA5E9]">30% Commission</strong></div>
+                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹1,500 to ₹2,000</span><strong class="text-[#F59E0B]">25% Commission</strong></div>
+                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>Below ₹1,500 or &lt;10 trips</span><strong class="text-slate-500">Flat Vehicle Rent</strong></div>
+                            </div>
+                        </div>
 
-    <!-- ---------------------------------------------------------------------- -->
-    <!-- MODAL 1: MANUAL SHIFT ENTRY (Guaranteed Pop-up via .modal-overlay)     -->
-    <!-- ---------------------------------------------------------------------- -->
+                        <div class="p-5 rounded-2xl bg-[#080D1B] border border-[#263149]">
+                            <h4 class="font-bold text-sm text-[#0EA5E9] mb-3 flex items-center gap-2">
+                                <i data-lucide="clock-4" class="w-4 h-4"></i> 24 Hours Shift Policy (Min 18 Trips)
+                            </h4>
+                            <div class="space-y-2 text-xs font-mono">
+                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹6,500 and Above</span><strong class="text-[#10B981]">40% Commission</strong></div>
+                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹5,000 to ₹6,500</span><strong class="text-[#6655F5]">35% Commission</strong></div>
+                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹4,000 to ₹5,000</span><strong class="text-[#0EA5E9]">30% Commission</strong></div>
+                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹2,500 to ₹4,000</span><strong class="text-[#F59E0B]">25% Commission</strong></div>
+                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>Below ₹2,500 or &lt;18 trips</span><strong class="text-slate-500">Flat Vehicle Rent</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- VIEW 9: ANALYTICS TAB                                          -->
+            <!-- ============================================================== -->
+            <div data-tab-content="analytics" class="hidden flex flex-col gap-5">
+                <div class="saas-card p-6">
+                    <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#6655F5]"></i> Platform Telemetry & Market Share
+                    </h3>
+                    <p class="text-xs text-[#94A3B8] mb-6">Real-time driver session distribution across ride-hailing networks.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                            <div class="text-xs text-[#94A3B8] mb-1 font-bold">Uber Cabs (54%)</div>
+                            <div class="w-full bg-[#162038] h-2.5 rounded-full overflow-hidden mb-2">
+                                <div class="bg-white h-full" style="width: 54%"></div>
+                            </div>
+                            <div class="text-sm font-black text-white font-mono">16 Active Cabs</div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                            <div class="text-xs text-[#94A3B8] mb-1 font-bold">Rapido Cabs (28%)</div>
+                            <div class="w-full bg-[#162038] h-2.5 rounded-full overflow-hidden mb-2">
+                                <div class="bg-[#F59E0B] h-full" style="width: 28%"></div>
+                            </div>
+                            <div class="text-sm font-black text-white font-mono">8 Active Cabs</div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                            <div class="text-xs text-[#94A3B8] mb-1 font-bold">Ola Cabs (18%)</div>
+                            <div class="w-full bg-[#162038] h-2.5 rounded-full overflow-hidden mb-2">
+                                <div class="bg-[#10B981] h-full" style="width: 18%"></div>
+                            </div>
+                            <div class="text-sm font-black text-white font-mono">6 Active Cabs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- VIEW 10: SETTINGS TAB                                          -->
+            <!-- ============================================================== -->
+            <div data-tab-content="settings" class="hidden flex flex-col gap-5">
+                <div class="saas-card p-6">
+                    <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <i data-lucide="settings" class="w-5 h-5 text-[#6655F5]"></i> Demo Fleet Environment Settings
+                    </h3>
+                    <p class="text-xs text-[#94A3B8] mb-6">Manage simulated client demo state and test parameters.</p>
+                    
+                    <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <div class="text-sm font-bold text-white flex items-center gap-2">
+                                <span>Reset Demo Data to Default</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] bg-[#F59E0B]/20 text-[#F59E0B] font-bold">Sandbox</span>
+                            </div>
+                            <p class="text-xs text-[#94A3B8] mt-1">Clears local additions and restores 30 demo cabs, drivers, and shifts.</p>
+                        </div>
+                        <button type="button" onclick="window.SVM_APP.resetDemoState()" class="px-4 py-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 text-xs font-bold transition-colors cursor-pointer">
+                            Reset Demo State
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- MODAL 1: MANUAL SHIFT ENTRY (Never Clips / Sticky Header & Footer)     -->
+    <!-- ====================================================================== -->
     <div id="manual-entry-modal" class="modal-overlay">
-        <div class="modal-dialog-box glass-panel-elevated max-w-2xl w-full p-6 sm:p-7 border border-white/15 relative shadow-2xl">
-            <!-- Modal Header -->
-            <div class="flex justify-between items-start pb-4 border-b border-white/10">
+        <div class="modal-dialog-box max-w-2xl w-full">
+            
+            <!-- Fixed Sticky Header -->
+            <div class="modal-dialog-header">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-lg shadow-md shadow-indigo-500/30 border border-white/20">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6655F5] to-[#8B5CF6] flex items-center justify-center font-bold text-lg shadow-md shadow-[#6655F5]/30 border border-white/20">
                         📝
                     </div>
                     <div>
-                        <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block font-mono">SVM FLEET • SHIFT SETTLEMENT</span>
-                        <h3 class="font-extrabold text-lg text-white">Manual Duty Register Entry</h3>
+                        <span class="text-[10px] font-bold text-[#8B5CF6] uppercase tracking-widest block font-mono">SVM FLEET • SHIFT SETTLEMENT</span>
+                        <h3 class="font-extrabold text-base text-white">Manual Duty Register Entry</h3>
                     </div>
                 </div>
-                <button type="button" onclick="window.SVM_APP.closeManualEntryModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors border border-transparent hover:border-white/10">
+                <button type="button" onclick="window.SVM_APP.closeManualEntryModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors border border-transparent hover:border-[#263149] cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <form onsubmit="window.SVM_APP.submitManualEntryForm(event)" class="mt-4 space-y-4">
+            <!-- Form with Scrollable Body and Pinned Sticky Footer -->
+            <form id="form-manual-entry" onsubmit="window.SVM_APP.submitManualEntryForm(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-dialog-body space-y-4">
                 
                 <!-- Quick Driver Selection (Auto Populates Fields) -->
-                <div class="p-3.5 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-[#0E121C] to-purple-950/30 border border-indigo-500/30 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-indigo-400"></span> ⚡ Quick Auto-Fill Fleet Driver
+                <div class="p-3.5 rounded-xl bg-gradient-to-r from-[#6655F5]/10 via-[#0B1020] to-[#8B5CF6]/10 border border-[#6655F5]/30">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-bold text-[#8B5CF6] flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#6655F5]"></span> ⚡ Quick Auto-Fill Fleet Driver
                         </label>
-                        <span class="text-[10px] text-slate-400 font-mono">Auto-populates phone & car</span>
+                        <span class="text-[10px] text-[#64748B] font-mono">Auto-populates phone & car</span>
                     </div>
-                    <select id="modal-quick-driver-select" onchange="window.SVM_APP.onQuickDriverSelected(this.value)" class="w-full bg-[#0A0D15] border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+                    <select id="modal-quick-driver-select" onchange="window.SVM_APP.onQuickDriverSelected(this.value)" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
                         <option value="">-- Choose Driver (or enter manually below) --</option>
-                        <!-- Populated by JS -->
                     </select>
                 </div>
 
-                <!-- Section: Shift & Hub -->
+                <!-- Shift & Hub -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> Shift Duration *
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#6655F5]"></span> Shift Duration *
                         </label>
-                        <select id="modal-shifttype" class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-medium">
+                        <select id="modal-shifttype" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
                             <option value="12_HOURS">12 Hrs Shift (Min 10 Trips)</option>
                             <option value="24_HOURS">24 Hrs Shift (Min 18 Trips)</option>
                         </select>
@@ -488,9 +956,9 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span> Assigned Operating Hub *
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#3185F6]"></span> Assigned Operating Hub *
                         </label>
-                        <select id="modal-hub" class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-medium">
+                        <select id="modal-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
                             <option value="mgr_moosapet_01">Moosapet Central Hub</option>
                             <option value="mgr_kukatpally_02">Kukatpally Y-Junction Hub</option>
                             <option value="mgr_madhapur_03">Madhapur Hitec City Hub</option>
@@ -498,73 +966,73 @@
                     </div>
                 </div>
 
-                <!-- Section: Driver & Vehicle -->
+                <!-- Driver & Vehicle -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Name *</label>
                         <input id="modal-drivername" type="text" placeholder="e.g. Suman" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Mobile Number *</label>
                         <input id="modal-driverphone" type="tel" placeholder="+91 93919 15013" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">Vehicle Reg Number *</label>
                         <input id="modal-regno" type="text" placeholder="e.g. TS09 UB 3368" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white uppercase font-mono font-bold" />
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white uppercase font-mono font-bold" />
                     </div>
                 </div>
 
-                <!-- Section: Trip Metrics & Financials -->
+                <!-- Trip Metrics & Financials -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">Trips Done *</label>
                         <input id="modal-trips" type="number" min="0" value="12" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold" />
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono font-bold" />
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-emerald-400 mb-1">Gross Fare (₹) *</label>
+                        <label class="block text-xs font-semibold text-[#10B981] mb-1">Gross Fare (₹) *</label>
                         <input id="modal-earnings" type="number" step="0.5" min="0" value="3000" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-emerald-400 font-mono font-bold" />
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#10B981] font-mono font-bold" />
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-sky-400 mb-1">Fuel / Petrol (₹)</label>
+                        <label class="block text-xs font-semibold text-[#3185F6] mb-1">Fuel / Petrol (₹)</label>
                         <input id="modal-expenditure" type="number" step="0.5" min="0" value="200"
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-sky-400 font-mono font-bold" />
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#3185F6] font-mono font-bold" />
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-amber-400 mb-1">Cash Coll. (₹)</label>
+                        <label class="block text-xs font-semibold text-[#F59E0B] mb-1">Cash Coll. (₹)</label>
                         <input id="modal-cash" type="number" step="0.5" min="0" value="2000"
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-amber-400 font-mono font-bold" />
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#F59E0B] font-mono font-bold" />
                     </div>
                 </div>
 
-                <!-- Section: Passes & Advances -->
+                <!-- Passes, Advances & Settlement Status -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Drive Pass Fee (₹)</label>
                         <input id="modal-drivepass" type="number" step="0.5" min="0" value="0"
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Advance Taken (₹)</label>
                         <input id="modal-advance" type="number" step="0.5" min="0" value="0"
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Settlement Status</label>
-                        <select id="modal-status" class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+                        <select id="modal-status" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
                             <option value="SETTLED">SETTLED (Payment Complete)</option>
-                            <option value="OPEN">OPEN / PENDING (Balance Due)</option>
+                            <option value="PENDING">PENDING (Balance Due)</option>
                         </select>
                     </div>
                 </div>
@@ -572,34 +1040,34 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1">Remarks / Logbook Notes</label>
                     <input id="modal-remarks" type="text" placeholder="e.g. Settled via UPI / Moosapet paper book entry"
-                        class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
+                        class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
                 </div>
 
-                <!-- Dynamic Calculation Preview Box (Financial Voucher Styling) -->
-                <div class="p-4 rounded-2xl bg-gradient-to-br from-[#0B0E17] to-[#121624] border border-white/10 flex flex-col gap-2.5 shadow-lg">
-                    <div class="flex items-center justify-between pb-2 border-b border-white/10">
+                <!-- Live Calculation Preview Box -->
+                <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149] flex flex-col gap-2.5">
+                    <div class="flex items-center justify-between pb-2 border-b border-[#263149]">
                         <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
-                            <i data-lucide="calculator" class="w-3.5 h-3.5 text-indigo-400"></i>
+                            <i data-lucide="calculator" class="w-3.5 h-3.5 text-[#6655F5]"></i>
                             Official Commission Engine
                         </span>
                         <span id="calc-preview-trips-badge">--</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3 text-xs">
-                        <div class="p-2.5 rounded-xl bg-[#090C14] border border-white/5">
+                        <div class="p-2.5 rounded-lg bg-[#11182A] border border-[#263149]">
                             <span class="text-[10px] text-slate-400 uppercase font-semibold block">Commission Tier</span>
-                            <span id="calc-preview-tier" class="font-extrabold text-sm text-indigo-400 mt-0.5 block">--</span>
+                            <span id="calc-preview-tier" class="font-extrabold text-sm text-[#6655F5] mt-0.5 block">--</span>
                             <span class="text-[10px] text-slate-400 mt-1 block">Comm: <strong id="calc-preview-comm-amt" class="text-white font-mono">--</strong></span>
                         </div>
 
-                        <div class="p-2.5 rounded-xl bg-[#090C14] border border-white/5">
+                        <div class="p-2.5 rounded-lg bg-[#11182A] border border-[#263149]">
                             <span class="text-[10px] text-slate-400 uppercase font-semibold block">Total Driver Credit</span>
-                            <span id="calc-preview-credit" class="text-emerald-400 font-mono font-extrabold text-sm mt-0.5 block">--</span>
-                            <span class="text-[10px] text-slate-400 mt-1 block">Debit: <strong id="calc-preview-debit" class="text-amber-400 font-mono">--</strong></span>
+                            <span id="calc-preview-credit" class="text-[#10B981] font-mono font-extrabold text-sm mt-0.5 block">--</span>
+                            <span class="text-[10px] text-slate-400 mt-1 block">Debit: <strong id="calc-preview-debit" class="text-[#F59E0B] font-mono">--</strong></span>
                         </div>
                     </div>
 
-                    <div class="p-3 rounded-xl bg-[#090C14] border border-white/10 flex flex-col sm:flex-row justify-between sm:items-center gap-1">
+                    <div class="p-3 rounded-lg bg-[#11182A] border border-[#263149] flex flex-col sm:flex-row justify-between sm:items-center gap-1">
                         <div>
                             <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Net Settlement Handover</span>
                             <span id="calc-preview-net" class="font-black text-sm">--</span>
@@ -607,56 +1075,60 @@
                         <span class="text-[10px] text-slate-400 font-mono">Credit − Debit Formula</span>
                     </div>
                 </div>
+                </div>
 
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" onclick="window.SVM_APP.closeManualEntryModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-colors cursor-pointer">
+                <!-- Fixed Sticky Footer -->
+                <div class="modal-dialog-footer">
+                    <button type="button" onclick="window.SVM_APP.closeManualEntryModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer">
                         Cancel
                     </button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-xs font-bold shadow-lg shadow-indigo-500/30 transition-all cursor-pointer">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold shadow-lg shadow-[#6655F5]/30 transition-all cursor-pointer">
                         Save & Settle Shift Log
                     </button>
                 </div>
+
             </form>
         </div>
     </div>
 
-    <!-- ---------------------------------------------------------------------- -->
+    <!-- ====================================================================== -->
     <!-- MODAL 2: TRANSFER CAR / DRIVER TO ANOTHER HUB                          -->
-    <!-- ---------------------------------------------------------------------- -->
+    <!-- ====================================================================== -->
     <div id="reassign-hub-modal" class="modal-overlay">
-        <div class="modal-dialog-box glass-panel-elevated max-w-md w-full p-6 border border-white/15 relative shadow-2xl">
-            <div class="flex justify-between items-start pb-3 border-b border-white/10 mb-4">
+        <div class="modal-dialog-box max-w-md w-full">
+            <div class="modal-dialog-header">
                 <div>
-                    <h3 class="font-bold text-base text-white flex items-center gap-2">
-                        <span class="w-6 h-6 rounded-lg bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center text-xs">🔄</span>
-                        <span>Transfer Vehicle & Driver Hub</span>
+                    <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                        <span>🔄 Transfer Vehicle & Driver Hub</span>
                     </h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Reassign operational hub and supervising manager</p>
+                    <p class="text-[11px] text-[#64748B] mt-0.5">Reassign operating hub and supervising manager</p>
                 </div>
-                <button type="button" onclick="window.SVM_APP.closeReassignModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+                <button type="button" onclick="window.SVM_APP.closeReassignModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-[#1E273D] transition-colors cursor-pointer">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <form onsubmit="window.SVM_APP.submitReassignment(event)" class="space-y-4">
-                <input type="hidden" id="reassign-vehicle-id" />
-                <div class="p-3.5 rounded-xl bg-[#0E121C] border border-white/10 text-xs">
-                    <span class="text-slate-400">Target Vehicle:</span>
-                    <strong id="reassign-vehicle-title" class="text-white block font-mono text-sm mt-1">--</strong>
+            <form onsubmit="window.SVM_APP.submitReassignment(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-dialog-body space-y-4">
+                    <input type="hidden" id="reassign-vehicle-id" />
+                    <div class="p-3.5 rounded-xl bg-[#080D1B] border border-[#263149] text-xs">
+                        <span class="text-[#64748B]">Target Vehicle:</span>
+                        <strong id="reassign-vehicle-title" class="text-white block font-mono text-sm mt-1">--</strong>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5">Select New Destination Hub</label>
+                        <select id="reassign-target-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1.5">Select New Destination Hub</label>
-                    <select id="reassign-target-hub" class="w-full bg-[#0E121C] border border-white/15 rounded-xl px-3 py-2 text-xs text-white">
-                        <!-- Populated by JS -->
-                    </select>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" onclick="window.SVM_APP.closeReassignModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-colors cursor-pointer">
+                <div class="modal-dialog-footer">
+                    <button type="button" onclick="window.SVM_APP.closeReassignModal()" class="px-4 py-2 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 transition-all cursor-pointer">
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold shadow-lg shadow-[#6655F5]/25 transition-all cursor-pointer">
                         Confirm Transfer
                     </button>
                 </div>
@@ -664,192 +1136,225 @@
         </div>
     </div>
 
-    <!-- ---------------------------------------------------------------------- -->
-    <!-- MODAL 3: ADD NEW FLEET DRIVER (Owner Power Feature)                    -->
-    <!-- ---------------------------------------------------------------------- -->
+    <!-- ====================================================================== -->
+    <!-- MODAL 3: ADD NEW FLEET DRIVER (Demo Modal)                             -->
+    <!-- ====================================================================== -->
     <div id="add-driver-modal" class="modal-overlay">
-        <div class="modal-dialog-box glass-panel-elevated max-w-lg w-full p-6 sm:p-7 border border-white/15 relative shadow-2xl">
-            <div class="flex justify-between items-start pb-4 border-b border-white/10 mb-4">
+        <div class="modal-dialog-box max-w-lg w-full">
+            <div class="modal-dialog-header">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center font-bold text-lg shadow-md shadow-emerald-500/30 border border-white/20">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#10B981] to-teal-600 flex items-center justify-center font-bold text-lg shadow-md shadow-[#10B981]/30 border border-white/20">
                         👤
                     </div>
                     <div>
-                        <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block font-mono">OWNER PORTAL • ROSTER</span>
-                        <h3 class="font-extrabold text-lg text-white">Add New Fleet Driver</h3>
+                        <span class="text-[10px] font-bold text-[#10B981] uppercase tracking-widest block font-mono">DEMO ROSTER</span>
+                        <h3 class="font-extrabold text-base text-white">Add New Fleet Driver</h3>
                     </div>
                 </div>
-                <button type="button" onclick="window.SVM_APP.closeAddDriverModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors">
+                <button type="button" onclick="window.SVM_APP.closeAddDriverModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <form onsubmit="window.SVM_APP.submitAddDriver(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Full Name *</label>
-                    <input id="add-driver-name" type="text" placeholder="e.g. Satish Reddy" required
-                        class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <form onsubmit="window.SVM_APP.submitAddDriver(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-dialog-body space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Mobile Number *</label>
-                        <input id="add-driver-phone" type="tel" placeholder="+91 98480 12345" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Full Name *</label>
+                        <input id="add-driver-name" type="text" placeholder="e.g. Satish Reddy" required
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Mobile Number *</label>
+                            <input id="add-driver-phone" type="tel" placeholder="+91 98480 12345" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Operating Hub *</label>
+                            <select id="add-driver-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Cab (Optional)</label>
+                            <select id="add-driver-vehicle" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Initial Rating ⭐</label>
+                            <input id="add-driver-rating" type="number" step="0.01" min="1.0" max="5.0" value="4.85" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#10B981] font-mono font-bold" />
+                        </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Operating Hub *</label>
-                        <select id="add-driver-hub" class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
-                            <!-- Populated by JS -->
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Duty Status</label>
+                        <select id="add-driver-status" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                            <option value="ON_DUTY">🟢 ON DUTY (Active on Road)</option>
+                            <option value="IDLE">🟡 IDLE (In Hub Yard / Standby)</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Cab (Optional)</label>
-                        <select id="add-driver-vehicle" class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
-                            <!-- Populated by JS -->
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Initial Rating ⭐</label>
-                        <input id="add-driver-rating" type="number" step="0.01" min="1.0" max="5.0" value="4.85" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-emerald-400 font-mono font-bold" />
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Duty Status</label>
-                    <select id="add-driver-status" class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
-                        <option value="ON_DUTY">🟢 ON DUTY (Active on Road)</option>
-                        <option value="IDLE">🟡 IDLE (In Hub Yard / Standby)</option>
-                    </select>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-3 border-t border-white/10">
-                    <button type="button" onclick="window.SVM_APP.closeAddDriverModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-colors cursor-pointer">
+                <div class="modal-dialog-footer">
+                    <button type="button" onclick="window.SVM_APP.closeAddDriverModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer">
                         Cancel
                     </button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold shadow-lg shadow-emerald-500/25 transition-all cursor-pointer">
-                        Save Driver
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-xs font-bold shadow-lg shadow-[#10B981]/25 transition-all cursor-pointer">
+                        Save Driver (Demo)
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- ---------------------------------------------------------------------- -->
-    <!-- MODAL 4: ADD NEW HUB & MANAGER (Owner Power Feature)                   -->
-    <!-- ---------------------------------------------------------------------- -->
-    <div id="add-manager-modal" class="modal-overlay">
-        <div class="modal-dialog-box glass-panel-elevated max-w-lg w-full p-6 sm:p-7 border border-white/15 relative shadow-2xl">
-            <div class="flex justify-between items-start pb-4 border-b border-white/10 mb-4">
+    <!-- ====================================================================== -->
+    <!-- MODAL 4: ADD VEHICLE (Demo Modal)                                      -->
+    <!-- ====================================================================== -->
+    <div id="add-vehicle-modal" class="modal-overlay">
+        <div class="modal-dialog-box max-w-lg w-full">
+            <div class="modal-dialog-header">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center font-bold text-lg shadow-md shadow-amber-500/30 border border-white/20">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#3185F6] to-indigo-600 flex items-center justify-center font-bold text-lg shadow-md shadow-[#3185F6]/30 border border-white/20">
+                        🚕
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-[#3185F6] uppercase tracking-widest block font-mono">DEMO FLEET</span>
+                        <h3 class="font-extrabold text-base text-white">Add New Commercial Vehicle</h3>
+                    </div>
+                </div>
+                <button type="button" onclick="window.SVM_APP.closeAddVehicleModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form onsubmit="window.SVM_APP.submitAddVehicle(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-dialog-body space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Registration Plate *</label>
+                            <input id="add-veh-reg" type="text" placeholder="e.g. TS09 UB 9999" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono uppercase font-bold" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Vehicle Model *</label>
+                            <input id="add-veh-model" type="text" placeholder="e.g. Hyundai Aura" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Hub *</label>
+                            <select id="add-veh-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <option value="mgr_moosapet_01">Moosapet Central Hub</option>
+                                <option value="mgr_kukatpally_02">Kukatpally Y-Junction</option>
+                                <option value="mgr_madhapur_03">Madhapur Hitec City</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Primary Platform *</label>
+                            <select id="add-veh-platform" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <option value="Uber">Uber</option>
+                                <option value="Rapido">Rapido</option>
+                                <option value="Ola">Ola</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-dialog-footer">
+                    <button type="button" onclick="window.SVM_APP.closeAddVehicleModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#3185F6] hover:bg-blue-600 text-white text-xs font-bold shadow-lg shadow-[#3185F6]/25 transition-all cursor-pointer">
+                        Save Vehicle (Demo)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- MODAL 5: ADD NEW HUB & MANAGER (Demo Modal)                            -->
+    <!-- ====================================================================== -->
+    <div id="add-manager-modal" class="modal-overlay">
+        <div class="modal-dialog-box max-w-lg w-full">
+            <div class="modal-dialog-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#F59E0B] to-amber-600 flex items-center justify-center font-bold text-lg shadow-md shadow-[#F59E0B]/30 border border-white/20">
                         🏢
                     </div>
                     <div>
-                        <span class="text-[10px] font-bold text-amber-400 uppercase tracking-widest block font-mono">OWNER PORTAL • HUB MANAGEMENT</span>
-                        <h3 class="font-extrabold text-lg text-white">Add Hub & Station Manager</h3>
+                        <span class="text-[10px] font-bold text-[#F59E0B] uppercase tracking-widest block font-mono">DEMO MANAGEMENT</span>
+                        <h3 class="font-extrabold text-base text-white">Add Hub & Station Manager</h3>
                     </div>
                 </div>
-                <button type="button" onclick="window.SVM_APP.closeAddManagerModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors">
+                <button type="button" onclick="window.SVM_APP.closeAddManagerModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <form onsubmit="window.SVM_APP.submitAddManager(event)" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Hub Official Name *</label>
-                        <input id="add-hub-name" type="text" placeholder="e.g. Gachibowli Hub" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
+            <form onsubmit="window.SVM_APP.submitAddManager(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-dialog-body space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Hub Official Name *</label>
+                            <input id="add-hub-name" type="text" placeholder="e.g. Gachibowli Hub" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Short Name (Badge) *</label>
+                            <input id="add-hub-short" type="text" placeholder="e.g. Gachibowli" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Short Name (Badge) *</label>
-                        <input id="add-hub-short" type="text" placeholder="e.g. Gachibowli" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Manager Full Name *</label>
+                            <input id="add-hub-manager" type="text" placeholder="e.g. Ramesh Varma" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Manager Mobile Phone *</label>
+                            <input id="add-hub-phone" type="tel" placeholder="+91 98480 11223" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Manager Full Name *</label>
-                        <input id="add-hub-manager" type="text" placeholder="e.g. Ramesh Varma" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Manager Mobile Phone *</label>
-                        <input id="add-hub-phone" type="tel" placeholder="9848011223" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Access PIN *</label>
-                        <input id="add-hub-pin" type="text" placeholder="4567" maxlength="4" value="4567" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Cabs Allocated</label>
-                        <input id="add-hub-cabs" type="number" min="1" max="50" value="8" required
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Accent Color</label>
-                        <select id="add-hub-color" class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
-                            <option value="#6366F1">Electric Indigo</option>
-                            <option value="#0EA5E9">Cyber Sky</option>
-                            <option value="#10B981">Mint Emerald</option>
-                            <option value="#F59E0B">Amber Gold</option>
-                            <option value="#8B5CF6">Royal Purple</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Latitude</label>
-                        <input id="add-hub-lat" type="number" step="0.0001" value="17.4400"
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Longitude</label>
-                        <input id="add-hub-lng" type="number" step="0.0001" value="78.3489"
-                            class="w-full bg-[#0E121C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" />
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-3 border-t border-white/10">
-                    <button type="button" onclick="window.SVM_APP.closeAddManagerModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-colors cursor-pointer">
+                <div class="modal-dialog-footer">
+                    <button type="button" onclick="window.SVM_APP.closeAddManagerModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer">
                         Cancel
                     </button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-xs font-bold shadow-lg shadow-amber-500/25 transition-all cursor-pointer">
-                        Create Hub & Manager
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-amber-600 text-white text-xs font-bold shadow-lg shadow-[#F59E0B]/25 transition-all cursor-pointer">
+                        Create Hub & Manager (Demo)
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Floating Action Button for Quick Shift Entry (Mobile & Desktop) -->
-    <button type="button" onclick="window.SVM_APP.openManualEntryModal()" class="fixed bottom-6 right-6 md:hidden w-14 h-14 rounded-full bg-[#6366F1] hover:bg-[#4F46E5] text-white flex items-center justify-center shadow-2xl shadow-indigo-500/50 z-40 border border-white/20 active:scale-95 transition-all" title="Add Shift">
-        <i data-lucide="plus" class="w-6 h-6"></i>
-    </button>
+    <!-- Hidden compatibility selectors -->
+    <select id="role-selector" class="hidden"></select>
+    <div id="hub-filter-pills" class="hidden"></div>
 
-    <!-- Application Core Scripts with Cache-Busting Version Query Strings -->
-    <script src="js/config.js?v=20261109_v3_executive"></script>
-    <script src="js/calculator.js?v=20261109_v3_executive"></script>
-    <script src="js/data.js?v=20261109_v3_executive"></script>
-    <script src="js/map.js?v=20261109_v3_executive"></script>
-    <script src="js/app.js?v=20261109_v3_executive"></script>
+    <!-- Core Scripts (Isolated Mock Data Layer for Client Demo) -->
+    <script src="js/calculator.js?v=20261110_demo_v4"></script>
+    <script src="js/mockData.js?v=20261110_demo_v4"></script>
+    <script src="js/map.js?v=20261110_demo_v4"></script>
+    <script src="js/app.js?v=20261110_demo_v4"></script>
 </body>
 </html>

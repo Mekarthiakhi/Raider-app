@@ -1,34 +1,49 @@
 /* ============================================================================
-   SVM FLEET Operating System (Executive Web Edition v2.5 PRO)
-   Hyderabad Commercial Cabs Management (Moosapet • Kukatpally • Madhapur)
-   High-Performance Dark Glassmorphism Design System (Linear / Stripe / Vercel Aesthetic)
+   SVM FLEET Operating System (Client Demonstration Edition)
+   Exact Enterprise SaaS Design System:
+     - Background: Deep Navy #080D1B
+     - Sidebar & Header: #0B1020
+     - Card Background: #11182A
+     - Elevated Card: #161F33
+     - Primary Purple: #6655F5
+     - Tech Blue: #3185F6
+     - Success Green: #10B981
+     - Warning Amber: #F59E0B
+     - Danger Red: #EF4444
+     - Borders: #263149 / #1E273D
+     - Typography: Inter / Plus Jakarta Sans & JetBrains Mono
    ============================================================================ */
 
 :root {
-    --bg-base: #07090E;
-    --bg-surface: #0E121C;
-    --bg-elevated: #141824;
+    --bg-main: #080D1B;
+    --bg-sidebar: #0B1020;
+    --bg-card: #11182A;
+    --bg-card-hover: #162038;
+    --bg-elevated: #161F33;
     
-    --surface-glass: rgba(14, 18, 28, 0.78);
-    --surface-glass-hover: rgba(22, 28, 44, 0.88);
-    --surface-border: rgba(255, 255, 255, 0.08);
-    --surface-border-hover: rgba(99, 102, 241, 0.45);
+    --border-subtle: #1E273D;
+    --border-card: #263149;
+    --border-hover: #6655F5;
     
-    --accent-indigo: #6366F1;
-    --accent-indigo-hover: #4F46E5;
-    --accent-indigo-glow: rgba(99, 102, 241, 0.35);
+    --primary-purple: #6655F5;
+    --primary-purple-hover: #5443E8;
+    --primary-glow: rgba(102, 85, 245, 0.35);
 
-    --color-emerald: #10B981;
-    --color-emerald-glow: rgba(16, 185, 129, 0.3);
-    --color-amber: #F59E0B;
-    --color-amber-glow: rgba(245, 158, 11, 0.25);
-    --color-sky: #0EA5E9;
-    --color-coral: #EF4444;
-    --color-purple: #8B5CF6;
+    --tech-blue: #3185F6;
+    --tech-blue-glow: rgba(49, 133, 246, 0.25);
 
-    --text-white: #F8FAFC;
-    --text-muted: #94A3B8;
-    --text-dim: #64748B;
+    --success-emerald: #10B981;
+    --success-glow: rgba(16, 185, 129, 0.25);
+    
+    --warning-amber: #F59E0B;
+    --warning-glow: rgba(245, 158, 11, 0.25);
+
+    --danger-red: #EF4444;
+    --danger-glow: rgba(239, 68, 68, 0.25);
+
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
 }
 
 * {
@@ -43,16 +58,9 @@ html {
 }
 
 body {
-    background-color: var(--bg-base);
-    background-image: 
-        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(99, 102, 241, 0.16) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 85% 90%, rgba(16, 185, 129, 0.10) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 30% at 50% 40%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
-        radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-    background-size: 100% 100%, 100% 100%, 100% 100%, 24px 24px;
-    background-attachment: fixed;
-    color: var(--text-white);
-    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
@@ -64,41 +72,99 @@ body.modal-open {
     touch-action: none !important;
 }
 
-/* Monospace metrics font */
+/* Monospace font for monetary metrics, license plates, and timestamps */
 .font-mono, [class*="font-mono"] {
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
     font-feature-settings: "tnum" 1, "zero" 1;
 }
 
 /* --------------------------------------------------------------------------
-   Glassmorphism Surfaces
+   SaaS Card & Glass Panels
    -------------------------------------------------------------------------- */
-.glass-panel {
-    background: var(--surface-glass);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--surface-border);
+.saas-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
     border-radius: 16px;
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.glass-panel:hover {
-    border-color: var(--surface-border-hover);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.15), 0 16px 36px -10px rgba(99, 102, 241, 0.2);
+.saas-card:hover {
+    border-color: rgba(102, 85, 245, 0.4);
+    box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.6);
 }
 
-.glass-panel-elevated {
-    background: rgba(14, 18, 30, 0.95);
-    backdrop-filter: blur(32px);
-    -webkit-backdrop-filter: blur(32px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 22px;
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.16), 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 50px -10px rgba(99, 102, 241, 0.25);
+.saas-card-elevated {
+    background: var(--bg-elevated);
+    border: 1px solid #2B3854;
+    border-radius: 20px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 40px -10px rgba(102, 85, 245, 0.25);
 }
 
 /* --------------------------------------------------------------------------
-   CRITICAL MODAL OVERLAY ARCHITECTURE (Pure Class-State, Top-Aligned Scroll)
+   Sidebar Navigation Links
+   -------------------------------------------------------------------------- */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 12px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.sidebar-link:hover {
+    color: var(--text-primary);
+    background: #162038;
+}
+
+.sidebar-link.active {
+    background: var(--primary-purple);
+    color: #FFFFFF;
+    box-shadow: 0 4px 16px -2px var(--primary-glow);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-link.active i, .sidebar-link.active svg {
+    color: #FFFFFF !important;
+}
+
+/* --------------------------------------------------------------------------
+   KPI Theme Cards
+   -------------------------------------------------------------------------- */
+.kpi-card-purple {
+    background: linear-gradient(135deg, #161633 0%, #11182A 100%);
+    border: 1px solid #2C2D5A;
+}
+
+.kpi-card-blue {
+    background: linear-gradient(135deg, #101E38 0%, #11182A 100%);
+    border: 1px solid #1E3760;
+}
+
+.kpi-card-amber {
+    background: linear-gradient(135deg, #2D1E10 0%, #11182A 100%);
+    border: 1px solid #5A3D1C;
+}
+
+.kpi-card-teal {
+    background: linear-gradient(135deg, #0D2633 0%, #11182A 100%);
+    border: 1px solid #1A4D60;
+}
+
+.kpi-card-emerald {
+    background: linear-gradient(135deg, #0D2B24 0%, #0A1C18 100%);
+    border: 1px solid #1A5445;
+}
+
+/* --------------------------------------------------------------------------
+   MODAL OVERLAY (Class-State Only, Centered Overlay, Never Clips)
    -------------------------------------------------------------------------- */
 .modal-overlay {
     display: none;
@@ -111,36 +177,71 @@ body.modal-open {
     height: 100vh;
     inset: 0;
     z-index: 999999;
-    background: rgba(4, 6, 12, 0.86);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    padding: 2.5rem 1rem 3rem 1rem;
+    padding: 1.25rem;
     overflow-y: auto;
     overflow-x: hidden;
+    background: rgba(4, 7, 18, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
 }
 
 .modal-overlay.open {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .modal-dialog-box {
     width: 100%;
-    margin: 0 auto;
+    margin: auto;
     position: relative;
     transform: translateY(0) scale(1);
-    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
     opacity: 1;
+    background: #11182A;
+    border: 1px solid #263149;
+    border-radius: 20px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.95), 0 0 40px -10px rgba(102, 85, 245, 0.35);
+    max-height: min(90vh, 780px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-dialog-header {
+    flex-shrink: 0;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #263149;
+    background: #11182A;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-dialog-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.modal-dialog-footer {
+    flex-shrink: 0;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #263149;
+    background: #0E1426;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
 }
 
 .modal-overlay:not(.open) .modal-dialog-box {
-    transform: translateY(16px) scale(0.96);
+    transform: translateY(18px) scale(0.96);
     opacity: 0;
 }
 
 .modal-overlay.open .modal-dialog-box {
-    animation: modalSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: modalSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes modalSlideIn {
@@ -155,106 +256,81 @@ body.modal-open {
 }
 
 /* --------------------------------------------------------------------------
-   Custom Dark Inputs & Selects
+   Inputs, Controls & Selects
    -------------------------------------------------------------------------- */
 select, input, textarea {
-    background-color: #0C0F17 !important;
-    color: var(--text-white) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 12px;
-    outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-select option {
-    background-color: #0A0D14 !important;
-    color: #F8FAFC !important;
-    padding: 12px !important;
+    background-color: #080D1B !important;
+    border-color: #263149 !important;
+    color: var(--text-primary) !important;
+    outline: none !important;
+    transition: all 0.15s ease !important;
 }
 
 select:focus, input:focus, textarea:focus {
-    border-color: var(--accent-indigo) !important;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
-    background-color: #101522 !important;
+    border-color: var(--primary-purple) !important;
+    box-shadow: 0 0 0 3px rgba(102, 85, 245, 0.25) !important;
+    background-color: #0E1428 !important;
 }
 
 /* --------------------------------------------------------------------------
-   Leaflet OSM Dark Night Mode (Zero Watermark & Zero API Keys!)
+   Leaflet Map OSM Dark Night Mode
    -------------------------------------------------------------------------- */
 .leaflet-container {
-    background: #080A0F !important;
+    background: #080D1B !important;
     font-family: inherit;
 }
 
-/* Inverts standard OSM tiles into a beautiful crisp night dark mode */
 .leaflet-tile {
     filter: invert(100%) hue-rotate(180deg) brightness(88%) contrast(115%) saturate(40%) !important;
 }
 
 .leaflet-bar a {
-    background-color: #121621 !important;
-    border-color: var(--surface-border) !important;
-    color: var(--text-white) !important;
+    background-color: #11182A !important;
+    border-color: var(--border-card) !important;
+    color: var(--text-primary) !important;
 }
 
 .leaflet-popup-content-wrapper {
-    background: #121621 !important;
-    color: var(--text-white) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 14px;
+    background: #11182A !important;
+    color: var(--text-primary) !important;
+    border: 1px solid #263149;
+    border-radius: 12px;
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
 }
 
 .leaflet-popup-tip {
-    background: #121621 !important;
+    background: #11182A !important;
 }
 
-/* Custom Vehicle Pin */
+/* Vehicle status markers (Active green, Idle yellow, Offline red) */
 .cab-marker {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background: #121621;
-    border: 2px solid var(--accent-indigo);
-    box-shadow: 0 0 12px var(--accent-indigo-glow);
+    background: #11182A;
+    border: 2px solid var(--primary-purple);
+    box-shadow: 0 0 12px var(--primary-glow);
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.15s ease;
 }
 .cab-marker.active {
-    border-color: var(--color-emerald);
-    box-shadow: 0 0 14px var(--color-emerald-glow);
+    border-color: var(--success-emerald);
+    box-shadow: 0 0 14px var(--success-glow);
 }
 .cab-marker.idle {
-    border-color: var(--color-amber);
-    box-shadow: 0 0 10px var(--color-amber-glow);
+    border-color: var(--warning-amber);
+    box-shadow: 0 0 12px var(--warning-glow);
+}
+.cab-marker.offline {
+    border-color: var(--danger-red);
+    box-shadow: 0 0 10px var(--danger-glow);
 }
 .cab-marker:hover {
     transform: scale(1.22);
     z-index: 9999 !important;
-}
-
-/* --------------------------------------------------------------------------
-   Skeleton Shimmer Loaders
-   -------------------------------------------------------------------------- */
-.skeleton-shimmer {
-    background: linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.03) 0%,
-        rgba(255, 255, 255, 0.09) 50%,
-        rgba(255, 255, 255, 0.03) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.6s infinite ease-in-out;
-    border-radius: 8px;
-}
-
-@keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
 }
 
 /* --------------------------------------------------------------------------
@@ -264,7 +340,7 @@ select:focus, input:focus, textarea:focus {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: var(--color-emerald);
+    background-color: var(--success-emerald);
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
     animation: pulse 1.8s infinite;
     display: inline-block;
@@ -277,7 +353,7 @@ select:focus, input:focus, textarea:focus {
     }
     70% {
         transform: scale(1);
-        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+        box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
     }
     100% {
         transform: scale(0.95);
@@ -293,26 +369,25 @@ select:focus, input:focus, textarea:focus {
     height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: var(--bg-base);
+    background: var(--bg-main);
 }
 ::-webkit-scrollbar-thumb {
-    background: #232A3B;
+    background: #1E273D;
     border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-indigo);
+    background: var(--primary-purple);
 }
 
 /* --------------------------------------------------------------------------
-   Print Styles for A4 Statement Export
+   Printable Driver Slip
    -------------------------------------------------------------------------- */
 @media print {
     body {
         background-color: #ffffff !important;
         color: #000000 !important;
-        background-image: none !important;
     }
-    .no-print, header, nav, .map-container, .role-selector, button, .modal-overlay {
+    .no-print, header, aside, .map-container, button, .modal-overlay {
         display: none !important;
     }
 }
