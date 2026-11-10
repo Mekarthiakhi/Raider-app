@@ -21,35 +21,159 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <!-- Custom Glassmorphism Stylesheet (Single Source of Truth with Cache-Busting Version) -->
-    <link rel="stylesheet" href="css/styles.css?v=20261110_demo_v6">
+    <link rel="stylesheet" href="css/styles.css?v=20261110_v2">
 </head>
-<body class="bg-[#080D1B] text-slate-100 min-h-screen flex font-sans selection:bg-[#6655F5] selection:text-white">
+<body class="auth-locked bg-[#080D1B] text-slate-100 min-h-screen flex font-sans selection:bg-[#6655F5] selection:text-white">
+
+    <!-- ====================================================================== -->
+    <!-- AUTHENTICATION GATE & LOGIN SCREEN OVERLAY                             -->
+    <!-- ====================================================================== -->
+    <div id="auth-login-screen" class="fixed inset-0 z-[1000000] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="auth-login-title">
+        <div id="auth-login-card" class="auth-card saas-card-elevated w-full max-w-md p-6 sm:p-8">
+
+            <!-- Branding Header -->
+            <div class="flex items-center gap-3.5 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#6655F5] to-[#8B5CF6] flex items-center justify-center font-black text-2xl shadow-lg shadow-[#6655F5]/40 border border-white/20 shrink-0">
+                    🚕
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 id="auth-login-title" class="font-black text-lg sm:text-xl tracking-tight text-white">SVM Fleet</h1>
+                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-[#6655F5]/30 text-[#A78BFA] border border-[#6655F5]/40 font-mono">
+                            v2.0 PRO
+                        </span>
+                    </div>
+                    <p class="text-xs text-[#94A3B8] font-medium mt-0.5">
+                        Hyderabad Commercial Fleet Command
+                    </p>
+                </div>
+            </div>
+
+            <!-- Role Switcher Tabs -->
+            <div class="flex items-center gap-2 mb-5" role="tablist" aria-label="Select sign-in role">
+                <button type="button" id="tab-login-owner" data-login-role="OWNER" class="login-role-tab active" onclick="window.SVM_APP.switchLoginRoleTab('OWNER')" role="tab" aria-selected="true" aria-controls="login-owner-panel">
+                    <i data-lucide="crown" class="w-4 h-4"></i>
+                    <span>Fleet Owner</span>
+                </button>
+                <button type="button" id="tab-login-manager" data-login-role="MANAGER" class="login-role-tab" onclick="window.SVM_APP.switchLoginRoleTab('MANAGER')" role="tab" aria-selected="false" aria-controls="login-manager-panel">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Hub Manager</span>
+                </button>
+            </div>
+
+            <!-- Login Error Banner -->
+            <div id="login-error-banner" class="hidden mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 text-xs font-semibold flex items-center gap-2" role="alert" aria-live="polite">
+                <i data-lucide="alert-circle" class="w-4 h-4 text-red-400 shrink-0"></i>
+                <span id="login-error-text">Invalid credentials. Please verify and try again.</span>
+            </div>
+
+            <!-- Panel 1: Fleet Owner Login -->
+            <div id="login-owner-panel" role="tabpanel" aria-labelledby="tab-login-owner">
+                <form id="form-owner-login" onsubmit="window.SVM_APP.handleOwnerLogin(event)" class="space-y-4">
+                    <div>
+                        <label for="login-owner-phone" class="block text-xs font-semibold text-slate-300 mb-1.5">Owner Mobile Number</label>
+                        <input id="login-owner-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="15" placeholder="e.g. 9391915013"
+                            class="auth-input bg-[#080D1B] border border-[#263149] text-white font-mono placeholder-[#64748B]" />
+                    </div>
+
+                    <div>
+                        <label for="login-owner-secret" class="block text-xs font-semibold text-slate-300 mb-1.5">Owner Secret Key</label>
+                        <input id="login-owner-secret" type="password" autocomplete="current-password" maxlength="20" placeholder="Default: 7777" required
+                            class="auth-input bg-[#080D1B] border border-[#263149] text-white font-mono placeholder-[#64748B]" />
+                    </div>
+
+                    <div class="pt-1 space-y-2.5">
+                        <button type="submit" class="auth-submit-btn flex items-center justify-center gap-2 text-sm px-4 py-2.5">
+                            <i data-lucide="lock" class="w-4 h-4"></i>
+                            <span>Access Owner Portal</span>
+                        </button>
+                        <button id="btn-demo-owner-login" type="button" onclick="window.SVM_APP.handleDemoLogin('OWNER')"
+                            class="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-[#161F33] hover:bg-[#1E273D] border border-[#6655F5]/40 text-[#A78BFA] hover:text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                            <span>⚡ 1-Tap Owner Demo</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Panel 2: Hub Manager Login -->
+            <div id="login-manager-panel" class="hidden" role="tabpanel" aria-labelledby="tab-login-manager">
+                <form id="form-manager-login" onsubmit="window.SVM_APP.handleManagerLogin(event)" class="space-y-4">
+                    <div>
+                        <label for="login-manager-hub" class="block text-xs font-semibold text-slate-300 mb-1.5">Select Operating Hub</label>
+                        <select id="login-manager-hub" class="auth-input bg-[#080D1B] border border-[#263149] text-white cursor-pointer">
+                            <option value="mgr_moosapet_01">Moosapet Central Hub (Srinivas Rao)</option>
+                            <option value="mgr_kukatpally_02">Kukatpally Y-Junction Hub (Venkatesh Naidu)</option>
+                            <option value="mgr_madhapur_03">Madhapur Hitec City Hub (Mohammed Farooq)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="login-manager-phone" class="block text-xs font-semibold text-slate-300 mb-1.5">Manager Mobile (Optional Override)</label>
+                        <input id="login-manager-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="15" placeholder="Or enter mobile e.g. 9849012345"
+                            class="auth-input bg-[#080D1B] border border-[#263149] text-white font-mono placeholder-[#64748B]" />
+                    </div>
+
+                    <div>
+                        <label for="login-manager-pin" class="block text-xs font-semibold text-slate-300 mb-1.5">Hub Manager PIN</label>
+                        <input id="login-manager-pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="20" placeholder="e.g. 1234 (Moosapet)" required
+                            class="auth-input bg-[#080D1B] border border-[#263149] text-white font-mono placeholder-[#64748B]" />
+                    </div>
+
+                    <div class="pt-1 space-y-2.5">
+                        <button type="submit" class="auth-submit-btn flex items-center justify-center gap-2 text-sm px-4 py-2.5">
+                            <i data-lucide="log-in" class="w-4 h-4"></i>
+                            <span>Sign In as Hub Manager</span>
+                        </button>
+                        <button id="btn-demo-manager-login" type="button" onclick="window.SVM_APP.handleDemoLogin('MANAGER')"
+                            class="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-[#161F33] hover:bg-[#1E273D] border border-[#3185F6]/40 text-[#60A5FA] hover:text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                            <span>⚡ 1-Tap Moosapet Manager Demo</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Demo Hints Footer -->
+            <div class="mt-6 pt-4 border-t border-[#263149]/80 text-center">
+                <p class="text-[11px] text-[#94A3B8] font-mono leading-relaxed">
+                    Owner Secret Key: <strong class="text-white">7777</strong> • Moosapet PIN: <strong class="text-white">1234</strong> • Kukatpally: <strong class="text-white">2345</strong> • Madhapur: <strong class="text-white">3456</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Off-Canvas Sidebar Backdrop -->
+    <div id="mobile-sidebar-backdrop" onclick="window.SVM_APP.closeMobileSidebar()" aria-hidden="true"></div>
 
     <!-- ====================================================================== -->
     <!-- LEFT SIDEBAR NAVIGATION (Matching Client Mockup media_1794250116022)   -->
     <!-- ====================================================================== -->
-    <aside id="app-sidebar" class="w-64 bg-[#0B1020] border-r border-[#1E273D] flex flex-col justify-between shrink-0 min-h-screen sticky top-0 h-screen z-30 transition-all duration-300">
+    <aside id="app-sidebar" class="fixed inset-y-0 left-0 -translate-x-full md:translate-x-0 md:static w-64 bg-[#0B1020] border-r border-[#1E273D] flex flex-col justify-between shrink-0 min-h-screen md:sticky md:top-0 md:h-screen z-30 transition-all duration-300">
         
         <!-- Top: Brand Header & Navigation Menu -->
         <div class="p-5 flex flex-col gap-5 overflow-y-auto">
             
             <!-- Logo Branding & DEMO MODE Tag -->
             <div class="flex flex-col gap-2.5">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6655F5] to-[#8B5CF6] flex items-center justify-center font-black text-xl shadow-lg shadow-[#6655F5]/35 border border-white/20 shrink-0">
-                        🚕
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="font-black text-base tracking-tight text-white">SVM Fleet</span>
-                            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#6655F5]/30 text-[#8B5CF6] border border-[#6655F5]/40 font-mono">
-                                v2.0 PRO
-                            </span>
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6655F5] to-[#8B5CF6] flex items-center justify-center font-black text-xl shadow-lg shadow-[#6655F5]/35 border border-white/20 shrink-0">
+                            🚕
                         </div>
-                        <p class="text-[11px] text-[#94A3B8] font-medium tracking-wide">
-                            Fleet Command Center
-                        </p>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-black text-base tracking-tight text-white truncate">SVM Fleet</span>
+                                <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#6655F5]/30 text-[#8B5CF6] border border-[#6655F5]/40 font-mono shrink-0">
+                                    v2.0 PRO
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-[#94A3B8] font-medium tracking-wide truncate">
+                                Fleet Command Center
+                            </p>
+                        </div>
                     </div>
+                    <button id="mobile-sidebar-close-btn" type="button" onclick="window.SVM_APP.closeMobileSidebar()" class="md:hidden p-2 rounded-xl bg-[#161F33] border border-[#263149] text-slate-300 hover:text-white hover:border-[#6655F5] transition-colors cursor-pointer shrink-0" aria-label="Close navigation menu">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
                 </div>
 
                 <!-- Amber Demo Mode Pill Badge in Sidebar -->
@@ -100,7 +224,7 @@
                     <i data-lucide="bar-chart-2" class="w-4 h-4 text-[#94A3B8]"></i>
                     <span>Analytics</span>
                 </button>
-                <button type="button" data-nav-tab="settings" class="sidebar-link">
+                <button id="nav-tab-settings" data-owner-only="true" type="button" data-nav-tab="settings" class="sidebar-link">
                     <i data-lucide="settings" class="w-4 h-4 text-[#94A3B8]"></i>
                     <span>Settings</span>
                 </button>
@@ -111,8 +235,8 @@
             </nav>
         </div>
 
-        <!-- Bottom: Glowing Purple Car Graphic & Demo Disclaimer Card -->
-        <div class="p-4 relative overflow-hidden flex flex-col items-center gap-2 border-t border-[#1E273D]/60 bg-[#080D1B]/50">
+        <!-- Bottom: Glowing Purple Car Graphic, Demo Disclaimer Card & Logout -->
+        <div class="p-4 relative overflow-hidden flex flex-col items-center gap-2 border-t border-[#1E273D]/60 bg-[#080D1B]/50 shrink-0">
             <!-- Stylized Car Graphic with Purple Neon Glow -->
             <div class="w-full relative py-1">
                 <svg viewBox="0 0 280 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto drop-shadow-[0_0_16px_rgba(102,85,245,0.6)]">
@@ -145,6 +269,12 @@
                     </p>
                 </div>
             </div>
+
+            <!-- Sidebar Logout Button -->
+            <button id="sidebar-logout-btn" type="button" onclick="window.SVM_APP.logout()" class="w-full mt-1 py-2.5 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 hover:text-red-300 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer min-h-[44px]">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+                <span>Sign Out</span>
+            </button>
         </div>
 
     </aside>
@@ -152,22 +282,25 @@
     <!-- ====================================================================== -->
     <!-- MAIN CONTENT AREA                                                      -->
     <!-- ====================================================================== -->
-    <div class="flex-1 flex flex-col min-w-0 bg-[#080D1B]">
+    <div id="app-main-wrapper" class="flex-1 flex flex-col min-w-0 bg-[#080D1B]">
 
         <!-- Top App Bar -->
-        <header class="h-16 bg-[#0B1020] border-b border-[#1E273D] flex items-center justify-between px-6 sticky top-0 z-40">
+        <header class="h-16 bg-[#0B1020] border-b border-[#1E273D] flex items-center justify-between px-3 sm:px-6 gap-2 sticky top-0 z-40">
             
-            <!-- Left: Branch / Hub Dropdown Selector -->
-            <div class="flex items-center gap-3">
-                <div class="relative flex items-center">
-                    <span class="absolute left-3 text-sm pointer-events-none">📍</span>
-                    <select id="top-branch-selector" onchange="window.SVM_APP.filterHub(this.value)" class="bg-[#11182A] border border-[#263149] rounded-xl pl-8 pr-8 py-2 text-xs font-bold text-white cursor-pointer shadow-sm appearance-none hover:border-[#6655F5] transition-colors">
+            <!-- Left: Mobile Drawer Trigger + Branch / Hub Dropdown Selector -->
+            <div class="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
+                <button id="mobile-menu-btn" type="button" onclick="window.SVM_APP.toggleMobileSidebar()" class="md:hidden p-2 rounded-xl bg-[#11182A] border border-[#263149] hover:border-[#6655F5] text-slate-200 hover:text-white transition-colors cursor-pointer shrink-0" aria-label="Open navigation menu" aria-controls="app-sidebar" aria-expanded="false">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+                <div class="relative flex items-center min-w-0 flex-1 sm:flex-initial">
+                    <span class="absolute left-2.5 sm:left-3 text-sm pointer-events-none">📍</span>
+                    <select id="top-branch-selector" onchange="window.SVM_APP.filterHub(this.value)" class="w-full sm:w-auto bg-[#11182A] border border-[#263149] rounded-xl pl-7 sm:pl-8 pr-7 sm:pr-8 py-2 text-xs font-bold text-white cursor-pointer shadow-sm appearance-none hover:border-[#6655F5] transition-colors truncate" aria-label="Select operating hub">
                         <option value="ALL" selected>Hyderabad (All Hubs)</option>
                         <option value="mgr_moosapet_01">Moosapet Central Hub</option>
                         <option value="mgr_kukatpally_02">Kukatpally Y-Junction</option>
                         <option value="mgr_madhapur_03">Madhapur Hitec City</option>
                     </select>
-                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748B] absolute right-3 pointer-events-none"></i>
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748B] absolute right-2.5 sm:right-3 pointer-events-none"></i>
                 </div>
             </div>
 
@@ -179,24 +312,24 @@
                 <span class="absolute right-2.5 top-2 px-1.5 py-0.5 rounded bg-[#162038] text-[10px] font-mono text-[#64748B] border border-[#263149]">Ctrl + K</span>
             </div>
 
-            <!-- Right: Live Cloud DB Badge, Notification Bell, User Profile -->
-            <div class="flex items-center gap-3.5">
+            <!-- Right: Live Cloud DB Badge, Notification Bell, User Profile, Logout -->
+            <div class="flex items-center gap-1.5 sm:gap-3.5 shrink-0">
                 
                 <!-- Cloud Status Indicator -->
-                <div id="db-cloud-indicator" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981]">
-                    <span class="pulse-dot"></span>
-                    <span class="text-[10px] font-extrabold uppercase tracking-wider">CLOUD DB LIVE</span>
+                <div id="db-cloud-indicator" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] whitespace-nowrap shrink-0">
+                    <span class="pulse-dot shrink-0"></span>
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider whitespace-nowrap"><span class="hidden sm:inline">CLOUD DB </span>LIVE</span>
                 </div>
 
                 <!-- Interactive Notification Bell with Live Telemetry Dropdown -->
-                <div class="relative">
-                    <button id="btn-notification-bell" type="button" onclick="window.SVM_APP.toggleNotifications()" class="relative p-2 rounded-xl bg-[#11182A] border border-[#263149] hover:border-[#6655F5] text-slate-300 hover:text-white transition-colors cursor-pointer" title="Telemetry & Shift Alerts">
+                <div class="relative shrink-0">
+                    <button id="btn-notification-bell" type="button" onclick="window.SVM_APP.toggleNotifications()" class="relative p-2 rounded-xl bg-[#11182A] border border-[#263149] hover:border-[#6655F5] text-slate-300 hover:text-white transition-colors cursor-pointer" title="Telemetry & Shift Alerts" aria-label="Telemetry and Shift Alerts">
                         <i data-lucide="bell" class="w-4 h-4"></i>
                         <span id="notif-badge" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#6655F5] text-white text-[9px] font-bold flex items-center justify-center animate-pulse">4</span>
                     </button>
 
                     <!-- Notifications Dropdown Floating Panel -->
-                    <div id="notification-dropdown" class="absolute right-0 mt-2.5 w-80 sm:w-96 bg-[#11182A] border border-[#263149] rounded-2xl shadow-2xl z-50 overflow-hidden divide-y divide-[#1E273D]">
+                    <div id="notification-dropdown" class="absolute right-0 mt-2.5 w-80 sm:w-96 max-w-[calc(100vw-1.5rem)] bg-[#11182A] border border-[#263149] rounded-2xl shadow-2xl z-50 overflow-hidden divide-y divide-[#1E273D]">
                         <div class="p-3.5 bg-[#0E1528] flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <i data-lucide="bell-ring" class="w-4 h-4 text-[#6655F5]"></i>
@@ -217,28 +350,34 @@
                 </div>
 
                 <!-- User Guide Walkthrough Trigger Button -->
-                <button type="button" onclick="window.SVM_APP.openUserGuideModal()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F33] border border-[#263149] hover:border-[#6655F5] text-slate-200 text-xs font-bold transition-all cursor-pointer" title="Interactive System Manual">
+                <button type="button" onclick="window.SVM_APP.openUserGuideModal()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F33] border border-[#263149] hover:border-[#6655F5] text-slate-200 text-xs font-bold transition-all cursor-pointer shrink-0" title="Interactive System Manual">
                     <i data-lucide="book-open" class="w-3.5 h-3.5 text-[#6655F5]"></i>
                     <span>User Guide</span>
                 </button>
 
-                <!-- User Profile Pill matching screenshot -->
-                <div class="flex items-center gap-2.5 bg-[#11182A] border border-[#263149] rounded-xl px-3 py-1.5 shadow-sm">
-                    <div class="w-7 h-7 rounded-full bg-[#6655F5] flex items-center justify-center font-bold text-xs text-white shadow-md shadow-[#6655F5]/30">
+                <!-- User Profile Pill -->
+                <div class="flex items-center gap-2 sm:gap-2.5 bg-[#11182A] border border-[#263149] rounded-xl px-1.5 sm:px-3 py-1 sm:py-1.5 shadow-sm shrink-0">
+                    <div id="header-user-avatar" class="w-7 h-7 rounded-full bg-[#6655F5] flex items-center justify-center font-bold text-xs text-white shadow-md shadow-[#6655F5]/30 shrink-0">
                         SF
                     </div>
-                    <div class="text-left hidden lg:block">
-                        <div class="text-xs font-bold text-white leading-tight">Fleet Owner</div>
-                        <div class="text-[10px] text-[#94A3B8]">SVM Fleet (Demo)</div>
+                    <div class="text-left hidden lg:block min-w-0">
+                        <div id="header-user-name" class="text-xs font-bold text-white leading-tight max-w-[110px] truncate">Fleet Owner</div>
+                        <div id="header-user-role" class="text-[10px] text-[#94A3B8] max-w-[110px] truncate">SVM Fleet (Demo)</div>
                     </div>
                 </div>
+
+                <!-- Header Logout Button (Visible on all screen sizes) -->
+                <button id="header-logout-btn" type="button" onclick="window.SVM_APP.logout()" class="min-w-[40px] min-h-[40px] px-2 sm:px-3 py-1.5 rounded-xl bg-[#11182A] border border-[#263149] hover:border-red-500/50 hover:bg-red-500/10 text-slate-300 hover:text-red-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0" title="Sign Out" aria-label="Sign out">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Logout</span>
+                </button>
 
             </div>
 
         </header>
 
         <!-- Main Workspace Canvas -->
-        <main class="flex-1 p-6 lg:p-8 space-y-6 overflow-y-auto">
+        <main class="flex-1 p-3 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 overflow-y-auto">
 
             <!-- ============================================================== -->
             <!-- VIEW 1: FLEET COMMAND CENTER / DASHBOARD                       -->
@@ -295,7 +434,7 @@
                 </div>
 
                 <!-- 5 KPI Cards (Exact match to reference mockup media_1794250116022) -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+                <div id="dashboard-kpi-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
                     
                     <!-- KPI 1: Total Vehicles (Purple) -->
                     <div class="kpi-card-purple p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
@@ -361,8 +500,8 @@
                         </div>
                     </div>
 
-                    <!-- KPI 5: Net Fleet Profit (Emerald) -->
-                    <div class="kpi-card-emerald p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
+                    <!-- KPI 5: Net Fleet Profit (Emerald - Owner Only) -->
+                    <div id="kpi-card-net-profit" data-owner-only="true" class="kpi-card-emerald col-span-2 md:col-span-1 p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
                         <div class="flex items-center justify-between">
                             <div class="w-9 h-9 rounded-xl bg-[#10B981]/25 border border-[#10B981]/40 flex items-center justify-center text-[#10B981]">
                                 <i data-lucide="trending-up" class="w-4 h-4"></i>
@@ -383,25 +522,25 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     
                     <!-- Left: Earnings & Profitability Trend (65% width / 2 cols) -->
-                    <div class="lg:col-span-2 saas-card p-5 flex flex-col justify-between h-[340px]">
-                        <div class="flex items-center justify-between mb-2">
+                    <div class="lg:col-span-2 saas-card p-5 flex flex-col justify-between min-h-[300px] lg:h-[340px]">
+                        <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
                             <div>
                                 <h3 class="font-bold text-sm text-white flex items-center gap-2">
                                     <i data-lucide="trending-up" class="w-4 h-4 text-[#6655F5]"></i>
-                                    <span>Earnings & Profitability Trend</span>
+                                    <span id="trend-chart-title">Earnings & Profitability Trend</span>
                                 </h3>
-                                <p class="text-[11px] text-[#94A3B8] mt-0.5">Gross earnings, expenses and net profit</p>
+                                <p id="trend-chart-subtitle" class="text-[11px] text-[#94A3B8] mt-0.5">Gross earnings, expenses and net profit</p>
                             </div>
 
                             <!-- Daily / Weekly / Monthly Switcher -->
-                            <div class="flex items-center bg-[#080D1B] border border-[#263149] rounded-lg p-0.5 text-xs">
-                                <button id="chart-tf-daily" type="button" onclick="window.SVM_APP.renderTrendChart('daily')" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-[#6655F5] text-white">
+                            <div class="flex items-center bg-[#080D1B] border border-[#263149] rounded-lg p-0.5 text-xs shrink-0">
+                                <button id="chart-tf-daily" type="button" onclick="window.SVM_APP.renderTrendChart('daily')" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-[#6655F5] text-white whitespace-nowrap">
                                     Daily
                                 </button>
-                                <button id="chart-tf-weekly" type="button" onclick="window.SVM_APP.renderTrendChart('weekly')" class="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#94A3B8] hover:text-white">
+                                <button id="chart-tf-weekly" type="button" onclick="window.SVM_APP.renderTrendChart('weekly')" class="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#94A3B8] hover:text-white whitespace-nowrap">
                                     Weekly
                                 </button>
-                                <button id="chart-tf-monthly" type="button" onclick="window.SVM_APP.renderTrendChart('monthly')" class="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#94A3B8] hover:text-white">
+                                <button id="chart-tf-monthly" type="button" onclick="window.SVM_APP.renderTrendChart('monthly')" class="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#94A3B8] hover:text-white whitespace-nowrap">
                                     Monthly
                                 </button>
                             </div>
@@ -417,14 +556,14 @@
                             <span class="flex items-center gap-1.5 text-slate-300">
                                 <span class="w-3 h-3 rounded-full bg-[#6655F5]"></span> Gross Earnings
                             </span>
-                            <span class="flex items-center gap-1.5 text-slate-300">
+                            <span id="trend-legend-net-profit" data-owner-only="true" class="flex items-center gap-1.5 text-slate-300">
                                 <span class="w-3 h-3 rounded-md bg-[#10B981]"></span> Net Profit
                             </span>
                         </div>
                     </div>
 
                     <!-- Right: Platform Earnings Split (35% width / 1 col) -->
-                    <div class="saas-card p-5 flex flex-col justify-between h-[340px]">
+                    <div class="saas-card p-5 flex flex-col justify-between min-h-[300px] lg:h-[340px]">
                         <div>
                             <h3 class="font-bold text-sm text-white flex items-center gap-2">
                                 <i data-lucide="pie-chart" class="w-4 h-4 text-[#8B5CF6]"></i>
@@ -448,7 +587,7 @@
                                     <circle cx="50" cy="50" r="38" stroke="#10B981" stroke-width="14" stroke-dasharray="43 238.8" stroke-dashoffset="-195.7" fill="transparent" />
                                 </svg>
                                 <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                                    <span class="text-xs font-black text-white font-mono">₹1,24,860</span>
+                                    <span id="donut-gross-total" class="text-xs font-black text-white font-mono">₹1,24,860</span>
                                     <span class="text-[9px] text-[#94A3B8] uppercase tracking-wider font-semibold">Gross</span>
                                 </div>
                             </div>
@@ -501,7 +640,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     
                     <!-- Live Hyderabad Fleet Map (2 cols) -->
-                    <div class="lg:col-span-2 saas-card p-5 flex flex-col h-[400px]">
+                    <div class="lg:col-span-2 saas-card p-5 flex flex-col min-h-[340px] lg:h-[400px]">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                             <div>
                                 <h3 class="font-bold text-sm text-white flex items-center gap-2">
@@ -512,7 +651,7 @@
                             </div>
 
                             <!-- Legend Pills matching screenshot -->
-                            <div class="flex items-center gap-3 flex-wrap">
+                            <div id="overview-map-legends" class="flex items-center gap-2 sm:gap-3 flex-wrap">
                                 <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 text-[10px] font-bold">
                                     <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span> Active (18)
                                 </span>
@@ -522,7 +661,7 @@
                                 <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30 text-[10px] font-bold">
                                     <span class="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></span> Offline (5)
                                 </span>
-                                <button type="button" onclick="window.SVM_APP.switchTab('map')" class="text-[#94A3B8] hover:text-white transition-colors" title="Expand Full Map">
+                                <button type="button" onclick="window.SVM_APP.switchTab('map')" class="text-[#94A3B8] hover:text-white transition-colors" title="Expand Full Map" aria-label="Expand Full Map">
                                     <i data-lucide="maximize-2" class="w-4 h-4"></i>
                                 </button>
                             </div>
@@ -533,7 +672,7 @@
                     </div>
 
                     <!-- Incoming Shift Telemetry (1 col) -->
-                    <div class="saas-card p-5 flex flex-col justify-between h-[400px]">
+                    <div class="saas-card p-5 flex flex-col justify-between min-h-[340px] lg:h-[400px]">
                         <div>
                             <div class="flex items-center justify-between mb-1">
                                 <div class="flex items-center gap-2">
@@ -567,21 +706,26 @@
 
                 <!-- Bottom Row: Duty Register (Recent Entries) Table -->
                 <div class="saas-card p-5">
-                    <div class="flex items-center justify-between mb-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                         <div>
                             <h3 class="font-bold text-base text-white flex items-center gap-2">
                                 <i data-lucide="clipboard-list" class="w-4 h-4 text-[#6655F5]"></i>
-                                <span>Moosapet Hub Duty Register (Recent Entries)</span>
+                                <span id="overview-register-title">Moosapet Hub Duty Register (Recent Entries)</span>
                             </h3>
                             <p class="text-xs text-[#94A3B8] mt-0.5">Daily commission & cash settlement logbook</p>
                         </div>
-                        <button onclick="window.SVM_APP.switchTab('register')" class="px-3.5 py-1.5 rounded-xl bg-[#161F33] hover:bg-[#1E273D] border border-[#263149] text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer">
+                        <button type="button" onclick="window.SVM_APP.switchTab('register')" class="px-3.5 py-1.5 rounded-xl bg-[#161F33] hover:bg-[#1E273D] border border-[#263149] text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 whitespace-nowrap self-start sm:self-auto">
                             <span>Open Full Register</span>
                             <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#6655F5]"></i>
                         </button>
                     </div>
 
-                    <div class="overflow-x-auto">
+                    <!-- Mobile Cards for Overview Duty Register -->
+                    <div id="overview-register-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
+                    <div class="hidden md:block overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="border-b border-[#263149] text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
@@ -611,7 +755,7 @@
             <!-- VIEW 2: FULL DUTY REGISTER TAB (14 Enterprise Columns)         -->
             <!-- ============================================================== -->
             <div data-tab-content="register" class="hidden flex flex-col gap-5">
-                <div class="saas-card p-5">
+                <div class="saas-card p-4 sm:p-5">
                     
                     <!-- Search & Filter Controls with Date Range Selection -->
                     <div class="flex flex-col gap-3.5 mb-5">
@@ -624,75 +768,92 @@
                             </div>
 
                             <!-- Shift Status Filters -->
-                            <div class="flex items-center gap-1.5 overflow-x-auto w-full lg:w-auto">
-                                <button onclick="window.SVM_APP.setShiftFilter('ALL')" id="filter-shift-all" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#6655F5] text-white border-[#6655F5]">
+                            <div class="flex items-center gap-1.5 overflow-x-auto w-full lg:w-auto pb-1 sm:pb-0">
+                                <button type="button" onclick="window.SVM_APP.setShiftFilter('ALL')" id="filter-shift-all" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#6655F5] text-white border-[#6655F5] shrink-0 whitespace-nowrap">
                                     All Shifts
                                 </button>
-                                <button onclick="window.SVM_APP.setShiftFilter('12_HOURS')" id="filter-shift-12" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white">
+                                <button type="button" onclick="window.SVM_APP.setShiftFilter('12_HOURS')" id="filter-shift-12" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white shrink-0 whitespace-nowrap">
                                     12h Shifts
                                 </button>
-                                <button onclick="window.SVM_APP.setShiftFilter('24_HOURS')" id="filter-shift-24" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white">
+                                <button type="button" onclick="window.SVM_APP.setShiftFilter('24_HOURS')" id="filter-shift-24" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white shrink-0 whitespace-nowrap">
                                     24h Shifts
                                 </button>
-                                <button onclick="window.SVM_APP.setShiftFilter('PENDING')" id="filter-shift-pending" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white">
+                                <button type="button" onclick="window.SVM_APP.setShiftFilter('PENDING')" id="filter-shift-pending" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white shrink-0 whitespace-nowrap">
                                     ⏳ Pending
                                 </button>
-                                <button onclick="window.SVM_APP.setShiftFilter('SETTLED')" id="filter-shift-settled" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white">
+                                <button type="button" onclick="window.SVM_APP.setShiftFilter('SETTLED')" id="filter-shift-settled" class="shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white shrink-0 whitespace-nowrap">
                                     ✓ Settled
                                 </button>
                             </div>
 
-                            <!-- Actions: CSV Export + Add Shift -->
-                            <div class="flex items-center gap-2.5 w-full lg:w-auto justify-end">
-                                <button onclick="window.SVM_APP.exportCSV()" class="px-3.5 py-2 rounded-xl bg-[#161F33] hover:bg-[#1E273D] text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-[#263149] transition-colors cursor-pointer">
-                                    <i data-lucide="download" class="w-4 h-4 text-[#10B981]"></i>
-                                    <span>Export CSV</span>
-                                </button>
-                                <button onclick="window.SVM_APP.openManualEntryModal()" class="px-4 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#6655F5]/25 cursor-pointer">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
-                                    <span>Add Shift</span>
-                                </button>
+                            <!-- Actions: View Mode Toggle + CSV Export + Add Shift -->
+                            <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-between sm:justify-end">
+                                <div class="flex items-center p-0.5 rounded-xl bg-[#080D1B] border border-[#263149] shrink-0">
+                                    <button type="button" id="view-mode-table-btn" onclick="window.SVM_APP.setRegisterViewMode('table')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#6655F5] text-white flex items-center gap-1 cursor-pointer shrink-0 whitespace-nowrap" title="Table View">
+                                        <i data-lucide="table" class="w-3.5 h-3.5"></i>
+                                        <span>Table</span>
+                                    </button>
+                                    <button type="button" id="view-mode-cards-btn" onclick="window.SVM_APP.setRegisterViewMode('cards')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0 whitespace-nowrap" title="Card View">
+                                        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                                        <span>Cards</span>
+                                    </button>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button type="button" onclick="window.SVM_APP.exportCSV()" class="px-3.5 py-2 rounded-xl bg-[#161F33] hover:bg-[#1E273D] text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-[#263149] transition-colors cursor-pointer shrink-0 whitespace-nowrap">
+                                        <i data-lucide="download" class="w-4 h-4 text-[#10B981]"></i>
+                                        <span>Export CSV</span>
+                                    </button>
+                                    <button type="button" onclick="window.SVM_APP.openManualEntryModal()" class="px-4 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#6655F5]/25 cursor-pointer shrink-0 whitespace-nowrap">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                        <span>Add Shift</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Date Selection Row: Today, This Week, This Month, Date Picker -->
                         <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#263149]/60 text-xs">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[11px] font-bold text-[#64748B] uppercase tracking-wider flex items-center gap-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-[11px] font-bold text-[#64748B] uppercase tracking-wider flex items-center gap-1 shrink-0 whitespace-nowrap">
                                     <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#6655F5]"></i> Date Range:
                                 </span>
-                                <div class="flex items-center p-0.5 rounded-xl bg-[#080D1B] border border-[#263149]">
-                                    <button type="button" onclick="window.SVM_APP.setDateRangeFilter('all')" id="btn-daterange-all" class="date-range-btn px-3 py-1 rounded-lg text-xs font-bold bg-[#6655F5] text-white transition-all">
+                                <div class="flex flex-wrap items-center p-0.5 rounded-xl bg-[#080D1B] border border-[#263149] gap-0.5">
+                                    <button type="button" onclick="window.SVM_APP.setDateRangeFilter('all')" id="btn-daterange-all" class="date-range-btn px-3 py-1 rounded-lg text-xs font-bold bg-[#6655F5] text-white transition-all shrink-0 whitespace-nowrap">
                                         All Time
                                     </button>
-                                    <button type="button" onclick="window.SVM_APP.setDateRangeFilter('today')" id="btn-daterange-today" class="date-range-btn px-3 py-1 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all">
+                                    <button type="button" onclick="window.SVM_APP.setDateRangeFilter('today')" id="btn-daterange-today" class="date-range-btn px-3 py-1 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all shrink-0 whitespace-nowrap">
                                         Today
                                     </button>
-                                    <button type="button" onclick="window.SVM_APP.setDateRangeFilter('week')" id="btn-daterange-week" class="date-range-btn px-3 py-1 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all">
+                                    <button type="button" onclick="window.SVM_APP.setDateRangeFilter('week')" id="btn-daterange-week" class="date-range-btn px-3 py-1 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all shrink-0 whitespace-nowrap">
                                         This Week
                                     </button>
-                                    <button type="button" onclick="window.SVM_APP.setDateRangeFilter('month')" id="btn-daterange-month" class="date-range-btn px-3 py-1 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all">
+                                    <button type="button" onclick="window.SVM_APP.setDateRangeFilter('month')" id="btn-daterange-month" class="date-range-btn px-3 py-1 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all shrink-0 whitespace-nowrap">
                                         This Month
                                     </button>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-2">
-                                <label for="register-date-picker" class="text-[11px] text-[#94A3B8] font-medium">Pick Date:</label>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <label for="register-date-picker" class="text-[11px] text-[#94A3B8] font-medium shrink-0">Pick Date:</label>
                                 <input type="date" id="register-date-picker" onchange="window.SVM_APP.setSpecificDateFilter(this.value)"
-                                    class="bg-[#080D1B] border border-[#263149] rounded-xl px-2.5 py-1 text-xs text-white font-mono focus:border-[#6655F5] focus:outline-none" />
-                                <button type="button" onclick="window.SVM_APP.clearDateFilter()" class="px-2 py-1 rounded-lg bg-[#161F33] hover:bg-[#1E273D] text-[#94A3B8] hover:text-white text-xs border border-[#263149]" title="Reset to All Dates">
+                                    class="bg-[#080D1B] border border-[#263149] rounded-xl px-2.5 py-1 text-xs text-white font-mono focus:border-[#6655F5] focus:outline-none shrink-0" />
+                                <button type="button" onclick="window.SVM_APP.clearDateFilter()" class="px-2.5 py-1 rounded-lg bg-[#161F33] hover:bg-[#1E273D] text-[#94A3B8] hover:text-white text-xs border border-[#263149] shrink-0 whitespace-nowrap" title="Reset to All Dates">
                                     Clear
                                 </button>
-                                <span id="register-records-count" class="px-2.5 py-1 rounded-lg bg-[#11182A] text-[#10B981] font-mono text-[11px] font-bold border border-[#263149]">
+                                <span id="register-records-count" class="px-2.5 py-1 rounded-lg bg-[#11182A] text-[#10B981] font-mono text-[11px] font-bold border border-[#263149] whitespace-nowrap">
                                     Showing Logs
                                 </span>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Mobile-Friendly Card View Container -->
+                    <div id="register-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
                     <!-- 14-Column Master Data Table -->
-                    <div class="overflow-x-auto">
+                    <div id="register-table-container" class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="border-b border-[#263149] text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
@@ -725,12 +886,12 @@
             <!-- VIEW 3: FULL HYDERABAD MAP TAB                                 -->
             <!-- ============================================================== -->
             <div data-tab-content="map" class="hidden flex flex-col gap-4">
-                <div class="saas-card p-4 h-[650px] flex flex-col">
-                    <div class="flex justify-between items-center mb-3">
+                <div class="saas-card p-4 h-[60vh] min-h-[360px] lg:h-[650px] flex flex-col">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3">
                         <h3 class="font-bold text-base text-white flex items-center gap-2">
                             <i data-lucide="map" class="w-5 h-5 text-[#6655F5]"></i> Hyderabad Citywide Fleet Radar
                         </h3>
-                        <div class="text-xs text-slate-400 flex items-center gap-4">
+                        <div id="map-legend-counts" class="text-xs text-slate-400 flex flex-wrap items-center gap-3 sm:gap-4">
                             <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#10B981]"></span> Active (18)</span>
                             <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#F59E0B]"></span> Idle (7)</span>
                             <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#EF4444]"></span> Offline (5)</span>
@@ -744,16 +905,16 @@
             <!-- VIEW 4: VEHICLES TAB                                           -->
             <!-- ============================================================== -->
             <div data-tab-content="cars" class="hidden flex flex-col gap-4">
-                <div class="flex justify-between items-center mb-2">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
                     <div>
-                        <h3 class="font-bold text-lg text-white">SVM Fleet Vehicles (30 Commercial Cabs)</h3>
+                        <h3 id="vehicles-tab-title" class="font-bold text-lg text-white">SVM Fleet Vehicles (30 Commercial Cabs)</h3>
                         <p class="text-xs text-[#94A3B8]">Active commercial fleet across Uber, Rapido, and Ola</p>
                     </div>
-                    <button type="button" onclick="window.SVM_APP.openAddVehicleModal()" class="px-3.5 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#6655F5]/25 cursor-pointer">
+                    <button type="button" onclick="window.SVM_APP.openAddVehicleModal()" class="px-3.5 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#6655F5]/25 cursor-pointer shrink-0 whitespace-nowrap self-start sm:self-auto">
                         <i data-lucide="plus" class="w-4 h-4"></i> <span>Add Vehicle</span>
                     </button>
                 </div>
-                <div id="cars-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div id="cars-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <!-- Populated dynamically -->
                 </div>
             </div>
@@ -770,16 +931,16 @@
                         </h3>
                         <p class="text-xs text-[#94A3B8]">Profiles with ratings, direct phone call links, active cars, and duty registers</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="window.SVM_APP.openAddDriverModal()" class="px-3.5 py-2 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#10B981]/25 transition-all cursor-pointer">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" onclick="window.SVM_APP.openAddDriverModal()" class="px-3.5 py-2 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#10B981]/25 transition-all cursor-pointer shrink-0 whitespace-nowrap">
                             <i data-lucide="user-plus" class="w-4 h-4"></i> <span>Add Driver</span>
                         </button>
-                        <button onclick="window.SVM_APP.openAddManagerModal()" class="px-3.5 py-2 rounded-xl bg-[#161F33] border border-[#263149] hover:border-[#6655F5] text-slate-200 text-xs font-bold flex items-center gap-1.5 hover:bg-[#1E273D] transition-all cursor-pointer">
+                        <button id="btn-add-manager" data-owner-only="true" type="button" onclick="window.SVM_APP.openAddManagerModal()" class="px-3.5 py-2 rounded-xl bg-[#161F33] border border-[#263149] hover:border-[#6655F5] text-slate-200 text-xs font-bold flex items-center gap-1.5 hover:bg-[#1E273D] transition-all cursor-pointer shrink-0 whitespace-nowrap">
                             <i data-lucide="shield-plus" class="w-4 h-4 text-[#6655F5]"></i> <span>Add Hub Manager</span>
                         </button>
                     </div>
                 </div>
-                <div id="drivers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div id="drivers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Populated dynamically -->
                 </div>
             </div>
@@ -788,40 +949,40 @@
             <!-- VIEW 6: REPORTS & FINANCIAL AUDIT TAB                          -->
             <!-- ============================================================== -->
             <div data-tab-content="reports" class="hidden flex flex-col gap-5">
-                <div class="saas-card p-6">
+                <div class="saas-card p-4 sm:p-6">
                     <!-- Reports Header & Period Toggle -->
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-[#263149]">
                         <div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <h3 class="text-lg font-bold text-white flex items-center gap-2">
                                     <i data-lucide="file-text" class="w-5 h-5 text-[#6655F5]"></i>
                                     <span>Fleet Financial Audit & Period Reports</span>
                                 </h3>
-                                <span id="report-period-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#6655F5]/20 text-[#8B5CF6] border border-[#6655F5]/30">
+                                <span id="report-period-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#6655F5]/20 text-[#8B5CF6] border border-[#6655F5]/30 shrink-0">
                                     Weekly View
                                 </span>
                             </div>
-                            <p class="text-xs text-[#94A3B8] mt-1">Aggregated gross revenues, driver commission disbursements, fuel vouchers, and profit margins across Hyderabad depots.</p>
+                            <p id="report-subtitle" class="text-xs text-[#94A3B8] mt-1">Aggregated gross revenues, driver commission disbursements, fuel vouchers, and profit margins across Hyderabad depots.</p>
                         </div>
 
                         <!-- Period Selectors: Today / This Week / This Month / All Time -->
                         <div class="flex flex-wrap items-center gap-2">
-                            <div class="flex items-center p-1 rounded-xl bg-[#080D1B] border border-[#263149]">
-                                <button type="button" onclick="window.SVM_APP.setReportPeriod('today')" id="btn-rep-today" class="rep-period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all cursor-pointer">
+                            <div class="flex flex-wrap items-center p-1 rounded-xl bg-[#080D1B] border border-[#263149] gap-0.5">
+                                <button type="button" onclick="window.SVM_APP.setReportPeriod('today')" id="btn-rep-today" class="rep-period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all cursor-pointer shrink-0 whitespace-nowrap">
                                     Daily Audit
                                 </button>
-                                <button type="button" onclick="window.SVM_APP.setReportPeriod('week')" id="btn-rep-week" class="rep-period-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#6655F5] text-white transition-all cursor-pointer">
+                                <button type="button" onclick="window.SVM_APP.setReportPeriod('week')" id="btn-rep-week" class="rep-period-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#6655F5] text-white transition-all cursor-pointer shrink-0 whitespace-nowrap">
                                     Weekly Report
                                 </button>
-                                <button type="button" onclick="window.SVM_APP.setReportPeriod('month')" id="btn-rep-month" class="rep-period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all cursor-pointer">
+                                <button type="button" onclick="window.SVM_APP.setReportPeriod('month')" id="btn-rep-month" class="rep-period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all cursor-pointer shrink-0 whitespace-nowrap">
                                     Monthly Report (MTD)
                                 </button>
-                                <button type="button" onclick="window.SVM_APP.setReportPeriod('all')" id="btn-rep-all" class="rep-period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all cursor-pointer">
+                                <button type="button" onclick="window.SVM_APP.setReportPeriod('all')" id="btn-rep-all" class="rep-period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all cursor-pointer shrink-0 whitespace-nowrap">
                                     All Time
                                 </button>
                             </div>
 
-                            <button onclick="window.SVM_APP.exportCSV()" class="px-3.5 py-2 rounded-xl bg-[#161F33] hover:bg-[#1E273D] text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-[#263149] transition-colors cursor-pointer">
+                            <button type="button" onclick="window.SVM_APP.exportCSV()" class="px-3.5 py-2 rounded-xl bg-[#161F33] hover:bg-[#1E273D] text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-[#263149] transition-colors cursor-pointer shrink-0 whitespace-nowrap">
                                 <i data-lucide="download" class="w-4 h-4 text-[#10B981]"></i>
                                 <span>Export CSV</span>
                             </button>
@@ -829,7 +990,7 @@
                     </div>
 
                     <!-- 5 Dynamic Financial Audit KPI Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 my-6">
+                    <div id="reports-kpi-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3.5 my-5 sm:my-6">
                         <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
                             <span class="text-[11px] text-[#94A3B8] font-medium block">Total Fleet Turnover</span>
                             <div id="report-kpi-gross" class="text-2xl font-black text-white mt-1 font-mono">₹2,84,600</div>
@@ -845,7 +1006,7 @@
                             <div id="report-kpi-fuel" class="text-2xl font-black text-[#0EA5E9] mt-1 font-mono">₹21,800</div>
                             <span class="text-[10px] text-[#94A3B8] mt-1 block font-mono">Daily Operating Fuel</span>
                         </div>
-                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                        <div id="report-card-profit" data-owner-only="true" class="col-span-2 md:col-span-1 p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
                             <span class="text-[11px] text-[#94A3B8] font-medium block">Net Fleet Profit</span>
                             <div id="report-kpi-profit" class="text-2xl font-black text-[#10B981] mt-1 font-mono">₹1,60,400</div>
                             <span id="report-kpi-margin" class="text-[10px] text-[#10B981] mt-1 block font-mono">56.4% Net Margin</span>
@@ -857,8 +1018,13 @@
                         </div>
                     </div>
 
+                    <!-- Mobile Cards for Financial Audit Reports -->
+                    <div id="report-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
                     <!-- Detailed Period Log Breakdown Table -->
-                    <div class="overflow-x-auto rounded-xl border border-[#263149] bg-[#080D1B]">
+                    <div class="hidden md:block overflow-x-auto rounded-xl border border-[#263149] bg-[#080D1B]">
                         <table class="w-full text-left border-collapse text-xs">
                             <thead class="bg-[#11182A] text-slate-400 font-semibold border-b border-[#263149]">
                                 <tr>
@@ -887,15 +1053,15 @@
             <!-- VIEW 7: SETTLEMENTS TAB                                        -->
             <!-- ============================================================== -->
             <div data-tab-content="settlements" class="hidden flex flex-col gap-5">
-                <div class="saas-card p-6">
-                    <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                <div class="saas-card p-4 sm:p-6">
+                    <h3 class="text-lg font-bold text-white mb-2 flex flex-wrap items-center gap-2">
                         <i data-lucide="credit-card" class="w-5 h-5 text-[#6655F5]"></i> Daily Cash & UPI Handover Settlements
                     </h3>
                     <p class="text-xs text-[#94A3B8] mb-6">Manage end-of-shift driver reconciliations, fuel vouchers, cash collections, and pending balances.</p>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
-                            <div class="flex justify-between items-center mb-2">
+                            <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
                                 <span class="text-xs font-bold text-white">Pending Handover Total</span>
                                 <span class="px-2 py-0.5 rounded text-[10px] bg-[#F59E0B]/20 text-[#F59E0B] font-bold">Awaiting Hub Officer</span>
                             </div>
@@ -904,7 +1070,7 @@
                         </div>
 
                         <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
-                            <div class="flex justify-between items-center mb-2">
+                            <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
                                 <span class="text-xs font-bold text-white">Settled Today via UPI / Bank</span>
                                 <span class="px-2 py-0.5 rounded text-[10px] bg-[#10B981]/20 text-[#10B981] font-bold">100% Cleared</span>
                             </div>
@@ -919,36 +1085,36 @@
             <!-- VIEW 8: POLICY & TIERS TAB                                     -->
             <!-- ============================================================== -->
             <div data-tab-content="policy" class="hidden flex flex-col gap-5">
-                <div class="saas-card p-6">
-                    <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                <div class="saas-card p-4 sm:p-6">
+                    <h3 class="text-lg font-bold text-white mb-2 flex flex-wrap items-center gap-2">
                         <i data-lucide="sliders" class="w-5 h-5 text-[#6655F5]"></i> SVM FLEET Official Commission Policy
                     </h3>
                     <p class="text-xs text-[#94A3B8] mb-6">Standard operational commission structure for Moosapet, Kukatpally, and Madhapur fleet cabs.</p>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div class="p-5 rounded-2xl bg-[#080D1B] border border-[#263149]">
-                            <h4 class="font-bold text-sm text-[#10B981] mb-3 flex items-center gap-2">
+                        <div class="p-4 sm:p-5 rounded-2xl bg-[#080D1B] border border-[#263149]">
+                            <h4 class="font-bold text-sm text-[#10B981] mb-3 flex flex-wrap items-center gap-2">
                                 <i data-lucide="clock" class="w-4 h-4"></i> 12 Hours Shift Policy (Min 10 Trips)
                             </h4>
                             <div class="space-y-2 text-xs font-mono">
-                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹3,500 and Above</span><strong class="text-[#10B981]">40% Commission</strong></div>
-                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹2,500 to ₹3,500</span><strong class="text-[#6655F5]">35% Commission</strong></div>
-                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹2,000 to ₹2,500</span><strong class="text-[#0EA5E9]">30% Commission</strong></div>
-                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹1,500 to ₹2,000</span><strong class="text-[#F59E0B]">25% Commission</strong></div>
-                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>Below ₹1,500 or &lt;10 trips</span><strong class="text-slate-500">Flat Vehicle Rent</strong></div>
+                                <div class="flex flex-wrap justify-between gap-2 p-2 rounded-lg bg-[#11182A]"><span>₹3,500 and Above</span><strong class="text-[#10B981]">40% Commission</strong></div>
+                                <div class="flex flex-wrap justify-between gap-2 p-2 rounded-lg bg-[#11182A]"><span>₹2,500 to ₹3,500</span><strong class="text-[#6655F5]">35% Commission</strong></div>
+                                <div class="flex flex-wrap justify-between gap-2 p-2 rounded-lg bg-[#11182A]"><span>₹2,000 to ₹2,500</span><strong class="text-[#0EA5E9]">30% Commission</strong></div>
+                                <div class="flex flex-wrap justify-between gap-2 p-2 rounded-lg bg-[#11182A]"><span>₹1,500 to ₹2,000</span><strong class="text-[#F59E0B]">25% Commission</strong></div>
+                                <div class="flex flex-wrap justify-between gap-2 p-2 rounded-lg bg-[#11182A]"><span>Below ₹1,500 or &lt;10 trips</span><strong class="text-slate-500">Flat Vehicle Rent</strong></div>
                             </div>
                         </div>
 
-                        <div class="p-5 rounded-2xl bg-[#080D1B] border border-[#263149]">
-                            <h4 class="font-bold text-sm text-[#0EA5E9] mb-3 flex items-center gap-2">
+                        <div class="p-4 sm:p-5 rounded-2xl bg-[#080D1B] border border-[#263149]">
+                            <h4 class="font-bold text-sm text-[#0EA5E9] mb-3 flex flex-wrap items-center gap-2">
                                 <i data-lucide="clock-4" class="w-4 h-4"></i> 24 Hours Shift Policy (Min 18 Trips)
                             </h4>
                             <div class="space-y-2 text-xs font-mono">
-                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹6,500 and Above</span><strong class="text-[#10B981]">40% Commission</strong></div>
-                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹5,000 to ₹6,500</span><strong class="text-[#6655F5]">35% Commission</strong></div>
-                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹4,000 to ₹5,000</span><strong class="text-[#0EA5E9]">30% Commission</strong></div>
-                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>₹2,500 to ₹4,000</span><strong class="text-[#F59E0B]">25% Commission</strong></div>
-                                <div class="flex justify-between p-2 rounded-lg bg-[#11182A]"><span>Below ₹2,500 or &lt;18 trips</span><strong class="text-slate-500">Flat Vehicle Rent</strong></div>
+                                <div class="flex flex-wrap justify-between gap-2 p-2 rounded-lg bg-[#11182A]"><span>₹6,500 and Above</span><strong class="text-[#10B981]">40% Commission</strong></div>
+                                <div class="flex flex-wrap justify-between gap-2 p-2 rounded-lg bg-[#11182A]"><span>₹5,000 to ₹6,500</span><strong class="text-[#6655F5]">35% Commission</strong></div>
+                                <div class="flex flex-wrap justify-between gap-2 p-2 rounded-lg bg-[#11182A]"><span>₹4,000 to ₹5,000</span><strong class="text-[#0EA5E9]">30% Commission</strong></div>
+                                <div class="flex flex-wrap justify-between gap-2 p-2 rounded-lg bg-[#11182A]"><span>₹2,500 to ₹4,000</span><strong class="text-[#F59E0B]">25% Commission</strong></div>
+                                <div class="flex flex-wrap justify-between gap-2 p-2 rounded-lg bg-[#11182A]"><span>Below ₹2,500 or &lt;18 trips</span><strong class="text-slate-500">Flat Vehicle Rent</strong></div>
                             </div>
                         </div>
                     </div>
@@ -959,8 +1125,8 @@
             <!-- VIEW 9: ANALYTICS TAB                                          -->
             <!-- ============================================================== -->
             <div data-tab-content="analytics" class="hidden flex flex-col gap-5">
-                <div class="saas-card p-6">
-                    <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                <div class="saas-card p-4 sm:p-6">
+                    <h3 class="text-lg font-bold text-white mb-2 flex flex-wrap items-center gap-2">
                         <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#6655F5]"></i> Platform Telemetry & Market Share
                     </h3>
                     <p class="text-xs text-[#94A3B8] mb-6">Real-time driver session distribution across ride-hailing networks.</p>
@@ -994,10 +1160,55 @@
             </div>
 
             <!-- ============================================================== -->
-            <!-- VIEW 10: SETTINGS TAB                                          -->
+            <!-- VIEW 10: SETTINGS TAB (OWNER ONLY)                             -->
             <!-- ============================================================== -->
-            <div data-tab-content="settings" class="hidden flex flex-col gap-5">
-                <div class="saas-card p-6">
+            <div data-tab-content="settings" data-owner-only="true" class="hidden flex flex-col gap-5">
+                <!-- Owner Security & Secret Key Card -->
+                <div id="settings-owner-security-card" class="saas-card p-4 sm:p-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-[#263149]">
+                        <div>
+                            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i data-lucide="key" class="w-5 h-5 text-[#6655F5]"></i>
+                                <span>Owner Security &amp; Secret Key</span>
+                            </h3>
+                            <p class="text-xs text-[#94A3B8] mt-1">Rotate the Master Owner Secret Key used to unlock profit analytics and multi-hub controls.</p>
+                        </div>
+                        <span id="setting-secret-key-badge" class="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#6655F5]/20 text-[#8B5CF6] border border-[#6655F5]/40 shrink-0 w-fit">
+                            Default Key Active
+                        </span>
+                    </div>
+
+                    <form id="form-change-secret-key" onsubmit="window.SVM_APP.handleChangeSecretKey(event)" class="space-y-4 max-w-2xl">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                            <div>
+                                <label for="setting-current-secret-key" class="block text-xs font-semibold text-slate-300 mb-1.5">Current Secret Key *</label>
+                                <input id="setting-current-secret-key" type="password" required maxlength="20" autocomplete="current-password" placeholder="Current key (e.g. 7777)"
+                                    class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2.5 text-xs text-white font-mono" />
+                            </div>
+                            <div>
+                                <label for="setting-new-secret-key" class="block text-xs font-semibold text-slate-300 mb-1.5">New Secret Key *</label>
+                                <input id="setting-new-secret-key" type="password" required minlength="4" maxlength="20" autocomplete="new-password" placeholder="Min 4 characters"
+                                    class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2.5 text-xs text-white font-mono" />
+                            </div>
+                            <div>
+                                <label for="setting-confirm-secret-key" class="block text-xs font-semibold text-slate-300 mb-1.5">Confirm New Key *</label>
+                                <input id="setting-confirm-secret-key" type="password" required minlength="4" maxlength="20" autocomplete="new-password" placeholder="Repeat new key"
+                                    class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2.5 text-xs text-white font-mono" />
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                            <span class="text-[11px] text-[#64748B]">Updated key takes effect immediately for Owner sign-in.</span>
+                            <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold shadow-lg shadow-[#6655F5]/25 transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[40px] shrink-0">
+                                <i data-lucide="shield-check" class="w-4 h-4"></i>
+                                <span>Save Secret Key</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Demo Fleet Environment Settings Card -->
+                <div class="saas-card p-4 sm:p-6">
                     <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
                         <i data-lucide="settings" class="w-5 h-5 text-[#6655F5]"></i> Demo Fleet Environment Settings
                     </h3>
@@ -1005,13 +1216,13 @@
                     
                     <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                            <div class="text-sm font-bold text-white flex items-center gap-2">
+                            <div class="text-sm font-bold text-white flex flex-wrap items-center gap-2">
                                 <span>Reset Demo Data to Default</span>
                                 <span class="px-2 py-0.5 rounded text-[10px] bg-[#F59E0B]/20 text-[#F59E0B] font-bold">Sandbox</span>
                             </div>
                             <p class="text-xs text-[#94A3B8] mt-1">Clears local additions and restores 30 demo cabs, drivers, and shifts.</p>
                         </div>
-                        <button type="button" onclick="window.SVM_APP.resetDemoState()" class="px-4 py-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 text-xs font-bold transition-colors cursor-pointer">
+                        <button type="button" onclick="window.SVM_APP.resetDemoState()" class="px-4 py-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 text-xs font-bold transition-colors cursor-pointer shrink-0">
                             Reset Demo State
                         </button>
                     </div>
@@ -1020,6 +1231,32 @@
 
         </main>
     </div>
+
+    <!-- ====================================================================== -->
+    <!-- MOBILE BOTTOM NAVIGATION BAR (< 768px)                                 -->
+    <!-- ====================================================================== -->
+    <nav id="mobile-bottom-nav" aria-label="Mobile Navigation" class="md:hidden fixed bottom-0 left-0 right-0 bg-[#0B1020]/95 backdrop-blur-md border-t border-[#1E273D] flex items-center justify-around px-1 py-1">
+        <button type="button" data-nav-tab="overview" class="mobile-nav-btn active" aria-label="Dashboard">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Home</span>
+        </button>
+        <button type="button" data-nav-tab="register" class="mobile-nav-btn" aria-label="Duty Register">
+            <i data-lucide="calendar"></i>
+            <span>Register</span>
+        </button>
+        <button type="button" data-nav-tab="map" class="mobile-nav-btn" aria-label="Live Map">
+            <i data-lucide="map-pin"></i>
+            <span>Live Map</span>
+        </button>
+        <button type="button" data-nav-tab="cars" class="mobile-nav-btn" aria-label="Vehicles">
+            <i data-lucide="car"></i>
+            <span>Vehicles</span>
+        </button>
+        <button id="mobile-more-btn" type="button" onclick="window.SVM_APP.toggleMobileSidebar()" class="mobile-nav-btn" aria-label="More menu" aria-controls="app-sidebar">
+            <i data-lucide="menu"></i>
+            <span>More</span>
+        </button>
+    </nav>
 
     <!-- ====================================================================== -->
     <!-- MODAL 1: MANUAL SHIFT ENTRY (Never Clips / Sticky Header & Footer)     -->
@@ -1038,7 +1275,7 @@
                         <h3 class="font-extrabold text-base text-white">Manual Duty Register Entry</h3>
                     </div>
                 </div>
-                <button type="button" onclick="window.SVM_APP.closeManualEntryModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors border border-transparent hover:border-[#263149] cursor-pointer">
+                <button type="button" onclick="window.SVM_APP.closeManualEntryModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors border border-transparent hover:border-[#263149] cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0" aria-label="Close modal">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -1107,19 +1344,19 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Name *</label>
-                            <input id="modal-drivername" type="text" placeholder="e.g. Suman" required
+                            <input id="modal-drivername" type="text" maxlength="40" placeholder="e.g. Suman" required
                                 class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Mobile Number *</label>
-                            <input id="modal-driverphone" type="tel" placeholder="+91 93919 15013" required
+                            <input id="modal-driverphone" type="tel" maxlength="15" placeholder="+91 93919 15013" required
                                 class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1">Vehicle Reg Number *</label>
-                            <input id="modal-regno" type="text" placeholder="e.g. TS09 UB 3368" required
+                            <input id="modal-regno" type="text" maxlength="14" placeholder="e.g. TS09 UB 3368" required
                                 class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white uppercase font-mono font-bold" />
                         </div>
                     </div>
@@ -1186,7 +1423,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Remarks / Logbook Notes</label>
-                        <input id="modal-remarks" type="text" placeholder="e.g. Settled via UPI / Moosapet paper book entry"
+                        <input id="modal-remarks" type="text" maxlength="120" placeholder="e.g. Settled via UPI / Moosapet paper book entry"
                             class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
                     </div>
 
@@ -1200,7 +1437,7 @@
                             <span id="calc-preview-trips-badge">--</span>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                             <div class="p-2.5 rounded-lg bg-[#11182A] border border-[#263149]">
                                 <span class="text-[10px] text-slate-400 uppercase font-semibold block">Commission Tier</span>
                                 <span id="calc-preview-tier" class="font-extrabold text-sm text-[#6655F5] mt-0.5 block">--</span>
@@ -1227,10 +1464,10 @@
 
                 <!-- Fixed Sticky Footer -->
                 <div class="modal-dialog-footer">
-                    <button type="button" onclick="window.SVM_APP.closeManualEntryModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer">
+                    <button type="button" onclick="window.SVM_APP.closeManualEntryModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer min-h-[40px]">
                         Cancel
                     </button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold shadow-lg shadow-[#6655F5]/30 transition-all cursor-pointer">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold shadow-lg shadow-[#6655F5]/30 transition-all cursor-pointer min-h-[40px]">
                         Save & Settle Shift Log
                     </button>
                 </div>
@@ -1251,30 +1488,32 @@
                     </h3>
                     <p class="text-[11px] text-[#64748B] mt-0.5">Reassign operating hub and supervising manager</p>
                 </div>
-                <button type="button" onclick="window.SVM_APP.closeReassignModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-[#1E273D] transition-colors cursor-pointer">
+                <button type="button" onclick="window.SVM_APP.closeReassignModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0" aria-label="Close modal">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <form onsubmit="window.SVM_APP.submitReassignment(event)" class="modal-dialog-body space-y-4">
-                <input type="hidden" id="reassign-vehicle-id" />
-                <div class="p-3.5 rounded-xl bg-[#080D1B] border border-[#263149] text-xs">
-                    <span class="text-[#64748B]">Target Vehicle:</span>
-                    <strong id="reassign-vehicle-title" class="text-white block font-mono text-sm mt-1">--</strong>
-                </div>
+            <form onsubmit="window.SVM_APP.submitReassignment(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-dialog-body space-y-4">
+                    <input type="hidden" id="reassign-vehicle-id" />
+                    <div class="p-3.5 rounded-xl bg-[#080D1B] border border-[#263149] text-xs">
+                        <span class="text-[#64748B]">Target Vehicle:</span>
+                        <strong id="reassign-vehicle-title" class="text-white block font-mono text-sm mt-1">--</strong>
+                    </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1.5">Select New Destination Hub</label>
-                    <select id="reassign-target-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                        <!-- Populated by JS -->
-                    </select>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5">Select New Destination Hub</label>
+                        <select id="reassign-target-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
                 </div>
 
                 <div class="modal-dialog-footer">
-                    <button type="button" onclick="window.SVM_APP.closeReassignModal()" class="px-4 py-2 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer">
+                    <button type="button" onclick="window.SVM_APP.closeReassignModal()" class="px-4 py-2 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer min-h-[40px]">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold shadow-lg shadow-[#6655F5]/25 transition-all cursor-pointer">
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold shadow-lg shadow-[#6655F5]/25 transition-all cursor-pointer min-h-[40px]">
                         Confirm Transfer
                     </button>
                 </div>
@@ -1289,7 +1528,7 @@
         <div class="modal-dialog-box max-w-lg w-full">
             <div class="modal-dialog-header">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#10B981] to-teal-600 flex items-center justify-center font-bold text-lg shadow-md shadow-[#10B981]/30 border border-white/20">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#10B981] to-teal-600 flex items-center justify-center font-bold text-lg shadow-md shadow-[#10B981]/30 border border-white/20 shrink-0">
                         👤
                     </div>
                     <div>
@@ -1297,61 +1536,63 @@
                         <h3 class="font-extrabold text-base text-white">Add New Fleet Driver</h3>
                     </div>
                 </div>
-                <button type="button" onclick="window.SVM_APP.closeAddDriverModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer">
+                <button type="button" onclick="window.SVM_APP.closeAddDriverModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0" aria-label="Close modal">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <form onsubmit="window.SVM_APP.submitAddDriver(event)" class="modal-dialog-body space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Full Name *</label>
-                    <input id="add-driver-name" type="text" placeholder="e.g. Satish Reddy" required
-                        class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <form onsubmit="window.SVM_APP.submitAddDriver(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-dialog-body space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Mobile Number *</label>
-                        <input id="add-driver-phone" type="tel" placeholder="+91 98480 12345" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Full Name *</label>
+                        <input id="add-driver-name" type="text" maxlength="40" placeholder="e.g. Satish Reddy" required
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Driver Mobile Number *</label>
+                            <input id="add-driver-phone" type="tel" maxlength="15" placeholder="+91 98480 12345" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Operating Hub *</label>
+                            <select id="add-driver-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Cab (Optional)</label>
+                            <select id="add-driver-vehicle" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Initial Rating ⭐</label>
+                            <input id="add-driver-rating" type="number" step="0.01" min="1.0" max="5.0" value="4.85" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#10B981] font-mono font-bold" />
+                        </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Operating Hub *</label>
-                        <select id="add-driver-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                            <!-- Populated by JS -->
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Duty Status</label>
+                        <select id="add-driver-status" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                            <option value="ON_DUTY">🟢 ON DUTY (Active on Road)</option>
+                            <option value="IDLE">🟡 IDLE (In Hub Yard / Standby)</option>
                         </select>
                     </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Cab (Optional)</label>
-                        <select id="add-driver-vehicle" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                            <!-- Populated by JS -->
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Initial Rating ⭐</label>
-                        <input id="add-driver-rating" type="number" step="0.01" min="1.0" max="5.0" value="4.85" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#10B981] font-mono font-bold" />
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Duty Status</label>
-                    <select id="add-driver-status" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                        <option value="ON_DUTY">🟢 ON DUTY (Active on Road)</option>
-                        <option value="IDLE">🟡 IDLE (In Hub Yard / Standby)</option>
-                    </select>
                 </div>
 
                 <div class="modal-dialog-footer">
-                    <button type="button" onclick="window.SVM_APP.closeAddDriverModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer">
+                    <button type="button" onclick="window.SVM_APP.closeAddDriverModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer min-h-[40px]">
                         Cancel
                     </button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-xs font-bold shadow-lg shadow-[#10B981]/25 transition-all cursor-pointer">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-xs font-bold shadow-lg shadow-[#10B981]/25 transition-all cursor-pointer min-h-[40px]">
                         Save Driver (Demo)
                     </button>
                 </div>
@@ -1366,7 +1607,7 @@
         <div class="modal-dialog-box max-w-lg w-full">
             <div class="modal-dialog-header">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#3185F6] to-indigo-600 flex items-center justify-center font-bold text-lg shadow-md shadow-[#3185F6]/30 border border-white/20">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#3185F6] to-indigo-600 flex items-center justify-center font-bold text-lg shadow-md shadow-[#3185F6]/30 border border-white/20 shrink-0">
                         🚕
                     </div>
                     <div>
@@ -1374,51 +1615,53 @@
                         <h3 class="font-extrabold text-base text-white">Add New Commercial Vehicle</h3>
                     </div>
                 </div>
-                <button type="button" onclick="window.SVM_APP.closeAddVehicleModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer">
+                <button type="button" onclick="window.SVM_APP.closeAddVehicleModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0" aria-label="Close modal">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <form onsubmit="window.SVM_APP.submitAddVehicle(event)" class="modal-dialog-body space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Registration Plate *</label>
-                        <input id="add-veh-reg" type="text" placeholder="e.g. TS09 UB 9999" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono uppercase font-bold" />
+            <form onsubmit="window.SVM_APP.submitAddVehicle(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-dialog-body space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Registration Plate *</label>
+                            <input id="add-veh-reg" type="text" maxlength="14" placeholder="e.g. TS09 UB 9999" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono uppercase font-bold" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Vehicle Model *</label>
+                            <input id="add-veh-model" type="text" maxlength="40" placeholder="e.g. Hyundai Aura" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Vehicle Model *</label>
-                        <input id="add-veh-model" type="text" placeholder="e.g. Hyundai Aura" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
-                    </div>
-                </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Hub *</label>
+                            <select id="add-veh-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <option value="mgr_moosapet_01">Moosapet Central Hub</option>
+                                <option value="mgr_kukatpally_02">Kukatpally Y-Junction</option>
+                                <option value="mgr_madhapur_03">Madhapur Hitec City</option>
+                            </select>
+                        </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Hub *</label>
-                        <select id="add-veh-hub" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                            <option value="mgr_moosapet_01">Moosapet Central Hub</option>
-                            <option value="mgr_kukatpally_02">Kukatpally Y-Junction</option>
-                            <option value="mgr_madhapur_03">Madhapur Hitec City</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Primary Platform *</label>
-                        <select id="add-veh-platform" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                            <option value="Uber">Uber</option>
-                            <option value="Rapido">Rapido</option>
-                            <option value="Ola">Ola</option>
-                        </select>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Primary Platform *</label>
+                            <select id="add-veh-platform" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <option value="Uber">Uber</option>
+                                <option value="Rapido">Rapido</option>
+                                <option value="Ola">Ola</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <div class="modal-dialog-footer">
-                    <button type="button" onclick="window.SVM_APP.closeAddVehicleModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer">
+                    <button type="button" onclick="window.SVM_APP.closeAddVehicleModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer min-h-[40px]">
                         Cancel
                     </button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#3185F6] hover:bg-blue-600 text-white text-xs font-bold shadow-lg shadow-[#3185F6]/25 transition-all cursor-pointer">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#3185F6] hover:bg-blue-600 text-white text-xs font-bold shadow-lg shadow-[#3185F6]/25 transition-all cursor-pointer min-h-[40px]">
                         Save Vehicle (Demo)
                     </button>
                 </div>
@@ -1433,7 +1676,7 @@
         <div class="modal-dialog-box max-w-lg w-full">
             <div class="modal-dialog-header">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#F59E0B] to-amber-600 flex items-center justify-center font-bold text-lg shadow-md shadow-[#F59E0B]/30 border border-white/20">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#F59E0B] to-amber-600 flex items-center justify-center font-bold text-lg shadow-md shadow-[#F59E0B]/30 border border-white/20 shrink-0">
                         🏢
                     </div>
                     <div>
@@ -1441,45 +1684,47 @@
                         <h3 class="font-extrabold text-base text-white">Add Hub & Station Manager</h3>
                     </div>
                 </div>
-                <button type="button" onclick="window.SVM_APP.closeAddManagerModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer">
+                <button type="button" onclick="window.SVM_APP.closeAddManagerModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0" aria-label="Close modal">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <form onsubmit="window.SVM_APP.submitAddManager(event)" class="modal-dialog-body space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Hub Official Name *</label>
-                        <input id="add-hub-name" type="text" placeholder="e.g. Gachibowli Hub" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+            <form onsubmit="window.SVM_APP.submitAddManager(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-dialog-body space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Hub Official Name *</label>
+                            <input id="add-hub-name" type="text" maxlength="40" placeholder="e.g. Gachibowli Hub" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Short Name (Badge) *</label>
+                            <input id="add-hub-short" type="text" maxlength="40" placeholder="e.g. Gachibowli" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Short Name (Badge) *</label>
-                        <input id="add-hub-short" type="text" placeholder="e.g. Gachibowli" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
-                    </div>
-                </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Manager Full Name *</label>
+                            <input id="add-hub-manager" type="text" maxlength="40" placeholder="e.g. Ramesh Varma" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                        </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Manager Full Name *</label>
-                        <input id="add-hub-manager" type="text" placeholder="e.g. Ramesh Varma" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Manager Mobile Phone *</label>
-                        <input id="add-hub-phone" type="tel" placeholder="+91 98480 11223" required
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Manager Mobile Phone *</label>
+                            <input id="add-hub-phone" type="tel" maxlength="15" placeholder="+91 98480 11223" required
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                        </div>
                     </div>
                 </div>
 
                 <div class="modal-dialog-footer">
-                    <button type="button" onclick="window.SVM_APP.closeAddManagerModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer">
+                    <button type="button" onclick="window.SVM_APP.closeAddManagerModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer min-h-[40px]">
                         Cancel
                     </button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-amber-600 text-white text-xs font-bold shadow-lg shadow-[#F59E0B]/25 transition-all cursor-pointer">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-amber-600 text-white text-xs font-bold shadow-lg shadow-[#F59E0B]/25 transition-all cursor-pointer min-h-[40px]">
                         Create Hub & Manager (Demo)
                     </button>
                 </div>
@@ -1494,7 +1739,7 @@
         <div class="modal-dialog-box max-w-2xl w-full">
             <div class="modal-dialog-header">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6655F5] to-indigo-700 flex items-center justify-center font-bold text-lg shadow-md shadow-[#6655F5]/30 border border-white/20">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6655F5] to-indigo-700 flex items-center justify-center font-bold text-lg shadow-md shadow-[#6655F5]/30 border border-white/20 shrink-0">
                         📖
                     </div>
                     <div>
@@ -1502,23 +1747,23 @@
                         <h3 class="font-extrabold text-base text-white">SVM FLEET System User Guide</h3>
                     </div>
                 </div>
-                <button type="button" onclick="window.SVM_APP.closeUserGuideModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer">
+                <button type="button" onclick="window.SVM_APP.closeUserGuideModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0" aria-label="Close modal">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
             <!-- Tabbed Guide Navigation -->
-            <div class="px-6 pt-3 pb-1 border-b border-[#263149] bg-[#0E1528] flex items-center gap-2 overflow-x-auto">
-                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-quickstart')" id="tab-btn-guide-quickstart" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#6655F5] text-white transition-all">
+            <div class="px-4 sm:px-6 pt-3 pb-1 border-b border-[#263149] bg-[#0E1528] flex items-center gap-2 overflow-x-auto shrink-0">
+                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-quickstart')" id="tab-btn-guide-quickstart" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#6655F5] text-white transition-all shrink-0 whitespace-nowrap">
                     1. Quick Start
                 </button>
-                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-shifts')" id="tab-btn-guide-shifts" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all">
+                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-shifts')" id="tab-btn-guide-shifts" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all shrink-0 whitespace-nowrap">
                     2. Shift Entry & Slabs
                 </button>
-                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-register')" id="tab-btn-guide-register" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all">
+                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-register')" id="tab-btn-guide-register" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all shrink-0 whitespace-nowrap">
                     3. Duty Register & Receipts
                 </button>
-                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-cabs')" id="tab-btn-guide-cabs" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all">
+                <button type="button" onclick="window.SVM_APP.switchGuideTab('guide-cabs')" id="tab-btn-guide-cabs" class="guide-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-[#94A3B8] hover:text-white transition-all shrink-0 whitespace-nowrap">
                     4. Fleet & Hubs
                 </button>
             </div>
@@ -1573,7 +1818,7 @@
 
                     <div class="p-3.5 rounded-xl bg-[#11182A] border border-[#263149] space-y-2">
                         <span class="font-bold text-white block">Official Commission Structure:</span>
-                        <div class="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
                             <div class="p-2 rounded bg-[#080D1B] border border-[#263149]">
                                 <span class="text-[#10B981] font-bold block">12h Shifts</span>
                                 <div>≥₹3,500: <strong>40%</strong></div>
@@ -1624,7 +1869,7 @@
             </div>
 
             <div class="modal-dialog-footer">
-                <button type="button" onclick="window.SVM_APP.closeUserGuideModal()" class="px-6 py-2.5 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold shadow-lg shadow-[#6655F5]/30 transition-all cursor-pointer">
+                <button type="button" onclick="window.SVM_APP.closeUserGuideModal()" class="px-6 py-2.5 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold shadow-lg shadow-[#6655F5]/30 transition-all cursor-pointer min-h-[40px]">
                     Got It, Let's Drive! 🚕
                 </button>
             </div>
@@ -1638,7 +1883,7 @@
         <div class="modal-dialog-box max-w-xl w-full">
             <div class="modal-dialog-header">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#10B981] to-emerald-700 flex items-center justify-center font-bold text-lg shadow-md shadow-[#10B981]/30 border border-white/20">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#10B981] to-emerald-700 flex items-center justify-center font-bold text-lg shadow-md shadow-[#10B981]/30 border border-white/20 shrink-0">
                         💼
                     </div>
                     <div>
@@ -1646,144 +1891,146 @@
                         <h3 class="font-extrabold text-base text-white">Edit Shift & Commission Settlement</h3>
                     </div>
                 </div>
-                <button type="button" onclick="window.SVM_APP.closeEditSettlementModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer">
+                <button type="button" onclick="window.SVM_APP.closeEditSettlementModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1E273D] transition-colors cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0" aria-label="Close modal">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <form onsubmit="window.SVM_APP.submitEditSettlementForm(event)" class="modal-dialog-body space-y-4">
-                <input type="hidden" id="edit-settle-id" />
+            <form onsubmit="window.SVM_APP.submitEditSettlementForm(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-dialog-body space-y-4">
+                    <input type="hidden" id="edit-settle-id" />
 
-                <!-- Driver & Vehicle Identity Banner -->
-                <div class="p-3.5 rounded-xl bg-[#080D1B] border border-[#263149] flex items-center justify-between">
-                    <div>
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">Driver & Mobile</span>
-                        <div id="edit-settle-driver-name" class="font-bold text-white text-sm">--</div>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">Vehicle & Date</span>
-                        <div class="flex items-center gap-2 justify-end">
-                            <span id="edit-settle-veh-plate" class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-[#162038] text-[#10B981] border border-[#263149]">--</span>
-                            <span id="edit-settle-date-badge" class="text-xs text-slate-300 font-mono">--</span>
+                    <!-- Driver & Vehicle Identity Banner -->
+                    <div class="p-3.5 rounded-xl bg-[#080D1B] border border-[#263149] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Driver & Mobile</span>
+                            <div id="edit-settle-driver-name" class="font-bold text-white text-sm">--</div>
+                        </div>
+                        <div class="text-left sm:text-right">
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Vehicle & Date</span>
+                            <div class="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
+                                <span id="edit-settle-veh-plate" class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-[#162038] text-[#10B981] border border-[#263149]">--</span>
+                                <span id="edit-settle-date-badge" class="text-xs text-slate-300 font-mono">--</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Shift Duration & Operating Hub -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Shift Duration *</label>
-                        <select id="edit-settle-shifttype" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                            <option value="12_HOURS">12 Hrs Shift (Min 10 Trips)</option>
-                            <option value="24_HOURS">24 Hrs Shift (Min 18 Trips)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Settlement Status *</label>
-                        <select id="edit-settle-status" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs font-bold text-white">
-                            <option value="SETTLED">✓ SETTLED (Payment Complete)</option>
-                            <option value="PENDING">⏳ PENDING (Handover / Balance Due)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Financial Collections 2x2 Grid -->
-                <div class="p-3.5 rounded-xl bg-[#0B1020] border border-[#263149] space-y-3">
-                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
-                        Shift Financials & Trip Verification
-                    </span>
-
+                    <!-- Shift Duration & Operating Hub -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-200 mb-1">Trips Completed *</label>
-                            <input id="edit-settle-trips" type="number" min="0" required
-                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono font-bold" />
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Shift Duration *</label>
+                            <select id="edit-settle-shifttype" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <option value="12_HOURS">12 Hrs Shift (Min 10 Trips)</option>
+                                <option value="24_HOURS">24 Hrs Shift (Min 18 Trips)</option>
+                            </select>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-[#10B981] mb-1">Gross Revenue (₹) *</label>
-                            <input id="edit-settle-gross" type="number" step="0.5" min="0" required
-                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#10B981] font-mono font-bold" />
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-[#0EA5E9] mb-1">Fuel / Petrol Exp (₹)</label>
-                            <input id="edit-settle-fuel" type="number" step="0.5" min="0"
-                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#0EA5E9] font-mono font-bold" />
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-[#F59E0B] mb-1">Cash Collected (₹)</label>
-                            <input id="edit-settle-cash" type="number" step="0.5" min="0"
-                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#F59E0B] font-mono font-bold" />
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Settlement Status *</label>
+                            <select id="edit-settle-status" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs font-bold text-white">
+                                <option value="SETTLED">✓ SETTLED (Payment Complete)</option>
+                                <option value="PENDING">⏳ PENDING (Handover / Balance Due)</option>
+                            </select>
                         </div>
                     </div>
-                </div>
 
-                <!-- Payment Mode & Advances -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Payment Method / Rail</label>
-                        <select id="edit-settle-payment-mode" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
-                            <option value="UPI Direct Transfer (PhonePe/GPay)">UPI Direct Transfer (PhonePe/GPay)</option>
-                            <option value="Physical Cash Handover at Depot">Physical Cash Handover at Depot</option>
-                            <option value="Bank Account IMPS/NEFT">Bank Account IMPS/NEFT</option>
-                            <option value="Offset / Advance Adjustment">Offset / Advance Adjustment</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Advance Taken (₹)</label>
-                        <input id="edit-settle-advance" type="number" step="0.5" min="0" value="0"
-                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Office Settlement Notes / Reference ID</label>
-                    <input id="edit-settle-remarks" type="text" placeholder="e.g. Paid via UPI #TXN99281 / Physical cash verified at Moosapet"
-                        class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
-                </div>
-
-                <!-- Live Dynamic Calculation Card -->
-                <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149] flex flex-col gap-2.5 shadow-inner">
-                    <div class="flex items-center justify-between pb-2 border-b border-[#263149]">
-                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
-                            <i data-lucide="calculator" class="w-3.5 h-3.5 text-[#6655F5]"></i>
-                            Recomputed Settlement Balance
+                    <!-- Financial Collections 2x2 Grid -->
+                    <div class="p-3.5 rounded-xl bg-[#0B1020] border border-[#263149] space-y-3">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
+                            Shift Financials & Trip Verification
                         </span>
-                        <span id="edit-calc-trips-badge">--</span>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-200 mb-1">Trips Completed *</label>
+                                <input id="edit-settle-trips" type="number" min="0" required
+                                    class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono font-bold" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-[#10B981] mb-1">Gross Revenue (₹) *</label>
+                                <input id="edit-settle-gross" type="number" step="0.5" min="0" required
+                                    class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#10B981] font-mono font-bold" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-[#0EA5E9] mb-1">Fuel / Petrol Exp (₹)</label>
+                                <input id="edit-settle-fuel" type="number" step="0.5" min="0"
+                                    class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#0EA5E9] font-mono font-bold" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-[#F59E0B] mb-1">Cash Collected (₹)</label>
+                                <input id="edit-settle-cash" type="number" step="0.5" min="0"
+                                    class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-[#F59E0B] font-mono font-bold" />
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 text-xs">
-                        <div class="p-2.5 rounded-lg bg-[#11182A] border border-[#263149]">
-                            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Commission Tier</span>
-                            <span id="edit-calc-tier" class="font-extrabold text-sm text-[#6655F5] mt-0.5 block">--</span>
-                            <span class="text-[10px] text-slate-400 mt-1 block">Comm: <strong id="edit-calc-comm-amt" class="text-white font-mono">--</strong></span>
-                        </div>
-
-                        <div class="p-2.5 rounded-lg bg-[#11182A] border border-[#263149]">
-                            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Driver Credit</span>
-                            <span id="edit-calc-credit" class="text-[#10B981] font-mono font-extrabold text-sm mt-0.5 block">--</span>
-                            <span class="text-[10px] text-slate-400 mt-1 block">Debit: <strong id="edit-calc-debit" class="text-[#F59E0B] font-mono">--</strong></span>
-                        </div>
-                    </div>
-
-                    <div class="p-3 rounded-lg bg-[#11182A] border border-[#263149] flex flex-col sm:flex-row justify-between sm:items-center gap-1">
+                    <!-- Payment Mode & Advances -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         <div>
-                            <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Net Settlement Handover</span>
-                            <span id="edit-calc-net" class="font-black text-sm">--</span>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Payment Method / Rail</label>
+                            <select id="edit-settle-payment-mode" class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white">
+                                <option value="UPI Direct Transfer (PhonePe/GPay)">UPI Direct Transfer (PhonePe/GPay)</option>
+                                <option value="Physical Cash Handover at Depot">Physical Cash Handover at Depot</option>
+                                <option value="Bank Account IMPS/NEFT">Bank Account IMPS/NEFT</option>
+                                <option value="Offset / Advance Adjustment">Offset / Advance Adjustment</option>
+                            </select>
                         </div>
-                        <span class="text-[10px] text-slate-400 font-mono">Credit − Debit Formula</span>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Advance Taken (₹)</label>
+                            <input id="edit-settle-advance" type="number" step="0.5" min="0" value="0"
+                                class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white font-mono" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Office Settlement Notes / Reference ID</label>
+                        <input id="edit-settle-remarks" type="text" maxlength="120" placeholder="e.g. Paid via UPI #TXN99281 / Physical cash verified at Moosapet"
+                            class="w-full bg-[#080D1B] border border-[#263149] rounded-xl px-3 py-2 text-xs text-white" />
+                    </div>
+
+                    <!-- Live Dynamic Calculation Card -->
+                    <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149] flex flex-col gap-2.5 shadow-inner">
+                        <div class="flex items-center justify-between pb-2 border-b border-[#263149]">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                                <i data-lucide="calculator" class="w-3.5 h-3.5 text-[#6655F5]"></i>
+                                Recomputed Settlement Balance
+                            </span>
+                            <span id="edit-calc-trips-badge">--</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div class="p-2.5 rounded-lg bg-[#11182A] border border-[#263149]">
+                                <span class="text-[10px] text-slate-400 uppercase font-semibold block">Commission Tier</span>
+                                <span id="edit-calc-tier" class="font-extrabold text-sm text-[#6655F5] mt-0.5 block">--</span>
+                                <span class="text-[10px] text-slate-400 mt-1 block">Comm: <strong id="edit-calc-comm-amt" class="text-white font-mono">--</strong></span>
+                            </div>
+
+                            <div class="p-2.5 rounded-lg bg-[#11182A] border border-[#263149]">
+                                <span class="text-[10px] text-slate-400 uppercase font-semibold block">Driver Credit</span>
+                                <span id="edit-calc-credit" class="text-[#10B981] font-mono font-extrabold text-sm mt-0.5 block">--</span>
+                                <span class="text-[10px] text-slate-400 mt-1 block">Debit: <strong id="edit-calc-debit" class="text-[#F59E0B] font-mono">--</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-lg bg-[#11182A] border border-[#263149] flex flex-col sm:flex-row justify-between sm:items-center gap-1">
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Net Settlement Handover</span>
+                                <span id="edit-calc-net" class="font-black text-sm">--</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-mono">Credit − Debit Formula</span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="modal-dialog-footer">
-                    <button type="button" onclick="window.SVM_APP.closeEditSettlementModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer">
+                    <button type="button" onclick="window.SVM_APP.closeEditSettlementModal()" class="px-5 py-2.5 rounded-xl bg-[#161F33] text-slate-300 text-xs font-bold hover:bg-[#1E273D] transition-colors cursor-pointer min-h-[40px]">
                         Cancel
                     </button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-xs font-bold shadow-lg shadow-[#10B981]/25 transition-all cursor-pointer">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-xs font-bold shadow-lg shadow-[#10B981]/25 transition-all cursor-pointer min-h-[40px]">
                         Save Settlement Changes
                     </button>
                 </div>
@@ -1796,9 +2043,10 @@
     <div id="hub-filter-pills" class="hidden"></div>
 
     <!-- Core Scripts (Isolated Mock Data Layer for Client Demo) -->
-    <script src="js/calculator.js?v=20261110_demo_v6"></script>
-    <script src="js/mockData.js?v=20261110_demo_v6"></script>
-    <script src="js/map.js?v=20261110_demo_v6"></script>
-    <script src="js/app.js?v=20261110_demo_v6"></script>
+    <script src="js/calculator.js?v=20261110_v2"></script>
+    <script src="js/mockData.js?v=20261110_v2"></script>
+    <script src="js/auth.js?v=20261110_v2"></script>
+    <script src="js/map.js?v=20261110_v2"></script>
+    <script src="js/app.js?v=20261110_v2"></script>
 </body>
 </html>
