@@ -21,7 +21,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <!-- Custom Glassmorphism Stylesheet (Single Source of Truth with Cache-Busting Version) -->
-    <link rel="stylesheet" href="css/styles.css?v=20261110_v2">
+    <link rel="stylesheet" href="css/styles.css?v=20261110_v3">
 </head>
 <body class="auth-locked bg-[#080D1B] text-slate-100 min-h-screen flex font-sans selection:bg-[#6655F5] selection:text-white">
 
@@ -147,31 +147,31 @@
     <!-- ====================================================================== -->
     <!-- LEFT SIDEBAR NAVIGATION (Matching Client Mockup media_1794250116022)   -->
     <!-- ====================================================================== -->
-    <aside id="app-sidebar" class="fixed inset-y-0 left-0 -translate-x-full md:translate-x-0 md:static w-64 bg-[#0B1020] border-r border-[#1E273D] flex flex-col justify-between shrink-0 min-h-screen md:sticky md:top-0 md:h-screen z-30 transition-all duration-300">
+    <aside id="app-sidebar" class="fixed inset-y-0 left-0 -translate-x-full lg:translate-x-0 lg:static w-64 bg-[#0B1020] border-r border-[#1E273D] flex flex-col justify-between shrink-0 min-h-screen lg:sticky lg:top-0 lg:h-screen z-[60] lg:z-30 transition-all duration-300">
         
         <!-- Top: Brand Header & Navigation Menu -->
-        <div class="p-5 flex flex-col gap-5 overflow-y-auto">
+        <div class="p-4 lg:p-5 flex flex-col gap-5 overflow-y-auto">
             
             <!-- Logo Branding & DEMO MODE Tag -->
             <div class="flex flex-col gap-2.5">
                 <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6655F5] to-[#8B5CF6] flex items-center justify-center font-black text-xl shadow-lg shadow-[#6655F5]/35 border border-white/20 shrink-0">
+                    <div class="flex items-center gap-2.5 lg:gap-3 min-w-0">
+                        <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-gradient-to-tr from-[#6655F5] to-[#8B5CF6] flex items-center justify-center font-black text-lg lg:text-xl shadow-lg shadow-[#6655F5]/35 border border-white/20 shrink-0">
                             🚕
                         </div>
                         <div class="min-w-0">
-                            <div class="flex items-center gap-1.5">
-                                <span class="font-black text-base tracking-tight text-white truncate">SVM Fleet</span>
-                                <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#6655F5]/30 text-[#8B5CF6] border border-[#6655F5]/40 font-mono shrink-0">
+                            <span class="font-black text-base tracking-tight text-white whitespace-nowrap block leading-tight">SVM Fleet</span>
+                            <div class="flex items-center gap-1.5 mt-0.5">
+                                <p class="text-[11px] text-[#94A3B8] font-medium tracking-wide whitespace-nowrap">
+                                    Fleet Command
+                                </p>
+                                <span class="text-[8px] font-extrabold px-1 py-0.5 rounded bg-[#6655F5]/30 text-[#8B5CF6] border border-[#6655F5]/40 font-mono shrink-0 whitespace-nowrap leading-none">
                                     v2.0 PRO
                                 </span>
                             </div>
-                            <p class="text-[11px] text-[#94A3B8] font-medium tracking-wide truncate">
-                                Fleet Command Center
-                            </p>
                         </div>
                     </div>
-                    <button id="mobile-sidebar-close-btn" type="button" onclick="window.SVM_APP.closeMobileSidebar()" class="md:hidden p-2 rounded-xl bg-[#161F33] border border-[#263149] text-slate-300 hover:text-white hover:border-[#6655F5] transition-colors cursor-pointer shrink-0" aria-label="Close navigation menu">
+                    <button id="mobile-sidebar-close-btn" type="button" onclick="window.SVM_APP.closeMobileSidebar()" class="lg:hidden p-2 rounded-xl bg-[#161F33] border border-[#263149] text-slate-300 hover:text-white hover:border-[#6655F5] transition-colors cursor-pointer shrink-0" aria-label="Close navigation menu">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -238,7 +238,7 @@
         <!-- Bottom: Glowing Purple Car Graphic, Demo Disclaimer Card & Logout -->
         <div class="p-4 relative overflow-hidden flex flex-col items-center gap-2 border-t border-[#1E273D]/60 bg-[#080D1B]/50 shrink-0">
             <!-- Stylized Car Graphic with Purple Neon Glow -->
-            <div class="w-full relative py-1">
+            <div id="sidebar-car-graphic" class="w-full relative py-1">
                 <svg viewBox="0 0 280 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto drop-shadow-[0_0_16px_rgba(102,85,245,0.6)]">
                     <ellipse cx="140" cy="110" rx="105" ry="8" fill="#6655F5" fill-opacity="0.4" filter="blur(6px)"/>
                     <path d="M22 88C22 84 25 80 32 77L54 70C60 68 66 63 78 54L102 34C110 26 120 22 142 22H192C208 22 218 28 228 39L248 61C258 65 264 70 266 76C268 81 266 86 262 89L254 91C252 80 238 72 222 72C206 72 192 80 190 91H100C98 80 84 72 68 72C52 72 38 80 36 91L24 90C22 90 22 89 22 88Z" fill="url(#car-body-grad)" stroke="#6655F5" stroke-width="1.5"/>
@@ -285,16 +285,16 @@
     <div id="app-main-wrapper" class="flex-1 flex flex-col min-w-0 bg-[#080D1B]">
 
         <!-- Top App Bar -->
-        <header class="h-16 bg-[#0B1020] border-b border-[#1E273D] flex items-center justify-between px-3 sm:px-6 gap-2 sticky top-0 z-40">
+        <header class="h-16 bg-[#0B1020] border-b border-[#1E273D] flex items-center justify-between px-3 sm:px-4 xl:px-6 gap-2 sticky top-0 z-40">
             
             <!-- Left: Mobile Drawer Trigger + Branch / Hub Dropdown Selector -->
             <div class="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
-                <button id="mobile-menu-btn" type="button" onclick="window.SVM_APP.toggleMobileSidebar()" class="md:hidden p-2 rounded-xl bg-[#11182A] border border-[#263149] hover:border-[#6655F5] text-slate-200 hover:text-white transition-colors cursor-pointer shrink-0" aria-label="Open navigation menu" aria-controls="app-sidebar" aria-expanded="false">
+                <button id="mobile-menu-btn" type="button" onclick="window.SVM_APP.toggleMobileSidebar()" class="lg:hidden p-2 rounded-xl bg-[#11182A] border border-[#263149] hover:border-[#6655F5] text-slate-200 hover:text-white transition-colors cursor-pointer shrink-0" aria-label="Open navigation menu" aria-controls="app-sidebar" aria-expanded="false">
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
                 <div class="relative flex items-center min-w-0 flex-1 sm:flex-initial">
                     <span class="absolute left-2.5 sm:left-3 text-sm pointer-events-none">📍</span>
-                    <select id="top-branch-selector" onchange="window.SVM_APP.filterHub(this.value)" class="w-full sm:w-auto bg-[#11182A] border border-[#263149] rounded-xl pl-7 sm:pl-8 pr-7 sm:pr-8 py-2 text-xs font-bold text-white cursor-pointer shadow-sm appearance-none hover:border-[#6655F5] transition-colors truncate" aria-label="Select operating hub">
+                    <select id="top-branch-selector" onchange="window.SVM_APP.filterHub(this.value)" class="w-full sm:w-auto max-w-[165px] sm:max-w-[220px] lg:max-w-[180px] xl:max-w-[220px] bg-[#11182A] border border-[#263149] rounded-xl pl-7 sm:pl-8 pr-7 sm:pr-8 py-2 text-xs font-bold text-white cursor-pointer shadow-sm appearance-none hover:border-[#6655F5] transition-colors truncate" aria-label="Select operating hub">
                         <option value="ALL" selected>Hyderabad (All Hubs)</option>
                         <option value="mgr_moosapet_01">Moosapet Central Hub</option>
                         <option value="mgr_kukatpally_02">Kukatpally Y-Junction</option>
@@ -305,7 +305,7 @@
             </div>
 
             <!-- Middle: Global Search Bar with Ctrl+K -->
-            <div class="relative w-80 md:w-96 hidden md:block">
+            <div class="relative hidden lg:block flex-1 min-w-[150px] max-w-xs mx-2">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-2.5 text-[#64748B]"></i>
                 <input id="global-search-input" type="text" placeholder="Search driver, vehicle, trip, or shift... (Ctrl + K)"
                     class="w-full bg-[#11182A] border border-[#263149] rounded-xl pl-10 pr-16 py-2 text-xs text-white placeholder-[#64748B] focus:border-[#6655F5] focus:outline-none transition-colors" />
@@ -313,7 +313,7 @@
             </div>
 
             <!-- Right: Live Cloud DB Badge, Notification Bell, User Profile, Logout -->
-            <div class="flex items-center gap-1.5 sm:gap-3.5 shrink-0">
+            <div class="flex items-center gap-1.5 sm:gap-2 xl:gap-3.5 shrink-0">
                 
                 <!-- Cloud Status Indicator -->
                 <div id="db-cloud-indicator" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] whitespace-nowrap shrink-0">
@@ -350,7 +350,7 @@
                 </div>
 
                 <!-- User Guide Walkthrough Trigger Button -->
-                <button type="button" onclick="window.SVM_APP.openUserGuideModal()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F33] border border-[#263149] hover:border-[#6655F5] text-slate-200 text-xs font-bold transition-all cursor-pointer shrink-0" title="Interactive System Manual">
+                <button type="button" onclick="window.SVM_APP.openUserGuideModal()" class="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F33] border border-[#263149] hover:border-[#6655F5] text-slate-200 text-xs font-bold transition-all cursor-pointer shrink-0" title="Interactive System Manual">
                     <i data-lucide="book-open" class="w-3.5 h-3.5 text-[#6655F5]"></i>
                     <span>User Guide</span>
                 </button>
@@ -367,9 +367,9 @@
                 </div>
 
                 <!-- Header Logout Button (Visible on all screen sizes) -->
-                <button id="header-logout-btn" type="button" onclick="window.SVM_APP.logout()" class="min-w-[40px] min-h-[40px] px-2 sm:px-3 py-1.5 rounded-xl bg-[#11182A] border border-[#263149] hover:border-red-500/50 hover:bg-red-500/10 text-slate-300 hover:text-red-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0" title="Sign Out" aria-label="Sign out">
+                <button id="header-logout-btn" type="button" onclick="window.SVM_APP.logout()" class="min-w-[40px] min-h-[40px] px-2 xl:px-3 py-1.5 rounded-xl bg-[#11182A] border border-[#263149] hover:border-red-500/50 hover:bg-red-500/10 text-slate-300 hover:text-red-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0" title="Sign Out" aria-label="Sign out">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
-                    <span class="hidden sm:inline">Logout</span>
+                    <span class="hidden xl:inline">Logout</span>
                 </button>
 
             </div>
@@ -434,85 +434,85 @@
                 </div>
 
                 <!-- 5 KPI Cards (Exact match to reference mockup media_1794250116022) -->
-                <div id="dashboard-kpi-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+                <div id="dashboard-kpi-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-3.5">
                     
                     <!-- KPI 1: Total Vehicles (Purple) -->
-                    <div class="kpi-card-purple p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
-                        <div class="flex items-center justify-between">
-                            <div class="w-9 h-9 rounded-xl bg-[#6655F5]/25 border border-[#6655F5]/40 flex items-center justify-center text-[#8B5CF6]">
+                    <div class="kpi-card-purple min-w-0 overflow-hidden p-3 sm:p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
+                        <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-[#6655F5]/25 border border-[#6655F5]/40 flex items-center justify-center text-[#8B5CF6]">
                                 <i data-lucide="car" class="w-4 h-4"></i>
                             </div>
                             <span class="text-xs font-bold text-[#10B981] flex items-center gap-1">
-                                ↑ +11% <span class="text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
+                                ↑ +11% <span class="hidden xl:inline text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
                             </span>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <span class="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider block">Total Vehicles</span>
-                            <span id="kpi-total-cabs" class="text-2xl font-black text-white mt-0.5 block font-mono">30</span>
+                            <span id="kpi-total-cabs" class="text-lg sm:text-xl xl:text-2xl font-black text-white mt-0.5 block font-mono truncate">30</span>
                         </div>
                     </div>
 
                     <!-- KPI 2: Active Drivers (Blue) -->
-                    <div class="kpi-card-blue p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
-                        <div class="flex items-center justify-between">
-                            <div class="w-9 h-9 rounded-xl bg-[#3185F6]/25 border border-[#3185F6]/40 flex items-center justify-center text-[#3185F6]">
+                    <div class="kpi-card-blue min-w-0 overflow-hidden p-3 sm:p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
+                        <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-[#3185F6]/25 border border-[#3185F6]/40 flex items-center justify-center text-[#3185F6]">
                                 <i data-lucide="users" class="w-4 h-4"></i>
                             </div>
                             <span class="text-xs font-bold text-[#10B981] flex items-center gap-1">
-                                ↑ +8% <span class="text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
+                                ↑ +8% <span class="hidden xl:inline text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
                             </span>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <span class="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider block">Active Drivers</span>
-                            <span id="kpi-active-drivers" class="text-2xl font-black text-white mt-0.5 block font-mono">27</span>
+                            <span id="kpi-active-drivers" class="text-lg sm:text-xl xl:text-2xl font-black text-white mt-0.5 block font-mono truncate">27</span>
                         </div>
                     </div>
 
                     <!-- KPI 3: Total Trips (Amber) -->
-                    <div class="kpi-card-amber p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
-                        <div class="flex items-center justify-between">
-                            <div class="w-9 h-9 rounded-xl bg-[#F59E0B]/25 border border-[#F59E0B]/40 flex items-center justify-center text-[#F59E0B]">
+                    <div class="kpi-card-amber min-w-0 overflow-hidden p-3 sm:p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
+                        <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-[#F59E0B]/25 border border-[#F59E0B]/40 flex items-center justify-center text-[#F59E0B]">
                                 <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
                             </div>
                             <span class="text-xs font-bold text-[#10B981] flex items-center gap-1">
-                                ↑ +14% <span class="text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
+                                ↑ +14% <span class="hidden xl:inline text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
                             </span>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <span class="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider block">Total Trips</span>
-                            <span id="kpi-total-trips" class="text-2xl font-black text-white mt-0.5 block font-mono">326</span>
+                            <span id="kpi-total-trips" class="text-lg sm:text-xl xl:text-2xl font-black text-white mt-0.5 block font-mono truncate">326</span>
                         </div>
                     </div>
 
                     <!-- KPI 4: Gross Earnings (Teal/Cyan) -->
-                    <div class="kpi-card-teal p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
-                        <div class="flex items-center justify-between">
-                            <div class="w-9 h-9 rounded-xl bg-[#0EA5E9]/25 border border-[#0EA5E9]/40 flex items-center justify-center text-[#0EA5E9]">
+                    <div class="kpi-card-teal min-w-0 overflow-hidden p-3 sm:p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
+                        <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-[#0EA5E9]/25 border border-[#0EA5E9]/40 flex items-center justify-center text-[#0EA5E9]">
                                 <i data-lucide="wallet" class="w-4 h-4"></i>
                             </div>
                             <span class="text-xs font-bold text-[#10B981] flex items-center gap-1">
-                                ↑ +12% <span class="text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
+                                ↑ +12% <span class="hidden xl:inline text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
                             </span>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <span class="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider block">Gross Earnings</span>
-                            <span id="kpi-gross-earnings" class="text-2xl font-black text-white mt-0.5 block font-mono">₹1,24,860</span>
+                            <span id="kpi-gross-earnings" class="text-lg sm:text-xl xl:text-2xl font-black text-white mt-0.5 block font-mono truncate">₹1,24,860</span>
                         </div>
                     </div>
 
                     <!-- KPI 5: Net Fleet Profit (Emerald - Owner Only) -->
-                    <div id="kpi-card-net-profit" data-owner-only="true" class="kpi-card-emerald col-span-2 md:col-span-1 p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
-                        <div class="flex items-center justify-between">
-                            <div class="w-9 h-9 rounded-xl bg-[#10B981]/25 border border-[#10B981]/40 flex items-center justify-center text-[#10B981]">
+                    <div id="kpi-card-net-profit" data-owner-only="true" class="kpi-card-emerald col-span-2 sm:col-span-1 min-w-0 overflow-hidden p-3 sm:p-4 rounded-2xl flex flex-col justify-between gap-2.5 shadow-md">
+                        <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-[#10B981]/25 border border-[#10B981]/40 flex items-center justify-center text-[#10B981]">
                                 <i data-lucide="trending-up" class="w-4 h-4"></i>
                             </div>
                             <span class="text-xs font-bold text-[#10B981] flex items-center gap-1">
-                                ↑ +16% <span class="text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
+                                ↑ +16% <span class="hidden xl:inline text-[10px] text-[#94A3B8] font-normal">vs. yesterday</span>
                             </span>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <span class="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider block">Net Fleet Profit</span>
-                            <span id="kpi-net-profit" class="text-2xl font-black text-[#10B981] mt-0.5 block font-mono">₹38,420</span>
+                            <span id="kpi-net-profit" class="text-lg sm:text-xl xl:text-2xl font-black text-[#10B981] mt-0.5 block font-mono truncate">₹38,420</span>
                         </div>
                     </div>
 
@@ -990,30 +990,30 @@
                     </div>
 
                     <!-- 5 Dynamic Financial Audit KPI Cards -->
-                    <div id="reports-kpi-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3.5 my-5 sm:my-6">
-                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                    <div id="reports-kpi-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-3.5 my-5 sm:my-6">
+                        <div class="min-w-0 overflow-hidden p-3 sm:p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
                             <span class="text-[11px] text-[#94A3B8] font-medium block">Total Fleet Turnover</span>
-                            <div id="report-kpi-gross" class="text-2xl font-black text-white mt-1 font-mono">₹2,84,600</div>
+                            <div id="report-kpi-gross" class="text-lg sm:text-xl xl:text-2xl font-black text-white mt-1 font-mono truncate">₹2,84,600</div>
                             <span class="text-[10px] text-[#10B981] mt-1 block font-mono">Gross Collections</span>
                         </div>
-                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                        <div class="min-w-0 overflow-hidden p-3 sm:p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
                             <span class="text-[11px] text-[#94A3B8] font-medium block">Driver Commission Paid</span>
-                            <div id="report-kpi-comm" class="text-2xl font-black text-[#6655F5] mt-1 font-mono">₹1,02,400</div>
+                            <div id="report-kpi-comm" class="text-lg sm:text-xl xl:text-2xl font-black text-[#6655F5] mt-1 font-mono truncate">₹1,02,400</div>
                             <span id="report-kpi-comm-rate" class="text-[10px] text-[#94A3B8] mt-1 block font-mono">36.0% Avg Slab</span>
                         </div>
-                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                        <div class="min-w-0 overflow-hidden p-3 sm:p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
                             <span class="text-[11px] text-[#94A3B8] font-medium block">Fuel & Reimbursements</span>
-                            <div id="report-kpi-fuel" class="text-2xl font-black text-[#0EA5E9] mt-1 font-mono">₹21,800</div>
+                            <div id="report-kpi-fuel" class="text-lg sm:text-xl xl:text-2xl font-black text-[#0EA5E9] mt-1 font-mono truncate">₹21,800</div>
                             <span class="text-[10px] text-[#94A3B8] mt-1 block font-mono">Daily Operating Fuel</span>
                         </div>
-                        <div id="report-card-profit" data-owner-only="true" class="col-span-2 md:col-span-1 p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                        <div id="report-card-profit" data-owner-only="true" class="col-span-2 sm:col-span-1 min-w-0 overflow-hidden p-3 sm:p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
                             <span class="text-[11px] text-[#94A3B8] font-medium block">Net Fleet Profit</span>
-                            <div id="report-kpi-profit" class="text-2xl font-black text-[#10B981] mt-1 font-mono">₹1,60,400</div>
+                            <div id="report-kpi-profit" class="text-lg sm:text-xl xl:text-2xl font-black text-[#10B981] mt-1 font-mono truncate">₹1,60,400</div>
                             <span id="report-kpi-margin" class="text-[10px] text-[#10B981] mt-1 block font-mono">56.4% Net Margin</span>
                         </div>
-                        <div class="p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
+                        <div class="min-w-0 overflow-hidden p-3 sm:p-4 rounded-xl bg-[#080D1B] border border-[#263149]">
                             <span class="text-[11px] text-[#94A3B8] font-medium block">Duty Shifts / Trips</span>
-                            <div id="report-kpi-shifts" class="text-2xl font-black text-[#F59E0B] mt-1 font-mono">82 Shifts</div>
+                            <div id="report-kpi-shifts" class="text-lg sm:text-xl xl:text-2xl font-black text-[#F59E0B] mt-1 font-mono truncate">82 Shifts</div>
                             <span id="report-kpi-trips" class="text-[10px] text-slate-400 mt-1 block font-mono">1,120 Completed Trips</span>
                         </div>
                     </div>
@@ -2043,10 +2043,10 @@
     <div id="hub-filter-pills" class="hidden"></div>
 
     <!-- Core Scripts (Isolated Mock Data Layer for Client Demo) -->
-    <script src="js/calculator.js?v=20261110_v2"></script>
-    <script src="js/mockData.js?v=20261110_v2"></script>
-    <script src="js/auth.js?v=20261110_v2"></script>
-    <script src="js/map.js?v=20261110_v2"></script>
-    <script src="js/app.js?v=20261110_v2"></script>
+    <script src="js/calculator.js?v=20261110_v3"></script>
+    <script src="js/mockData.js?v=20261110_v3"></script>
+    <script src="js/auth.js?v=20261110_v3"></script>
+    <script src="js/map.js?v=20261110_v3"></script>
+    <script src="js/app.js?v=20261110_v3"></script>
 </body>
 </html>

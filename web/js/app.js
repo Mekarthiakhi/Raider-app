@@ -79,9 +79,10 @@ class SvmFleetApp {
         }
 
         window.addEventListener("resize", () => {
-            if (window.innerWidth >= 768) {
+            if (window.innerWidth >= 1024) {
                 this.closeMobileSidebar();
-            } else if (this.registerViewMode !== "cards") {
+            }
+            if (window.innerWidth < 768 && this.registerViewMode !== "cards") {
                 this.setRegisterViewMode("cards");
             }
             if (this.mapController) this.mapController.invalidateSize();
@@ -110,20 +111,28 @@ class SvmFleetApp {
         return str.length > limit ? str.slice(0, limit).trimEnd() + "..." : str;
     }
 
-    renderTruncatedNameHtml(value, maxLen = 16, extraClass = "") {
-        const full = value === null || value === undefined ? "" : String(value).trim();
+    renderTruncatedNameHtml(value, maxLen = 16, extraClass = "", titleValue = null) {
+        const displaySource = value === null || value === undefined ? "" : String(value).trim();
+        const fullTitle = titleValue === null || titleValue === undefined ? displaySource : String(titleValue).trim();
         const cls = extraClass ? `truncate-name ${extraClass}` : "truncate-name";
-        return `<span class="${this.escapeHtml(cls)}" title="${this.escapeHtml(full)}">${this.escapeHtml(this.truncateName(full, maxLen))}</span>`;
+        return `<span class="${this.escapeHtml(cls)}" title="${this.escapeHtml(fullTitle)}">${this.escapeHtml(this.truncateName(displaySource, maxLen))}</span>`;
     }
 
-    _syncKpiGridColumns(gridEl, canSeeProfit) {
-        if (!gridEl) return;
-        gridEl.classList.remove("grid-cols-1");
-        gridEl.classList.add("grid-cols-2");
-        gridEl.classList.toggle("md:grid-cols-5", canSeeProfit);
-        gridEl.classList.toggle("lg:grid-cols-5", canSeeProfit);
-        gridEl.classList.toggle("md:grid-cols-4", !canSeeProfit);
-        gridEl.classList.toggle("lg:grid-cols-4", !canSeeProfit);
+    _syncKpiGridColumns(gridEl, canSeeProfit, profitCardEl = null) {
+        if (gridEl) {
+            gridEl.classList.remove("grid-cols-1", "md:grid-cols-4", "md:grid-cols-5", "lg:grid-cols-5");
+            gridEl.classList.add("grid-cols-2");
+            gridEl.classList.toggle("sm:grid-cols-3", canSeeProfit);
+            gridEl.classList.toggle("xl:grid-cols-5", canSeeProfit);
+            gridEl.classList.toggle("sm:grid-cols-2", !canSeeProfit);
+            gridEl.classList.toggle("lg:grid-cols-4", !canSeeProfit);
+            gridEl.classList.toggle("xl:grid-cols-4", !canSeeProfit);
+        }
+
+        if (profitCardEl) {
+            profitCardEl.classList.remove("md:col-span-1");
+            profitCardEl.classList.add("col-span-2", "sm:col-span-1");
+        }
     }
 
     formatCompactINR(val) {
@@ -823,11 +832,13 @@ class SvmFleetApp {
         const hub = hubs.find(h => h.id === scopedHubId);
 
         if (session.role === "MANAGER") {
-            const managerLabel = hub
+            const fullManagerLabel = hub
                 ? `${hub.managerName} (${hub.shortName} Manager)`
                 : (session.userName || "Hub Manager");
+            const rawMgrName = (hub && hub.managerName) ? hub.managerName : (session.userName || "Hub Manager");
+            const cleanMgrName = rawMgrName.split("(")[0].trim() || rawMgrName;
             if (titleEl) {
-                titleEl.innerHTML = `<span>${this.escapeHtml(timeGreeting)}, ${this.renderTruncatedNameHtml(managerLabel, 20)}</span> <span class="text-2xl">👋</span>`;
+                titleEl.innerHTML = `<span>${this.escapeHtml(timeGreeting)}, ${this.renderTruncatedNameHtml(cleanMgrName, 18, "", fullManagerLabel)}</span> <span class="text-2xl">👋</span>`;
             }
             if (subtitleEl) {
                 subtitleEl.innerText = hub
@@ -837,9 +848,10 @@ class SvmFleetApp {
             return;
         }
 
-        const ownerLabel = session.userName || "Akhilesh (Fleet Owner)";
+        const rawOwner = session.userName || "Akhilesh (Fleet Owner)";
+        const cleanOwner = rawOwner.split("(")[0].trim() || rawOwner;
         if (titleEl) {
-            titleEl.innerHTML = `<span>${this.escapeHtml(timeGreeting)}, ${this.renderTruncatedNameHtml(ownerLabel, 20)}</span> <span class="text-2xl">👋</span>`;
+            titleEl.innerHTML = `<span>${this.escapeHtml(timeGreeting)}, ${this.renderTruncatedNameHtml(cleanOwner, 18, "", rawOwner)}</span> <span class="text-2xl">👋</span>`;
         }
         if (subtitleEl) {
             subtitleEl.innerText = hub
@@ -1230,7 +1242,7 @@ class SvmFleetApp {
         const profitCardEl = document.getElementById("kpi-card-net-profit") || (netEl ? netEl.closest(".kpi-card-emerald") : null);
         const kpiGridEl = document.getElementById("dashboard-kpi-grid") || (cabsEl ? cabsEl.closest(".grid") : null);
 
-        this._syncKpiGridColumns(kpiGridEl, canSeeProfit);
+        this._syncKpiGridColumns(kpiGridEl, canSeeProfit, profitCardEl);
 
         if (profitCardEl) {
             profitCardEl.classList.toggle("hidden", !canSeeProfit);
@@ -2990,7 +3002,7 @@ class SvmFleetApp {
         const tbody = document.getElementById("report-table-body");
         const reportCards = document.getElementById("report-cards-container");
 
-        this._syncKpiGridColumns(kpiGrid, canSeeProfit);
+        this._syncKpiGridColumns(kpiGrid, canSeeProfit, profitCard);
 
         if (profitCard) {
             profitCard.classList.toggle("hidden", !canSeeProfit);
