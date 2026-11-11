@@ -372,8 +372,7 @@ class FleetDataSeeder @Inject constructor(
         if (existingDrivers.isEmpty()) return
 
         val bindings = existingVehicles.mapIndexed { idx, v ->
-            val driverId = v.currentDriverId?.takeIf { id -> existingDrivers.any { it.id == id } }
-                ?: existingDrivers[idx % existingDrivers.size].id
+            val driverId = existingDrivers[idx % existingDrivers.size].id
             Triple(v.id, driverId, v.managerId ?: getManagerForIndex(idx + 1))
         }
         val backfillRides = buildSampleRidesForVehicles(
