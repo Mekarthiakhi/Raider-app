@@ -16,9 +16,13 @@ import com.fleettrack.app.data.repository.VehicleRepository
 import com.fleettrack.app.util.SvmCommissionCalculator
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -151,7 +155,10 @@ class FleetDataSeeder @Inject constructor(
         }
 
         val existingVehicles = vehicleRepository.getAllVehicles().first()
-        if (existingVehicles.isNotEmpty()) return
+        if (existingVehicles.isNotEmpty()) {
+            ensureMultiDaySampleRides(existingVehicles, now)
+            return
+        }
 
         // 1. Create 30 Drivers (SVM Fleet)
         val driversToInsert = driverList.mapIndexed { index, pair ->
@@ -340,39 +347,81 @@ class FleetDataSeeder @Inject constructor(
         )
         dutyLogRepository.insertAll(officeDutyLogs)
 
-        // 4. Generate Realistic Today's Rides (Uber + Rapido in Hyderabad)
-        val ridesToInsert = mutableListOf<RideEntity>()
-        var rideIdCounter = 1L
+        // 4. Generate Realistic Multi-Day Rides (Today, Yesterday, This Week, This Month) for All 30 Cabs
+        val allVehiclesSeeded = (1..30).map { cabIndex ->
+            Triple(cabIndex.toLong(), cabIndex.toLong(), getManagerForIndex(cabIndex))
+        }
+        val ridesToInsert = buildSampleRidesForVehicles(
+            vehicleBindings = allVehiclesSeeded,
+            now = now,
+            seedTag = "init"
+        )
+        rideRepository.insertAllRides(ridesToInsert)
+    }
 
-        for (cabIndex in 1..28) {
-            val vehicleId = cabIndex.toLong()
-            val driverId = cabIndex.toLong()
+    private suspend fun ensureMultiDaySampleRides(existingVehicles: List<VehicleEntity>, now: Instant) {
+        val existingRides = rideRepository.getRecentRides(limit = 500).first()
+        val tz = TimeZone.currentSystemDefault()
+        val todayDate = now.toLocalDateTime(tz).date
+        val yesterdayDate = (now - 1.days).toLocalDateTime(tz).date
+        val hasToday = existingRides.count { it.acceptedAt.toLocalDateTime(tz).date == todayDate } >= 5
+        val hasYesterday = existingRides.any { it.acceptedAt.toLocalDateTime(tz).date == yesterdayDate }
+        if (hasToday && hasYesterday && existingRides.size >= 30) return
 
-            val tripCount = Random.nextInt(4, 9)
+        val existingDrivers = driverRepository.getAllDrivers().first()
+        if (existingDrivers.isEmpty()) return
 
-            for (t in 0 until tripCount) {
-                val platform = if (t % 2 == 0) Platform.UBER else Platform.RAPIDO
+        val bindings = existingVehicles.mapIndexed { idx, v ->
+            val driverId = v.currentDriverId?.takeIf { id -> existingDrivers.any { it.id == id } }
+                ?: existingDrivers[idx % existingDrivers.size].id
+            Triple(v.id, driverId, v.managerId ?: getManagerForIndex(idx + 1))
+        }
+        val backfillRides = buildSampleRidesForVehicles(
+            vehicleBindings = bindings,
+            now = now,
+            seedTag = "md_${todayDate}"
+        )
+        backfillRides.forEach { ride ->
+            rideRepository.insertOrIgnoreRide(ride)
+        }
+    }
 
-                val tripMinutesAgo = Random.nextInt(20, 520)
-                val acceptedAt = now - tripMinutesAgo.minutes
-                val tripDuration = Random.nextInt(15, 50)
+    private fun buildSampleRidesForVehicles(
+        vehicleBindings: List<Triple<Long, Long, String>>,
+        now: Instant,
+        seedTag: String
+    ): List<RideEntity> {
+        val rides = mutableListOf<RideEntity>()
+        // Spread trips per cab across Today (0), Yesterday (1), This Week (2..5), and This Month (9..19)
+        val dayBuckets = listOf(0, 0, 1, 2, 4, 9)
+
+        vehicleBindings.forEachIndexed { idx, (vehicleId, driverId, managerId) ->
+            val extraWeekOffset = 2 + (idx % 4)
+            val extraMonthOffset = 10 + (idx % 10)
+            val offsets = dayBuckets + listOf(extraWeekOffset, extraMonthOffset)
+
+            offsets.forEachIndexed { tripIdx, dayOffset ->
+                val platform = if ((idx + tripIdx) % 2 == 0) Platform.UBER else Platform.RAPIDO
+                val minutesOffset = if (dayOffset == 0) {
+                    25 + ((idx * 17 + tripIdx * 43) % 420)
+                } else {
+                    60 + ((idx * 29 + tripIdx * 61) % 600)
+                }
+                val acceptedAt = now - dayOffset.days - minutesOffset.minutes
+                val tripDuration = 16 + ((idx + tripIdx) % 30)
                 val completedAt = acceptedAt + tripDuration.minutes
 
-                val distanceKm = (Random.nextDouble(4.0, 22.0) * 10).toInt() / 10.0
+                val distanceKm = ((5.0 + ((idx * 3 + tripIdx * 4) % 16)) * 10).toInt() / 10.0
                 val baseRate = if (platform == Platform.UBER) 18.0 else 16.5
-                val fare = ((distanceKm * baseRate + Random.nextInt(35, 75)) / 10).toInt() * 10.0
+                val fare = ((distanceKm * baseRate + 40 + ((idx + tripIdx) * 7) % 35) / 10).toInt() * 10.0
 
-                val pickup = hyderabadLocations.random()
-                var dropoff = hyderabadLocations.random()
-                while (dropoff == pickup) {
-                    dropoff = hyderabadLocations.random()
-                }
+                val pickup = hyderabadLocations[(idx + tripIdx) % hyderabadLocations.size]
+                val dropoff = hyderabadLocations[(idx + tripIdx + 3) % hyderabadLocations.size]
+                val rideKey = "${platform.name.lowercase()}_${seedTag}_${vehicleId}_${tripIdx}_${dayOffset}"
 
-                val rideKey = "${platform.name.lowercase()}_${cabIndex}_${acceptedAt.toEpochMilliseconds()}"
-
-                ridesToInsert.add(
+                rides.add(
                     RideEntity(
-                        id = rideIdCounter++,
+                        id = 0L,
                         vehicleId = vehicleId,
                         driverId = driverId,
                         platform = platform,
@@ -389,12 +438,11 @@ class FleetDataSeeder @Inject constructor(
                         needsReview = false,
                         syncStatus = SyncStatus.SYNCED,
                         createdAt = completedAt,
-                        managerId = getManagerForIndex(cabIndex)
+                        managerId = managerId
                     )
                 )
             }
         }
-
-        rideRepository.insertAllRides(ridesToInsert)
+        return rides
     }
 }

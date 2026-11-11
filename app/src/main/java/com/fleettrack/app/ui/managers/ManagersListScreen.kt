@@ -44,6 +44,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +58,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.fleettrack.app.data.local.entity.ManagerEntity
 import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.theme.ActiveGreen
+import com.fleettrack.app.ui.theme.ActiveGreenBg
+import kotlinx.coroutines.launch
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.PillShape
 import com.fleettrack.app.ui.theme.PrimaryPurple
@@ -71,10 +74,12 @@ import com.fleettrack.app.ui.theme.TextMutedGray
 fun ManagersListScreen(
     onNavigateBack: () -> Unit,
     onNavigateToManagerDetail: (String) -> Unit,
+    onOpenManagerPortal: (ManagerEntity) -> Unit = {},
     viewModel: ManagersViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val managers by viewModel.managers.collectAsState()
     val unassignedDrivers by viewModel.unassignedDrivers.collectAsState()
     val unassignedVehicles by viewModel.unassignedVehicles.collectAsState()
@@ -255,6 +260,12 @@ fun ManagersListScreen(
                 ManagerCard(
                     manager = manager,
                     onManageClick = { onNavigateToManagerDetail(manager.id) },
+                    onOpenPortalClick = {
+                        scope.launch {
+                            viewModel.enterManagerPortal(manager)
+                            onOpenManagerPortal(manager)
+                        }
+                    },
                     onCallClick = {
                         val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${manager.phone}"))
                         context.startActivity(intent)
@@ -279,6 +290,7 @@ fun ManagersListScreen(
 private fun ManagerCard(
     manager: ManagerEntity,
     onManageClick: () -> Unit,
+    onOpenPortalClick: () -> Unit,
     onCallClick: () -> Unit
 ) {
     GlassCard(
@@ -371,7 +383,7 @@ private fun ManagerCard(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFE8F5E9))
+                        .background(ActiveGreenBg)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Phone,
@@ -384,12 +396,13 @@ private fun ManagerCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Footer with PIN & Action
+            // Footer with PIN & Actions
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFF8F9FA))
+                    .background(BackgroundLight)
+                    .border(1.dp, SurfaceBorder, RoundedCornerShape(10.dp))
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -411,22 +424,42 @@ private fun ManagerCard(
                 }
 
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable(onClick = onManageClick)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Manage Team & Cabs",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryPurple
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = PrimaryPurple,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF0284C7).copy(alpha = 0.14f))
+                            .clickable(onClick = onOpenPortalClick)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "Open Portal",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0284C7)
+                        )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable(onClick = onManageClick)
+                    ) {
+                        Text(
+                            text = "Team",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryPurple
+                        )
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = PrimaryPurple,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
         }

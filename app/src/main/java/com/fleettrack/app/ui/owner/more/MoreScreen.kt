@@ -69,6 +69,8 @@ fun MoreScreen(
     onNavigateToOfficeRegister: () -> Unit = {},
     onNavigateToDriverShift: () -> Unit = {},
     onNavigateToManagers: () -> Unit = {},
+    onOpenManagerPortal: () -> Unit = {},
+    onSwitchRoleClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -181,6 +183,14 @@ fun MoreScreen(
                     onClick = onNavigateToManagers
                 )
 
+                // Open Hub Manager Portal Directly
+                MoreMenuItem(
+                    icon = Icons.Default.Person,
+                    title = "Hub Manager Portal (Preview Role)",
+                    subtitle = "Switch to Moosapet / Kukatpally / Madhapur Manager workspace",
+                    onClick = onOpenManagerPortal
+                )
+
                 // Office Duty Register (SVM Commission Base)
                 MoreMenuItem(
                     icon = Icons.Default.Description,
@@ -245,6 +255,14 @@ fun MoreScreen(
                     title = "Settings",
                     subtitle = "Team roles, Uber integration, theme",
                     onClick = onNavigateToSettings
+                )
+
+                // Switch Active Role (Owner / Manager / Driver)
+                MoreMenuItem(
+                    icon = Icons.Default.Person,
+                    title = "Switch Role (Owner / Manager / Driver)",
+                    subtitle = "Open role sign-in to switch between portals",
+                    onClick = onSwitchRoleClick
                 )
 
                 // Direct Logout from SVM FLEET Owner Portal

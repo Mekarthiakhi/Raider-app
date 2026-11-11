@@ -9,6 +9,7 @@ import com.fleettrack.app.data.model.ManagerOverview
 import com.fleettrack.app.data.repository.DriverRepository
 import com.fleettrack.app.data.repository.ManagerRepository
 import com.fleettrack.app.data.repository.VehicleRepository
+import com.fleettrack.app.data.session.ShiftManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,7 +27,8 @@ import javax.inject.Inject
 class ManagersViewModel @Inject constructor(
     private val managerRepository: ManagerRepository,
     private val driverRepository: DriverRepository,
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    private val shiftManager: ShiftManager
 ) : ViewModel() {
 
     val managers: StateFlow<List<ManagerEntity>> = managerRepository.getAllManagers()
@@ -125,6 +127,10 @@ class ManagersViewModel @Inject constructor(
         viewModelScope.launch {
             managerRepository.assignVehicleToManager(vehicleId, managerId)
         }
+    }
+
+    suspend fun enterManagerPortal(manager: ManagerEntity) {
+        shiftManager.setManagerSession(manager.id, manager.name, manager.hubName)
     }
 }
 

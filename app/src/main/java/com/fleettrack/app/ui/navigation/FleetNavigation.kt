@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.SupervisorAccount
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,6 +27,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -227,6 +230,7 @@ fun FleetNavigation(
             composable(Screen.ModeSelect.route) {
                 ModeSelectionScreen(
                     onSelectDriver = { navController.navigate(Screen.DriverToday.route) },
+                    onSelectManager = { navController.navigate(Screen.Login.route) },
                     onSelectOwner = { navController.navigate(Screen.Login.route) }
                 )
             }
@@ -280,6 +284,7 @@ fun FleetNavigation(
             composable(Screen.Dashboard.route) {
                 val vm: FleetBoardViewModel = hiltViewModel()
                 val context = LocalContext.current
+                val navScope = rememberCoroutineScope()
                 DashboardScreen(
                     viewModel = vm,
                     onNavigateToCars = { navController.navigate(Screen.Cars.route) },
@@ -292,12 +297,18 @@ fun FleetNavigation(
                     onNavigateToLiveTracking = { navController.navigate(Screen.LiveTracking.route) },
                     onNavigateToOfficeRegister = { navController.navigate(Screen.OfficeRegister.route) },
                     onNavigateToDriverShift = { navController.navigate(Screen.DriverToday.route) },
-                    onLogoutClick = {
-                        val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
-                        sessionPrefs.edit().clear().apply()
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(0) { inclusive = true }
+                    onNavigateToManagers = { navController.navigate(Screen.ManagersList.route) },
+                    onOpenManagerPortal = { mgrId, mgrName, hubName ->
+                        navScope.launch {
+                            vm.enterManagerPortal(mgrId, mgrName, hubName)
+                            openManagerPortalPrefs(context, mgrId, mgrName, hubName, isOwnerPreview = true)
+                            navController.navigate(Screen.ManagerDashboard.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
+                    },
+                    onLogoutClick = {
+                        clearActiveSessionAndGoToLogin(context, navController)
                     }
                 )
             }
@@ -336,6 +347,8 @@ fun FleetNavigation(
 
             composable(Screen.More.route) {
                 val context = LocalContext.current
+                val vm: FleetBoardViewModel = hiltViewModel()
+                val navScope = rememberCoroutineScope()
                 MoreScreen(
                     onNavigateToReports = { navController.navigate(Screen.Earnings.route) },
                     onNavigateToMaintenance = { navController.navigate(Screen.Maintenance.route) },
@@ -348,12 +361,20 @@ fun FleetNavigation(
                     onNavigateToOfficeRegister = { navController.navigate(Screen.OfficeRegister.route) },
                     onNavigateToDriverShift = { navController.navigate(Screen.DriverToday.route) },
                     onNavigateToManagers = { navController.navigate(Screen.ManagersList.route) },
-                    onLogoutClick = {
-                        val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
-                        sessionPrefs.edit().clear().apply()
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(0) { inclusive = true }
+                    onOpenManagerPortal = {
+                        navScope.launch {
+                            vm.enterManagerPortal("mgr_moosapet_01", "Srinivas Rao", "Moosapet Central Hub")
+                            openManagerPortalPrefs(context, "mgr_moosapet_01", "Srinivas Rao", "Moosapet Central Hub", isOwnerPreview = true)
+                            navController.navigate(Screen.ManagerDashboard.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
+                    },
+                    onSwitchRoleClick = {
+                        clearActiveSessionAndGoToLogin(context, navController)
+                    },
+                    onLogoutClick = {
+                        clearActiveSessionAndGoToLogin(context, navController)
                     }
                 )
             }
@@ -452,12 +473,11 @@ fun FleetNavigation(
                 val context = LocalContext.current
                 SettingsScreen(
                     onBackClick = { navController.popBackStack() },
+                    onSwitchRoleClick = {
+                        clearActiveSessionAndGoToLogin(context, navController)
+                    },
                     onLogoutClick = {
-                        val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
-                        sessionPrefs.edit().clear().apply()
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
+                        clearActiveSessionAndGoToLogin(context, navController)
                     },
                     onNodeInspectorClick = {
                         navController.navigate(Screen.NodeInspector.route)
@@ -508,10 +528,17 @@ fun FleetNavigation(
             // Owner's Hub Managers Control Center
             // ==========================================
             composable(Screen.ManagersList.route) {
+                val context = LocalContext.current
                 ManagersListScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToManagerDetail = { managerId ->
                         navController.navigate(Screen.ManagerDetail.createRoute(managerId))
+                    },
+                    onOpenManagerPortal = { manager ->
+                        openManagerPortalPrefs(context, manager.id, manager.name, manager.hubName, isOwnerPreview = true)
+                        navController.navigate(Screen.ManagerDashboard.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
                     }
                 )
             }
@@ -542,12 +569,22 @@ fun FleetNavigation(
                     onNavigateToCars = { navController.navigate(Screen.ManagerCars.route) },
                     onNavigateToRegister = { navController.navigate(Screen.ManagerRegister.route) },
                     onNavigateToLiveTracking = { navController.navigate(Screen.ManagerLiveTracking.route) },
-                    onLogoutClick = {
+                    onBackToOwnerClick = {
                         val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
-                        sessionPrefs.edit().clear().apply()
-                        navController.navigate(Screen.Login.route) {
+                        sessionPrefs.edit()
+                            .putBoolean("is_logged_in", true)
+                            .putBoolean("is_owner_preview", false)
+                            .putString("role", "OWNER")
+                            .remove("manager_id")
+                            .remove("manager_name")
+                            .remove("hub_name")
+                            .apply()
+                        navController.navigate(Screen.Dashboard.route) {
                             popUpTo(0) { inclusive = true }
                         }
+                    },
+                    onLogoutClick = {
+                        clearActiveSessionAndGoToLogin(context, navController)
                     }
                 )
             }
@@ -582,6 +619,7 @@ fun FleetNavigation(
 @Composable
 private fun ModeSelectionScreen(
     onSelectDriver: () -> Unit,
+    onSelectManager: () -> Unit,
     onSelectOwner: () -> Unit
 ) {
     Box(
@@ -659,7 +697,37 @@ private fun ModeSelectionScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Driver Companion Button (Secondary Action)
+            // Hub Manager Portal Button (Secondary Action)
+            GlassCard(
+                onClick = onSelectManager,
+                shape = PillShape,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 14.dp, horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Shield,
+                        contentDescription = "Manager",
+                        tint = Color(0xFF0284C7)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "Hub Fleet Manager Portal",
+                        color = TextDark,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Driver Companion Button
             GlassCard(
                 onClick = onSelectDriver,
                 shape = PillShape,
@@ -688,4 +756,44 @@ private fun ModeSelectionScreen(
             }
         }
     }
+}
+
+private fun clearActiveSessionAndGoToLogin(
+    context: android.content.Context,
+    navController: NavHostController
+) {
+    val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
+    sessionPrefs.edit()
+        .putBoolean("is_logged_in", false)
+        .remove("is_demo_mode")
+        .remove("is_owner_preview")
+        .remove("role")
+        .remove("phone")
+        .remove("driver_id")
+        .remove("driver_name")
+        .remove("manager_id")
+        .remove("manager_name")
+        .remove("hub_name")
+        .apply()
+    navController.navigate(Screen.Login.route) {
+        popUpTo(0) { inclusive = true }
+    }
+}
+
+private fun openManagerPortalPrefs(
+    context: android.content.Context,
+    managerId: String,
+    managerName: String,
+    hubName: String,
+    isOwnerPreview: Boolean
+) {
+    val sessionPrefs = context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
+    sessionPrefs.edit()
+        .putBoolean("is_logged_in", true)
+        .putBoolean("is_owner_preview", isOwnerPreview)
+        .putString("role", "MANAGER")
+        .putString("manager_id", managerId)
+        .putString("manager_name", managerName)
+        .putString("hub_name", hubName)
+        .apply()
 }

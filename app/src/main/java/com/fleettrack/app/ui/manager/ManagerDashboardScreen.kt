@@ -57,7 +57,10 @@ import com.fleettrack.app.data.local.entity.DriverEntity
 import com.fleettrack.app.data.local.entity.DutyLogEntity
 import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.theme.ActiveGreen
+import com.fleettrack.app.ui.theme.ActiveGreenBg
 import com.fleettrack.app.ui.theme.BackgroundLight
+import com.fleettrack.app.ui.theme.InactiveRed
+import com.fleettrack.app.ui.theme.InactiveRedBg
 import com.fleettrack.app.ui.theme.PillShape
 import com.fleettrack.app.ui.theme.PrimaryPurple
 import com.fleettrack.app.ui.theme.PrimaryPurpleContainer
@@ -73,11 +76,14 @@ fun ManagerDashboardScreen(
     onNavigateToCars: () -> Unit,
     onNavigateToRegister: () -> Unit,
     onNavigateToLiveTracking: () -> Unit,
+    onBackToOwnerClick: () -> Unit = {},
     onLogoutClick: () -> Unit,
     viewModel: ManagerDashboardViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val sessionPrefs = remember { context.getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE) }
+    val isOwnerPreview = remember { sessionPrefs.getBoolean("is_owner_preview", false) }
     val session by viewModel.managerSession.collectAsState()
     val overview by viewModel.managerOverview.collectAsState()
     val drivers by viewModel.assignedDrivers.collectAsState()
@@ -105,12 +111,12 @@ fun ManagerDashboardScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(Color(0xFFE0F2FE))
+                            .background(PrimaryPurpleContainer)
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = "📍 ${session.hubName ?: "Hyderabad Hub"}",
-                            color = Color(0xFF0369A1),
+                            color = PrimaryPurple,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -129,6 +135,17 @@ fun ManagerDashboardScreen(
                     )
                 }
 
+                if (isOwnerPreview) {
+                    TextButton(
+                        onClick = {
+                            viewModel.switchBackToOwner()
+                            onBackToOwnerClick()
+                        }
+                    ) {
+                        Text("Owner View", color = PrimaryPurple, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+
                 IconButton(
                     onClick = {
                         viewModel.logout()
@@ -137,12 +154,12 @@ fun ManagerDashboardScreen(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFFEE2E2))
+                        .background(InactiveRedBg)
                 ) {
                     Icon(
                         imageVector = Icons.Default.ExitToApp,
                         contentDescription = "Logout",
-                        tint = Color(0xFFDC2626),
+                        tint = InactiveRed,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -355,14 +372,14 @@ private fun ManagerDriverCard(
                 modifier = Modifier
                     .size(38.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFE0F2FE)),
+                    .background(PrimaryPurpleContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = driver.name.take(1).uppercase(),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
-                    color = Color(0xFF0369A1)
+                    color = PrimaryPurple
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
@@ -384,7 +401,7 @@ private fun ManagerDriverCard(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFE8F5E9))
+                    .background(ActiveGreenBg)
             ) {
                 Icon(Icons.Default.Phone, contentDescription = "Call", tint = ActiveGreen, modifier = Modifier.size(16.dp))
             }

@@ -90,6 +90,8 @@ fun DashboardScreen(
     onNavigateToLiveTracking: () -> Unit = onNavigateToCars,
     onNavigateToOfficeRegister: () -> Unit = {},
     onNavigateToDriverShift: () -> Unit = {},
+    onNavigateToManagers: () -> Unit = {},
+    onOpenManagerPortal: (managerId: String, managerName: String, hubName: String) -> Unit = { _, _, _ -> },
     onLogoutClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -216,6 +218,50 @@ fun DashboardScreen(
                         }
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            val selectedMgrTuple = when (selectedHub) {
+                "Moosapet Hub" -> Triple("mgr_moosapet_01", "Srinivas Rao", "Moosapet Central Hub")
+                "Kukatpally Hub" -> Triple("mgr_kukatpally_02", "Venkatesh Naidu", "Kukatpally Y-Junction Hub")
+                "Madhapur Hub" -> Triple("mgr_madhapur_03", "Mohammed Farooq", "Madhapur / Hitec City Hub")
+                else -> null
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(PrimaryPurpleContainer.copy(alpha = 0.45f))
+                    .border(1.dp, PrimaryPurple.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
+                    .clickable {
+                        if (selectedMgrTuple != null) {
+                            onOpenManagerPortal(selectedMgrTuple.first, selectedMgrTuple.second, selectedMgrTuple.third)
+                        } else {
+                            onNavigateToManagers()
+                        }
+                    }
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (selectedMgrTuple != null) {
+                        "👔 Open ${selectedMgrTuple.second} (Manager Role)"
+                    } else {
+                        "👔 Hub Managers (3 Active Portals)"
+                    },
+                    color = PrimaryPurple,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = if (selectedMgrTuple != null) "Switch Portal →" else "View Roles →",
+                    color = PrimaryPurple,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
 

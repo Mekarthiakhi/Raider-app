@@ -1415,6 +1415,15 @@ class SvmFleetApp {
             btnMonth.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-[#6655F5] text-white shadow-sm transition-all";
         }
 
+        const tfSelect = document.getElementById("timeframe-date-select");
+        if (tfSelect) {
+            const targetVal = tf === "week" ? "week" : tf === "month" ? "month" : "today";
+            if (tfSelect.value !== targetVal && tfSelect.value !== "custom" && tfSelect.value !== "yesterday") {
+                tfSelect.value = targetVal;
+                this._syncSingleSelectTrigger(tfSelect);
+            }
+        }
+
         this.renderMetricCards();
         this.renderPlatformDonutChart();
     }
@@ -1422,8 +1431,10 @@ class SvmFleetApp {
     handleTimeframeSelectChange(val) {
         if (val === "week") {
             this.setTimeframe("week");
+            this.setDateRangeFilter("week");
         } else if (val === "month") {
             this.setTimeframe("month");
+            this.setDateRangeFilter("month");
         } else if (val === "custom") {
             this.openCustomDateRangeModal();
         } else if (val === "yesterday") {
@@ -1431,7 +1442,7 @@ class SvmFleetApp {
             this.setSpecificDateFilter("2026-11-08");
         } else {
             this.setTimeframe("day");
-            this.setDateRangeFilter("all");
+            this.setDateRangeFilter("today");
         }
     }
 
@@ -1642,6 +1653,47 @@ class SvmFleetApp {
         return window.DEMO_REPO.getDrivers(allowedHubId);
     }
 
+    _toLocalIsoDate(dateObj) {
+        const d = dateObj || new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    _matchesPeriodFilter(loginDateStr, period) {
+        if (!period || period === "all") return true;
+        const iso = this._parseLogDateToIso(loginDateStr);
+        const now = new Date();
+        const todayIso = this._toLocalIsoDate(now);
+        const demoAnchorIso = "2026-11-09";
+
+        if (period === "today") {
+            if (iso) return iso === todayIso || iso === demoAnchorIso;
+            return Boolean(loginDateStr && String(loginDateStr).includes("09 Nov 2026"));
+        }
+
+        if (period === "week") {
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - 6);
+            const weekStartIso = this._toLocalIsoDate(weekStart);
+            if (iso) {
+                return (iso >= weekStartIso && iso <= todayIso) || (iso >= "2026-11-03" && iso <= demoAnchorIso);
+            }
+            return Boolean(loginDateStr && ["03 Nov", "04 Nov", "05 Nov", "06 Nov", "07 Nov", "08 Nov", "09 Nov"].some(d => loginDateStr.includes(d)));
+        }
+
+        if (period === "month") {
+            const monthPrefix = todayIso.slice(0, 7);
+            if (iso) {
+                return iso.startsWith(monthPrefix) || iso.startsWith("2026-11");
+            }
+            return Boolean(loginDateStr && String(loginDateStr).includes("Nov 2026"));
+        }
+
+        return true;
+    }
+
     getCurrentFilteredLogs() {
         const allowedHubId = this.getScopedHubId(this.currentHubId);
         if (!allowedHubId || !window.DEMO_REPO) return [];
@@ -1668,14 +1720,8 @@ class SvmFleetApp {
                 const iso = this._parseLogDateToIso(l.loginDate);
                 return iso && iso >= this.customDateRange.start && iso <= this.customDateRange.end;
             });
-        } else if (this.selectedDateRange === "today") {
-            const todayStr = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-            logs = logs.filter(l => (l.loginDate && l.loginDate.includes("09 Nov 2026")) || l.loginDate === todayStr);
-        } else if (this.selectedDateRange === "week") {
-            const weekDates = ["03 Nov", "04 Nov", "05 Nov", "06 Nov", "07 Nov", "08 Nov", "09 Nov"];
-            logs = logs.filter(l => l.loginDate && weekDates.some(d => l.loginDate.includes(d)));
-        } else if (this.selectedDateRange === "month") {
-            logs = logs.filter(l => l.loginDate && l.loginDate.includes("Nov 2026"));
+        } else if (this.selectedDateRange === "today" || this.selectedDateRange === "week" || this.selectedDateRange === "month") {
+            logs = logs.filter(l => this._matchesPeriodFilter(l.loginDate, this.selectedDateRange));
         }
 
         if (this.searchQuery) {
@@ -3612,17 +3658,7 @@ class SvmFleetApp {
         }
 
         const allLogs = window.DEMO_REPO.getDutyLogs(allowedHubId);
-        let periodLogs = allLogs;
-
-        if (this.reportPeriod === "today") {
-            const todayStr = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-            periodLogs = allLogs.filter(l => (l.loginDate && l.loginDate.includes("09 Nov 2026")) || l.loginDate === todayStr);
-        } else if (this.reportPeriod === "week") {
-            const weekDates = ["03 Nov", "04 Nov", "05 Nov", "06 Nov", "07 Nov", "08 Nov", "09 Nov"];
-            periodLogs = allLogs.filter(l => l.loginDate && weekDates.some(d => l.loginDate.includes(d)));
-        } else if (this.reportPeriod === "month") {
-            periodLogs = allLogs.filter(l => l.loginDate && l.loginDate.includes("Nov 2026"));
-        }
+        const periodLogs = allLogs.filter(l => this._matchesPeriodFilter(l.loginDate, this.reportPeriod));
 
         let totalGross = 0;
         let totalComm = 0;

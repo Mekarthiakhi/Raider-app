@@ -33,7 +33,7 @@ class LiveFeedViewModel @Inject constructor(
         )
 
     val recentRides: StateFlow<List<EnrichedTrip>> = combine(
-        rideRepository.getRecentRides(limit = 60),
+        rideRepository.getRecentRides(limit = 500),
         vehicleRepository.getAllVehicles()
     ) { rides, vehicles ->
         val vehicleMap = vehicles.associateBy { it.id }

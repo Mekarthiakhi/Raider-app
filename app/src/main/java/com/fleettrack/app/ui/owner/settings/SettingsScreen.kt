@@ -84,6 +84,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     onBackClick: (() -> Unit)? = null,
+    onSwitchRoleClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onNodeInspectorClick: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -153,22 +154,22 @@ fun SettingsScreen(
 
                     SettingItemRow(
                         icon = Icons.Default.Person,
-                        label = "Fleet Profile & Owner Info",
-                        onClick = { }
+                        label = "Switch Role (Owner / Manager / Driver)",
+                        onClick = onSwitchRoleClick
                     )
                     HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
 
                     SettingItemRow(
                         icon = Icons.Default.Group,
                         label = "Manage Drivers & Permissions",
-                        onClick = { }
+                        onClick = { Toast.makeText(context, "Open Team / Drivers from Home or More tab", Toast.LENGTH_SHORT).show() }
                     )
                     HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp)
 
                     SettingItemRow(
                         icon = Icons.Default.Extension,
                         label = "Platform Integrations (Uber, Rapido, Ola)",
-                        onClick = { }
+                        onClick = { Toast.makeText(context, "Uber, Rapido & Ola accessibility capture ready", Toast.LENGTH_SHORT).show() }
                     )
                 }
             }
@@ -479,7 +480,7 @@ fun SettingsScreen(
                                 val update = AppUpdateHelper.checkForUpdate(context)
                                 if (update != null) {
                                     android.widget.Toast.makeText(context, "Downloading update (${update.sizeMb} MB)...", android.widget.Toast.LENGTH_LONG).show()
-                                    AppUpdateHelper.downloadAndInstall(context, update.downloadUrl) { status ->
+                                    AppUpdateHelper.downloadAndInstall(context, update.downloadUrl, update.publishedAt) { status ->
                                         // update progress
                                     }
                                 } else {
@@ -493,8 +494,8 @@ fun SettingsScreen(
 
                     SettingItemRow(
                         icon = Icons.Default.Info,
-                        label = "About App (SVM FLEET v1.0.0)",
-                        onClick = { }
+                        label = "About App (SVM FLEET v${com.fleettrack.app.BuildConfig.VERSION_NAME})",
+                        onClick = { Toast.makeText(context, "SVM FLEET Build ${com.fleettrack.app.BuildConfig.VERSION_CODE}", Toast.LENGTH_SHORT).show() }
                     )
                 }
             }

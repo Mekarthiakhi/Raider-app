@@ -64,10 +64,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.fleettrack.app.data.local.entity.ManagerEntity
+import com.fleettrack.app.ui.components.SearchableDropdownField
+import com.fleettrack.app.ui.components.SearchableDropdownOption
 import com.fleettrack.app.ui.theme.ActiveGreen
+import com.fleettrack.app.ui.theme.ActiveGreenBg
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.PillShape
 import com.fleettrack.app.ui.theme.PrimaryPurple
@@ -145,7 +150,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp)),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                colors = CardDefaults.cardColors(containerColor = ActiveGreenBg),
                 border = androidx.compose.foundation.BorderStroke(1.dp, ActiveGreen.copy(alpha = 0.5f))
             ) {
                 Row(
@@ -173,7 +178,7 @@ fun LoginScreen(
                             Text(
                                 text = "New Version Available (${updateInfo!!.sizeMb} MB)",
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1B5E20),
+                                color = ActiveGreen,
                                 fontSize = 12.sp
                             )
                             Text(
@@ -393,7 +398,8 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF1F3F5))
+                        .background(BackgroundLight)
+                        .border(1.dp, SurfaceBorder, RoundedCornerShape(12.dp))
                         .padding(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -410,14 +416,16 @@ fun LoginScreen(
                                     otpCode = ""
                                 }
                             }
-                            .padding(vertical = 9.dp),
+                            .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "👑 Owner",
                             color = if (selectedRole == UserRole.OWNER) Color.White else TextDark,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
@@ -426,7 +434,7 @@ fun LoginScreen(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (selectedRole == UserRole.MANAGER) PrimaryPurple else Color.Transparent)
+                            .background(if (selectedRole == UserRole.MANAGER) Color(0xFF0284C7) else Color.Transparent)
                             .clickable {
                                 if (selectedRole != UserRole.MANAGER) {
                                     selectedRole = UserRole.MANAGER
@@ -434,14 +442,16 @@ fun LoginScreen(
                                     otpCode = ""
                                 }
                             }
-                            .padding(vertical = 9.dp),
+                            .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "👔 Manager",
                             color = if (selectedRole == UserRole.MANAGER) Color.White else TextDark,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
@@ -458,14 +468,16 @@ fun LoginScreen(
                                     otpCode = ""
                                 }
                             }
-                            .padding(vertical = 9.dp),
+                            .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "🚗 Driver",
                             color = if (selectedRole == UserRole.DRIVER) Color.White else TextDark,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -882,19 +894,20 @@ fun LoginScreen(
                                         authStatus.managerName,
                                         authStatus.hubName
                                     )
-                                }
-                                sessionPrefs.edit()
-                                    .putBoolean("is_logged_in", true)
-                                    .putBoolean("is_demo_mode", false)
-                                    .putString("role", "MANAGER")
-                                    .putString("phone", phoneInput)
-                                    .putString("manager_id", authStatus.managerId)
-                                    .putString("manager_name", authStatus.managerName)
-                                    .putString("hub_name", authStatus.hubName)
-                                    .apply()
+                                    sessionPrefs.edit()
+                                        .putBoolean("is_logged_in", true)
+                                        .putBoolean("is_demo_mode", false)
+                                        .putBoolean("is_owner_preview", false)
+                                        .putString("role", "MANAGER")
+                                        .putString("phone", phoneInput)
+                                        .putString("manager_id", authStatus.managerId)
+                                        .putString("manager_name", authStatus.managerName)
+                                        .putString("hub_name", authStatus.hubName)
+                                        .apply()
 
-                                Toast.makeText(context, "Welcome, ${authStatus.managerName} (${authStatus.hubName})!", Toast.LENGTH_SHORT).show()
-                                onManagerLoginSuccess(authStatus.managerId)
+                                    Toast.makeText(context, "Welcome, ${authStatus.managerName} (${authStatus.hubName})!", Toast.LENGTH_SHORT).show()
+                                    onManagerLoginSuccess(authStatus.managerId)
+                                }
                             }
                             is AuthStatus.DriverAuthorized -> {
                                 scope.launch { viewModel.saveDriverSession() }
@@ -983,25 +996,73 @@ fun LoginScreen(
                         }
                     }
                     UserRole.MANAGER -> {
-                        Spacer(modifier = Modifier.height(12.dp))
+                        val fallbackManagers = remember {
+                            listOf(
+                                ManagerEntity(
+                                    id = "mgr_moosapet_01",
+                                    name = "Srinivas Rao",
+                                    phone = "9849012345",
+                                    hubName = "Moosapet Central Hub",
+                                    pinCode = "1234"
+                                ),
+                                ManagerEntity(
+                                    id = "mgr_kukatpally_02",
+                                    name = "Venkatesh Naidu",
+                                    phone = "9701234567",
+                                    hubName = "Kukatpally Y-Junction Hub",
+                                    pinCode = "2345"
+                                ),
+                                ManagerEntity(
+                                    id = "mgr_madhapur_03",
+                                    name = "Mohammed Farooq",
+                                    phone = "9989056789",
+                                    hubName = "Madhapur / Hitec City Hub",
+                                    pinCode = "3456"
+                                )
+                            )
+                        }
+                        val hubManagers = if (registeredManagers.isNotEmpty()) registeredManagers else fallbackManagers
+                        var selectedDemoManagerId by remember(hubManagers) {
+                            mutableStateOf(hubManagers.first().id)
+                        }
+                        val chosenMgr = hubManagers.firstOrNull { it.id == selectedDemoManagerId } ?: hubManagers.first()
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        SearchableDropdownField(
+                            label = "Select Hub Manager Demo",
+                            selectedValue = chosenMgr.name,
+                            options = hubManagers.map { mgr ->
+                                SearchableDropdownOption(
+                                    value = mgr.id,
+                                    label = "${mgr.name} (${mgr.hubName})",
+                                    subtitle = "+91 ${mgr.phone} • PIN: ${mgr.pinCode}"
+                                )
+                            },
+                            onOptionSelected = { selectedDemoManagerId = it.value },
+                            dialogTitle = "Choose Hub Manager",
+                            searchPlaceholder = "Search manager or hub...",
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
                         Button(
                             onClick = {
                                 scope.launch {
-                                    viewModel.saveManagerSession("mgr_moosapet_01", "Srinivas Rao", "Moosapet Central Hub")
-                                }
-                                val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
-                                sessionPrefs.edit()
-                                    .putBoolean("is_logged_in", true)
-                                    .putBoolean("is_demo_mode", true)
-                                    .putString("role", "MANAGER")
-                                    .putString("phone", "9849012345")
-                                    .putString("manager_id", "mgr_moosapet_01")
-                                    .putString("manager_name", "Srinivas Rao")
-                                    .putString("hub_name", "Moosapet Central Hub")
-                                    .apply()
+                                    viewModel.saveManagerSession(chosenMgr.id, chosenMgr.name, chosenMgr.hubName)
+                                    val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
+                                    sessionPrefs.edit()
+                                        .putBoolean("is_logged_in", true)
+                                        .putBoolean("is_demo_mode", true)
+                                        .putBoolean("is_owner_preview", false)
+                                        .putString("role", "MANAGER")
+                                        .putString("phone", chosenMgr.phone)
+                                        .putString("manager_id", chosenMgr.id)
+                                        .putString("manager_name", chosenMgr.name)
+                                        .putString("hub_name", chosenMgr.hubName)
+                                        .apply()
 
-                                Toast.makeText(context, "👔 Welcome, Srinivas Rao! Opening Moosapet Hub Manager Demo (12 Drivers)...", Toast.LENGTH_SHORT).show()
-                                onManagerLoginSuccess("mgr_moosapet_01")
+                                    Toast.makeText(context, "👔 Welcome, ${chosenMgr.name}! Opening ${chosenMgr.hubName}...", Toast.LENGTH_SHORT).show()
+                                    onManagerLoginSuccess(chosenMgr.id)
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
                             shape = PillShape,
@@ -1017,10 +1078,12 @@ fun LoginScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "⚡ 1-Tap Manager Demo (12 Drivers • Moosapet)",
+                                text = "⚡ 1-Tap Manager (${chosenMgr.name})",
                                 color = Color.White,
                                 fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }

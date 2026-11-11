@@ -131,5 +131,7 @@ class ManagerDashboardViewModel @Inject constructor(
             shiftManager.setUserRole(UserRole.OWNER)
         }
     }
+
+    fun switchBackToOwner() = logout()
 }
 

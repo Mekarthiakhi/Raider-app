@@ -15,6 +15,7 @@ import com.fleettrack.app.data.repository.DriverRepository
 import com.fleettrack.app.data.repository.DutyLogRepository
 import com.fleettrack.app.data.repository.RideRepository
 import com.fleettrack.app.data.repository.VehicleRepository
+import com.fleettrack.app.data.session.ShiftManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
@@ -41,8 +42,13 @@ class FleetBoardViewModel @Inject constructor(
     private val driverRepository: DriverRepository,
     private val rideRepository: RideRepository,
     private val deviceRepository: DeviceRepository,
-    private val dutyLogRepository: DutyLogRepository
+    private val dutyLogRepository: DutyLogRepository,
+    private val shiftManager: ShiftManager
 ) : ViewModel() {
+
+    suspend fun enterManagerPortal(managerId: String, managerName: String, hubName: String) {
+        shiftManager.setManagerSession(managerId, managerName, hubName)
+    }
 
     private val sessionPrefs = context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE)
     private val isDemoMode: Boolean

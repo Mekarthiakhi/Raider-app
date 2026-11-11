@@ -43,6 +43,7 @@ import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.components.SearchableDropdownOption
 import com.fleettrack.app.ui.components.SearchableDropdownPill
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Duration.Companion.days
@@ -105,17 +106,22 @@ fun LiveFeedScreen(
     val tz = TimeZone.currentSystemDefault()
     val todayDate = now.toLocalDateTime(tz).date
     val yesterdayDate = (now - 1.days).toLocalDateTime(tz).date
+    val weekStartDate = (now - 6.days).toLocalDateTime(tz).date
+    val monthStartDate = (now - 29.days).toLocalDateTime(tz).date
 
     val filteredTrips = remember(trips, selectedTimeFilter, selectedCarFilter) {
+        val selectedCarNorm = selectedCarFilter.replace(" ", "").uppercase()
         trips.filter { item ->
+            val regNorm = item.vehicleRegNo.replace(" ", "").uppercase()
             val carMatches = selectedCarFilter == "All Cars" ||
+                regNorm == selectedCarNorm ||
                 item.vehicleRegNo.contains(selectedCarFilter, ignoreCase = true)
             val rideDate = item.ride.acceptedAt.toLocalDateTime(tz).date
             val timeMatches = when (selectedTimeFilter) {
                 "Today" -> rideDate == todayDate
                 "Yesterday" -> rideDate == yesterdayDate
-                "This Week" -> (now - item.ride.acceptedAt) <= 7.days
-                "This Month" -> (now - item.ride.acceptedAt) <= 30.days
+                "This Week" -> rideDate >= weekStartDate
+                "This Month" -> rideDate >= monthStartDate
                 else -> true
             }
             carMatches && timeMatches
@@ -253,11 +259,41 @@ fun LiveFeedScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 4. Trip Item Cards
+        // 4. Active filter status + Reset shortcut
+        if (selectedTimeFilter != "All Time" || selectedCarFilter != "All Cars") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Showing ${filteredTrips.size} trips • $selectedTimeFilter • $selectedCarFilter",
+                    color = TextGray,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "Reset",
+                    color = PrimaryPurple,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clickable {
+                            selectedTimeFilter = "All Time"
+                            selectedCarFilter = "All Cars"
+                        }
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+        }
+
+        // 5. Trip Item Cards
         if (filteredTrips.isEmpty()) {
             EmptyState(
-                title = "No trips found for $selectedCarFilter",
-                subtitle = "Completed Uber & Rapido trips will appear here automatically."
+                title = "No trips for $selectedCarFilter ($selectedTimeFilter)",
+                subtitle = "Try switching to All Time or selecting All Cars above."
             )
         } else {
             LazyColumn(
@@ -327,7 +363,7 @@ private fun MockupTripCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Today • ${trip.vehicleRegNo}",
+                        text = "${formatTripDayTime(trip.ride.acceptedAt)} • ${trip.vehicleRegNo}",
                         color = TextGray,
                         fontSize = 11.sp
                     )
@@ -352,4 +388,30 @@ private fun MockupTripCard(
             }
         }
     }
+}
+
+private fun formatTripDayTime(instant: Instant): String {
+    val now = Clock.System.now()
+    val tz = TimeZone.currentSystemDefault()
+    val todayDate = now.toLocalDateTime(tz).date
+    val yesterdayDate = (now - 1.days).toLocalDateTime(tz).date
+    val local = instant.toLocalDateTime(tz)
+    val hour24 = local.hour
+    val amPm = if (hour24 >= 12) "PM" else "AM"
+    val hour12 = when {
+        hour24 == 0 -> 12
+        hour24 > 12 -> hour24 - 12
+        else -> hour24
+    }
+    val timeStr = String.format(Locale.ENGLISH, "%02d:%02d %s", hour12, local.minute, amPm)
+    val dayStr = when (local.date) {
+        todayDate -> "Today"
+        yesterdayDate -> "Yesterday"
+        else -> {
+            val monthShort = local.month.name.take(3).lowercase()
+                .replaceFirstChar { it.uppercase() }
+            String.format(Locale.ENGLISH, "%02d %s", local.dayOfMonth, monthShort)
+        }
+    }
+    return "$dayStr, $timeStr"
 }
