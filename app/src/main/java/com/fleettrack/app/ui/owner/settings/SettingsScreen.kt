@@ -76,6 +76,7 @@ import com.fleettrack.app.ui.theme.SurfaceBorder
 import com.fleettrack.app.ui.theme.TextDark
 import com.fleettrack.app.ui.theme.TextGray
 import com.fleettrack.app.ui.theme.TextMutedGray
+import com.fleettrack.app.ui.theme.ThemeManager
 import com.fleettrack.app.util.AppUpdateHelper
 import com.fleettrack.app.util.BatteryOptimizationHelper
 import kotlinx.coroutines.launch
@@ -91,7 +92,7 @@ fun SettingsScreen(
     val sessionPrefs = remember { context.getSharedPreferences("svm_fleet_session", Context.MODE_PRIVATE) }
     var currentSecretKey by remember { mutableStateOf(sessionPrefs.getString("owner_secret_key", "7777") ?: "7777") }
     var showChangeKeyDialog by remember { mutableStateOf(false) }
-    var isDarkTheme by remember { mutableStateOf(false) }
+    val isDarkTheme = ThemeManager.isDarkTheme
 
     LazyColumn(
         modifier = modifier
@@ -459,7 +460,7 @@ fun SettingsScreen(
 
                         Switch(
                             checked = isDarkTheme,
-                            onCheckedChange = { isDarkTheme = it },
+                            onCheckedChange = { ThemeManager.setDarkTheme(context, it) },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
                                 checkedTrackColor = PrimaryPurple

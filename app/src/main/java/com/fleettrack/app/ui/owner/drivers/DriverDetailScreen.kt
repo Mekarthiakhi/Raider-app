@@ -56,6 +56,8 @@ import androidx.compose.ui.unit.sp
 import com.fleettrack.app.data.model.Platform
 import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.components.PlatformChip
+import com.fleettrack.app.ui.components.SearchableDropdownField
+import com.fleettrack.app.ui.components.SearchableDropdownOption
 import com.fleettrack.app.ui.theme.ActiveGreen
 import com.fleettrack.app.ui.theme.ActiveGreenBg
 import com.fleettrack.app.ui.theme.InactiveRed
@@ -909,31 +911,15 @@ private fun EditDriverDetailsDialog(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    carOptions.take(4).forEach { car ->
-                        val isSelected = selectedCar == car
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(PillShape)
-                                .background(if (isSelected) PrimaryPurple else SurfaceWhite)
-                                .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, PillShape)
-                                .clickable { selectedCar = car }
-                                .padding(vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = car.split(" ").lastOrNull() ?: car,
-                                color = if (isSelected) Color.White else TextDark,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
+                SearchableDropdownField(
+                    label = "",
+                    selectedValue = selectedCar,
+                    options = carOptions.map { SearchableDropdownOption(it, it, if (it == "Unassigned") "No Vehicle" else "Fleet Cab") },
+                    onOptionSelected = { selectedCar = it.value },
+                    dialogTitle = "Assign Daily Car",
+                    searchPlaceholder = "Search car reg no...",
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 Text(
                     text = "Assign Shift Rotation:",

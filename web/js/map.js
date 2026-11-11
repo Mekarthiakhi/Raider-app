@@ -8,8 +8,16 @@ class HyderabadMapController {
     constructor(containerId = "hyderabad-map") {
         this.containerId = containerId;
         this.map = null;
+        this.tileLayer = null;
         this.markers = new Map();
         this.hubMarkers = [];
+    }
+
+    _getTileUrl(theme = document.documentElement.getAttribute("data-theme")) {
+        const isLight = theme === "light";
+        return isLight
+            ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
     }
 
     init() {
@@ -26,8 +34,8 @@ class HyderabadMapController {
                 attributionControl: false
             });
 
-            // Executive Dark Matter tiles (High performance, crisp night roads & labels)
-            L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+            // Adaptive CARTO tiles (dark_all / light_all)
+            this.tileLayer = L.tileLayer(this._getTileUrl(), {
                 maxZoom: 19,
                 subdomains: ['a', 'b', 'c', 'd'],
                 attribution: '&copy; CARTO'
@@ -49,6 +57,15 @@ class HyderabadMapController {
             }, 250);
         } catch (e) {
             console.warn("Leaflet map initialization warning:", e);
+        }
+    }
+
+    setTheme(theme) {
+        if (!this.map || !this.tileLayer) return;
+        try {
+            this.tileLayer.setUrl(this._getTileUrl(theme));
+        } catch (e) {
+            console.warn("Map theme update warning:", e);
         }
     }
 

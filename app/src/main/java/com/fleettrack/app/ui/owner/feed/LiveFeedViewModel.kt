@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.owner.feed
+package com.fleettrack.app.ui.owner.feed
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,6 +24,13 @@ class LiveFeedViewModel @Inject constructor(
     private val rideRepository: RideRepository,
     private val vehicleRepository: VehicleRepository
 ) : ViewModel() {
+
+    val vehicles: StateFlow<List<VehicleEntity>> = vehicleRepository.getAllVehicles()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     val recentRides: StateFlow<List<EnrichedTrip>> = combine(
         rideRepository.getRecentRides(limit = 60),

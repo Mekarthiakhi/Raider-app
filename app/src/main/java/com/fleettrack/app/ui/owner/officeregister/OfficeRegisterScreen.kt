@@ -69,7 +69,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fleettrack.app.data.local.entity.DutyLogEntity
+import com.fleettrack.app.ui.components.DatePickerField
 import com.fleettrack.app.ui.components.GlassCard
+import com.fleettrack.app.ui.components.SearchableDropdownField
+import com.fleettrack.app.ui.components.SearchableDropdownOption
 import com.fleettrack.app.ui.theme.ActiveGreen
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.IdleOrange
@@ -346,6 +349,7 @@ fun OfficeRegisterScreen(
 
     if (showAddDialog) {
         AddDutyLogDialog(
+            recentLogs = uiState.dutyLogs,
             onDismiss = { showAddDialog = false },
             onConfirm = { shiftType, loginDate, loginTime, logoutDate, logoutTime, vehicleNo, driverName, driverPhone, trips, earnings, cashCollection, expenditure, drivePass, advance, paymentCash, paymentOnline, remarks ->
                 viewModel.addNewDutyLog(
@@ -579,6 +583,7 @@ private fun FilterChipItem(
 
 @Composable
 private fun AddDutyLogDialog(
+    recentLogs: List<DutyLogEntity> = emptyList(),
     onDismiss: () -> Unit,
     onConfirm: (
         shiftType: SvmCommissionCalculator.ShiftType,
@@ -677,9 +682,40 @@ private fun AddDutyLogDialog(
                     }
                 }
 
+                val quickPickOptions = remember(recentLogs) {
+                    val unique = linkedMapOf<String, DutyLogEntity>()
+                    recentLogs.forEach { unique.putIfAbsent("${it.vehicleNo}|${it.driverName}", it) }
+                    unique.values.map {
+                        SearchableDropdownOption(
+                            value = "${it.vehicleNo}|${it.driverName}|${it.driverPhone}",
+                            label = "${it.driverName} (${it.vehicleNo})",
+                            subtitle = it.driverPhone
+                        )
+                    }
+                }
+                if (quickPickOptions.isNotEmpty()) {
+                    SearchableDropdownField(
+                        label = "Quick Select Driver / Cab",
+                        selectedValue = "$vehicleNo|$driverName|$driverPhone",
+                        options = quickPickOptions,
+                        onOptionSelected = { opt ->
+                            val parts = opt.value.split("|")
+                            if (parts.size >= 3) {
+                                vehicleNo = parts[0]
+                                driverName = parts[1]
+                                driverPhone = parts[2]
+                            }
+                        },
+                        dialogTitle = "Select Driver or Cab",
+                        searchPlaceholder = "Search driver, phone or plate...",
+                        placeholder = "Tap to search & auto-fill...",
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 OutlinedTextField(
                     value = vehicleNo,
-                    onValueChange = { vehicleNo = it },
+                    onValueChange = { vehicleNo = it.uppercase() },
                     label = { Text("Vehicle No (e.g. TS09 UB 3368)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -692,6 +728,23 @@ private fun AddDutyLogDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DatePickerField(
+                        label = "Log In Date *",
+                        selectedDate = loginDate,
+                        onDateSelected = { loginDate = it },
+                        outputPattern = "dd/MM/yyyy",
+                        modifier = Modifier.weight(1f)
+                    )
+                    DatePickerField(
+                        label = "Log Out Date *",
+                        selectedDate = logoutDate,
+                        onDateSelected = { logoutDate = it },
+                        outputPattern = "dd/MM/yyyy",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(

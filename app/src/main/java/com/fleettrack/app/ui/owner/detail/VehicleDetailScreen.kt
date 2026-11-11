@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.owner.detail
+package com.fleettrack.app.ui.owner.detail
 
 import android.content.Intent
 import android.net.Uri
@@ -63,9 +63,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fleettrack.app.data.local.entity.RideEntity
+import com.fleettrack.app.ui.components.DatePickerField
 import com.fleettrack.app.ui.components.EmptyState
 import com.fleettrack.app.ui.components.GlassCard
 import com.fleettrack.app.ui.components.PlatformChip
+import com.fleettrack.app.ui.components.SearchableDropdownField
+import com.fleettrack.app.ui.components.SearchableDropdownOption
 import com.fleettrack.app.ui.theme.ActiveGreen
 import com.fleettrack.app.ui.theme.ActiveGreenBg
 import com.fleettrack.app.ui.theme.BackgroundLight
@@ -724,33 +727,15 @@ private fun ShiftRotationDialog(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                // Select Incoming Driver Chips
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    driversList.take(3).forEach { d ->
-                        val isSelected = selectedIncomingDriver == d
-                        val firstName = d.split(" ").first()
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(PillShape)
-                                .background(if (isSelected) PrimaryPurple else SurfaceWhite)
-                                .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, PillShape)
-                                .clickable { selectedIncomingDriver = d }
-                                .padding(vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = firstName,
-                                color = if (isSelected) Color.White else TextDark,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
+                SearchableDropdownField(
+                    label = "",
+                    selectedValue = selectedIncomingDriver,
+                    options = driversList.map { SearchableDropdownOption(it, it, "Fleet Driver") },
+                    onOptionSelected = { selectedIncomingDriver = it.value },
+                    dialogTitle = "Select Incoming Driver",
+                    searchPlaceholder = "Search driver name...",
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 // Shift Type Selection
                 Text(
@@ -868,22 +853,18 @@ private fun EditCarDocumentsDialog(
                     singleLine = true
                 )
 
-                OutlinedTextField(
-                    value = insurance,
-                    onValueChange = { insurance = it },
-                    label = { Text("Insurance Expiry Date *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                DatePickerField(
+                    label = "Insurance Expiry Date *",
+                    selectedDate = insurance,
+                    onDateSelected = { insurance = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                OutlinedTextField(
-                    value = puc,
-                    onValueChange = { puc = it },
-                    label = { Text("PUC Expiry Date *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                DatePickerField(
+                    label = "PUC Expiry Date *",
+                    selectedDate = puc,
+                    onDateSelected = { puc = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },

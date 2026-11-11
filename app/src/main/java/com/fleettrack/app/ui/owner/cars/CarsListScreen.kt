@@ -63,7 +63,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fleettrack.app.data.model.VehicleStatus
+import com.fleettrack.app.ui.components.DatePickerField
 import com.fleettrack.app.ui.components.GlassCard
+import com.fleettrack.app.ui.components.SearchableDropdownField
+import com.fleettrack.app.ui.components.SearchableDropdownOption
 import com.fleettrack.app.ui.owner.fleet.FleetBoardViewModel
 import com.fleettrack.app.ui.theme.ActiveGreen
 import com.fleettrack.app.ui.theme.ActiveGreenBg
@@ -560,27 +563,21 @@ private fun AddCarDialog(
                     singleLine = true
                 )
 
-                OutlinedTextField(
-                    value = insuranceExpiry,
-                    onValueChange = { insuranceExpiry = it },
-                    label = { Text("Insurance Expiry Date *") },
-                    placeholder = { Text("e.g. 15 Nov 2026") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                DatePickerField(
+                    label = "Insurance Expiry Date *",
+                    selectedDate = insuranceExpiry,
+                    onDateSelected = { insuranceExpiry = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                OutlinedTextField(
-                    value = pucExpiry,
-                    onValueChange = { pucExpiry = it },
-                    label = { Text("PUC / Emission Expiry Date *") },
-                    placeholder = { Text("e.g. 28 Nov 2026") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                DatePickerField(
+                    label = "PUC / Emission Expiry Date *",
+                    selectedDate = pucExpiry,
+                    onDateSelected = { pucExpiry = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                // 3. Assign Driver
+                // 3. Assign Driver (Searchable Dropdown)
                 Text(
                     text = "Assign Driver:",
                     color = TextDark,
@@ -588,32 +585,15 @@ private fun AddCarDialog(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    driverOptions.take(3).forEach { d ->
-                        val isSelected = assignedDriver == d
-                        val firstName = d.split(" ").firstOrNull() ?: d
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(PillShape)
-                                .background(if (isSelected) PrimaryPurple else SurfaceWhite)
-                                .border(1.dp, if (isSelected) PrimaryPurple else SurfaceBorder, PillShape)
-                                .clickable { assignedDriver = d }
-                                .padding(vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = firstName,
-                                color = if (isSelected) Color.White else TextDark,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
+                SearchableDropdownField(
+                    label = "",
+                    selectedValue = assignedDriver,
+                    options = driverOptions.map { SearchableDropdownOption(it, it, "Fleet Driver") },
+                    onOptionSelected = { assignedDriver = it.value },
+                    dialogTitle = "Assign Driver",
+                    searchPlaceholder = "Search driver name...",
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {

@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.owner.maintenance
+package com.fleettrack.app.ui.owner.maintenance
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,7 +50,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fleettrack.app.ui.components.DatePickerField
 import com.fleettrack.app.ui.components.GlassCard
+import com.fleettrack.app.ui.components.SearchableDropdownField
+import com.fleettrack.app.ui.components.SearchableDropdownOption
 import com.fleettrack.app.ui.theme.ActiveGreen
 import com.fleettrack.app.ui.theme.ActiveGreenBg
 import com.fleettrack.app.ui.theme.BackgroundLight
@@ -353,39 +356,47 @@ private fun AddServiceDialog(
             )
         },
         text = {
+            val carOptions = remember {
+                listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "TS09 IJ 7890")
+                    .map { SearchableDropdownOption(it, it, "Fleet Cab") }
+            }
+            val serviceOptions = remember {
+                listOf("Regular Service", "Oil & Filter Change", "Brake Pad Inspection", "Tire Replacement", "AC Service", "Battery Replacement")
+                    .map { SearchableDropdownOption(it, it) }
+            }
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                OutlinedTextField(
-                    value = car,
-                    onValueChange = { car = it.uppercase() },
-                    label = { Text("Car Registration") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                SearchableDropdownField(
+                    label = "Car Registration",
+                    selectedValue = car,
+                    options = carOptions,
+                    onOptionSelected = { car = it.value },
+                    dialogTitle = "Select Vehicle",
+                    searchPlaceholder = "Search vehicle reg no...",
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                OutlinedTextField(
-                    value = serviceType,
-                    onValueChange = { serviceType = it },
-                    label = { Text("Service Type") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                SearchableDropdownField(
+                    label = "Service Type",
+                    selectedValue = serviceType,
+                    options = serviceOptions,
+                    onOptionSelected = { serviceType = it.value },
+                    dialogTitle = "Select Service Type",
+                    searchPlaceholder = "Search service type...",
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(
-                        value = date,
-                        onValueChange = { date = it },
-                        label = { Text("Date") },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(10.dp),
-                        singleLine = true
+                    DatePickerField(
+                        label = "Date",
+                        selectedDate = date,
+                        onDateSelected = { date = it },
+                        modifier = Modifier.weight(1f)
                     )
 
                     OutlinedTextField(

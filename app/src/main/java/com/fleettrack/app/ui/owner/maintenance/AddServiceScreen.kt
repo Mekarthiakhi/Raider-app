@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.owner.maintenance
+package com.fleettrack.app.ui.owner.maintenance
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -41,7 +41,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fleettrack.app.ui.components.DatePickerField
 import com.fleettrack.app.ui.components.GlassCard
+import com.fleettrack.app.ui.components.SearchableDropdownField
+import com.fleettrack.app.ui.components.SearchableDropdownOption
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.CardShape
 import com.fleettrack.app.ui.theme.PillShape
@@ -58,13 +61,17 @@ fun AddServiceScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    val carList = listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "TS09 IJ 7890")
-    var selectedCar by remember { mutableStateOf(carList[0]) }
-    var isCarDropdownExpanded by remember { mutableStateOf(false) }
+    val carOptions = remember {
+        listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "TS09 IJ 7890")
+            .map { SearchableDropdownOption(it, it, "Fleet Cab") }
+    }
+    var selectedCar by remember { mutableStateOf(carOptions[0].value) }
 
-    val serviceTypes = listOf("Regular Service", "Oil & Filter Change", "Brake Pad Inspection", "Tire Replacement", "AC Service", "Battery Replacement")
-    var selectedServiceType by remember { mutableStateOf(serviceTypes[0]) }
-    var isServiceDropdownExpanded by remember { mutableStateOf(false) }
+    val serviceOptions = remember {
+        listOf("Regular Service", "Oil & Filter Change", "Brake Pad Inspection", "Tire Replacement", "AC Service", "Battery Replacement")
+            .map { SearchableDropdownOption(it, it) }
+    }
+    var selectedServiceType by remember { mutableStateOf(serviceOptions[0].value) }
 
     var serviceDate by remember { mutableStateOf("05 Nov 2026") }
     var serviceAmount by remember { mutableStateOf("4500") }
@@ -112,7 +119,7 @@ fun AddServiceScreen(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Car Selector Dropdown
+                // Searchable Car Selector Dropdown
                 Text(
                     text = "Car *",
                     color = TextDark,
@@ -120,38 +127,17 @@ fun AddServiceScreen(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                ExposedDropdownMenuBox(
-                    expanded = isCarDropdownExpanded,
-                    onExpandedChange = { isCarDropdownExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = selectedCar,
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCarDropdownExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                SearchableDropdownField(
+                    label = "",
+                    selectedValue = selectedCar,
+                    options = carOptions,
+                    onOptionSelected = { selectedCar = it.value },
+                    dialogTitle = "Select Vehicle",
+                    searchPlaceholder = "Search vehicle reg no...",
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-                    ExposedDropdownMenu(
-                        expanded = isCarDropdownExpanded,
-                        onDismissRequest = { isCarDropdownExpanded = false }
-                    ) {
-                        carList.forEach { car ->
-                            DropdownMenuItem(
-                                text = { Text(car, fontWeight = FontWeight.Medium) },
-                                onClick = {
-                                    selectedCar = car
-                                    isCarDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                // Service Type Dropdown
+                // Searchable Service Type Dropdown
                 Text(
                     text = "Service Type *",
                     color = TextDark,
@@ -159,53 +145,28 @@ fun AddServiceScreen(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                ExposedDropdownMenuBox(
-                    expanded = isServiceDropdownExpanded,
-                    onExpandedChange = { isServiceDropdownExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = selectedServiceType,
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isServiceDropdownExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                SearchableDropdownField(
+                    label = "",
+                    selectedValue = selectedServiceType,
+                    options = serviceOptions,
+                    onOptionSelected = { selectedServiceType = it.value },
+                    dialogTitle = "Select Service Type",
+                    searchPlaceholder = "Search service type...",
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-                    ExposedDropdownMenu(
-                        expanded = isServiceDropdownExpanded,
-                        onDismissRequest = { isServiceDropdownExpanded = false }
-                    ) {
-                        serviceTypes.forEach { type ->
-                            DropdownMenuItem(
-                                text = { Text(type, fontWeight = FontWeight.Medium) },
-                                onClick = {
-                                    selectedServiceType = type
-                                    isServiceDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                // Date
+                // Date (Strict Calendar Picker - No Free Text Entry)
                 Text(
                     text = "Date *",
                     color = TextDark,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
-                OutlinedTextField(
-                    value = serviceDate,
-                    onValueChange = { serviceDate = it },
-                    trailingIcon = {
-                        Icon(Icons.Default.CalendarToday, contentDescription = "Date", tint = PrimaryPurple)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true
+                DatePickerField(
+                    label = "",
+                    selectedDate = serviceDate,
+                    onDateSelected = { serviceDate = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 // Amount (₹)

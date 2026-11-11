@@ -40,6 +40,12 @@ import androidx.compose.ui.unit.sp
 import com.fleettrack.app.data.model.Platform
 import com.fleettrack.app.ui.components.EmptyState
 import com.fleettrack.app.ui.components.GlassCard
+import com.fleettrack.app.ui.components.SearchableDropdownOption
+import com.fleettrack.app.ui.components.SearchableDropdownPill
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Duration.Companion.days
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.PillShape
 import com.fleettrack.app.ui.theme.PrimaryPurple
@@ -64,18 +70,60 @@ fun LiveFeedScreen(
     modifier: Modifier = Modifier
 ) {
     val trips by viewModel.recentRides.collectAsState()
+    val fleetVehicles by viewModel.vehicles.collectAsState()
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
     currencyFormat.maximumFractionDigits = 0
 
-    var selectedTimeFilter by remember { mutableStateOf("Today") }
+    var selectedTimeFilter by remember { mutableStateOf("All Time") }
     var selectedCarFilter by remember { mutableStateOf("All Cars") }
 
-    val totalFare = trips.sumOf { it.ride.fare ?: 0.0 }
-    val totalKm = trips.sumOf { it.ride.distanceKm ?: 0.0 }
-
-    val filteredTrips = trips.filter { item ->
-        selectedCarFilter == "All Cars" || item.vehicleRegNo.contains(selectedCarFilter, ignoreCase = true)
+    val timeOptions = remember {
+        listOf(
+            SearchableDropdownOption("All Time", "All Time", "Show all recorded trips"),
+            SearchableDropdownOption("Today", "Today", "Trips completed today"),
+            SearchableDropdownOption("Yesterday", "Yesterday", "Previous day trips"),
+            SearchableDropdownOption("This Week", "This Week", "Last 7 days"),
+            SearchableDropdownOption("This Month", "This Month", "Last 30 days")
+        )
     }
+
+    val carOptions = remember(fleetVehicles, trips) {
+        val uniqueCars = linkedMapOf<String, String?>()
+        fleetVehicles.forEach { v -> uniqueCars[v.regNo] = v.nickname }
+        trips.forEach { t -> uniqueCars.putIfAbsent(t.vehicleRegNo, t.vehicleModel) }
+        listOf(SearchableDropdownOption("All Cars", "All Cars", "${uniqueCars.size} fleet vehicles")) +
+            uniqueCars.entries.map { (regNo, model) ->
+                SearchableDropdownOption(
+                    value = regNo,
+                    label = regNo,
+                    subtitle = model
+                )
+            }
+    }
+
+    val now = Clock.System.now()
+    val tz = TimeZone.currentSystemDefault()
+    val todayDate = now.toLocalDateTime(tz).date
+    val yesterdayDate = (now - 1.days).toLocalDateTime(tz).date
+
+    val filteredTrips = remember(trips, selectedTimeFilter, selectedCarFilter) {
+        trips.filter { item ->
+            val carMatches = selectedCarFilter == "All Cars" ||
+                item.vehicleRegNo.contains(selectedCarFilter, ignoreCase = true)
+            val rideDate = item.ride.acceptedAt.toLocalDateTime(tz).date
+            val timeMatches = when (selectedTimeFilter) {
+                "Today" -> rideDate == todayDate
+                "Yesterday" -> rideDate == yesterdayDate
+                "This Week" -> (now - item.ride.acceptedAt) <= 7.days
+                "This Month" -> (now - item.ride.acceptedAt) <= 30.days
+                else -> true
+            }
+            carMatches && timeMatches
+        }
+    }
+
+    val totalFare = filteredTrips.sumOf { it.ride.fare ?: 0.0 }
+    val totalKm = filteredTrips.sumOf { it.ride.distanceKm ?: 0.0 }
 
     Column(
         modifier = modifier
@@ -109,41 +157,34 @@ fun LiveFeedScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 2. Dropdown Filter Pills: Today ⌄ | All Cars ⌄
+        // 2. Searchable Dropdown Filter Pills: Timeframe ⌄ | Car ⌄
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            DropdownFilterPill(
+            SearchableDropdownPill(
                 label = selectedTimeFilter,
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    selectedTimeFilter = when (selectedTimeFilter) {
-                        "Today" -> "Yesterday"
-                        "Yesterday" -> "This Week"
-                        "This Week" -> "This Month"
-                        else -> "Today"
-                    }
-                }
+                selectedValue = selectedTimeFilter,
+                options = timeOptions,
+                dialogTitle = "Filter Trips by Date",
+                searchPlaceholder = "Search Today, Week, Month...",
+                onOptionSelected = { selectedTimeFilter = it.value },
+                modifier = Modifier.weight(1f)
             )
-            DropdownFilterPill(
+            SearchableDropdownPill(
                 label = selectedCarFilter,
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    selectedCarFilter = when (selectedCarFilter) {
-                        "All Cars" -> "TS09 AB 1234"
-                        "TS09 AB 1234" -> "TS09 CD 5678"
-                        "TS09 CD 5678" -> "TS09 EF 9012"
-                        "TS09 EF 9012" -> "TS09 GH 3456"
-                        else -> "All Cars"
-                    }
-                }
+                selectedValue = selectedCarFilter,
+                options = carOptions,
+                dialogTitle = "Filter Trips by Vehicle",
+                searchPlaceholder = "Search car plate or model...",
+                onOptionSelected = { selectedCarFilter = it.value },
+                modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 3. Quick Stats Header Card (matching mockup: 126 Total Trips | 1,240 km | ₹18,420)
+        // 3. Quick Stats Header Card (dynamic for filtered trips)
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
@@ -154,7 +195,7 @@ fun LiveFeedScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "${trips.size.coerceAtLeast(126)}",
+                        text = "${filteredTrips.size}",
                         color = TextDark,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold
@@ -175,7 +216,7 @@ fun LiveFeedScreen(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "${String.format(Locale.US, "%.0f", totalKm.coerceAtLeast(1240.0))} km",
+                        text = "${String.format(Locale.US, "%.0f", totalKm)} km",
                         color = TextDark,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold
@@ -196,7 +237,7 @@ fun LiveFeedScreen(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = currencyFormat.format(if (totalFare > 0) totalFare else 18420.0),
+                        text = currencyFormat.format(totalFare),
                         color = PrimaryPurple,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold
@@ -231,41 +272,6 @@ fun LiveFeedScreen(
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun DropdownFilterPill(
-    label: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = modifier
-            .clip(PillShape)
-            .background(SurfaceWhite)
-            .border(1.dp, SurfaceBorder, PillShape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = label,
-                color = TextDark,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium
-            )
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = null,
-                tint = TextGray,
-                modifier = Modifier.size(18.dp)
-            )
         }
     }
 }

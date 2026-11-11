@@ -31,6 +31,7 @@ import com.fleettrack.app.ui.theme.SurfaceBorder
 import com.fleettrack.app.ui.theme.SurfaceWhite
 import com.fleettrack.app.ui.theme.TextDark
 import com.fleettrack.app.ui.theme.TextMutedGray
+import com.fleettrack.app.ui.theme.ThemeManager
 
 sealed class NavItem(val screen: Screen, val label: String, val icon: ImageVector) {
     // Owner 5 Tabs (Fleet Manager Design)
@@ -160,6 +161,9 @@ fun ManagerBottomBar(
         NavItem.ManagerLiveMapTab
     )
 
+    val managerAccent = if (ThemeManager.isDarkTheme) Color(0xFF38BDF8) else Color(0xFF0284C7)
+    val managerIndicator = if (ThemeManager.isDarkTheme) Color(0xFF132D46) else Color(0xFFE0F2FE)
+
     NavigationBar(
         containerColor = SurfaceWhite,
         tonalElevation = 4.dp,
@@ -174,23 +178,23 @@ fun ManagerBottomBar(
                     Icon(
                         imageVector = item.icon,
                         contentDescription = item.label,
-                        tint = if (isSelected) Color(0xFF0284C7) else TextMutedGray
+                        tint = if (isSelected) managerAccent else TextMutedGray
                     )
                 },
                 label = {
                     Text(
                         text = item.label,
-                        color = if (isSelected) Color(0xFF0284C7) else TextMutedGray,
+                        color = if (isSelected) managerAccent else TextMutedGray,
                         fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color(0xFF0284C7),
-                    selectedTextColor = Color(0xFF0284C7),
+                    selectedIconColor = managerAccent,
+                    selectedTextColor = managerAccent,
                     unselectedIconColor = TextMutedGray,
                     unselectedTextColor = TextMutedGray,
-                    indicatorColor = Color(0xFFE0F2FE)
+                    indicatorColor = managerIndicator
                 )
             )
         }

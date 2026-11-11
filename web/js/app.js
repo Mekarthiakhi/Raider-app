@@ -19,8 +19,13 @@ class SvmFleetApp {
         this.fullMapController = null;
         this.searchQuery = "";
         this.shiftFilter = "ALL";
+        this.registerVehicleFilter = "ALL";
         this.selectedDateRange = "all"; // "all" | "today" | "week" | "month" | "custom"
         this.specificDateFilter = ""; // YYYY-MM-DD
+        this.customDateRange = { start: "", end: "" };
+        this.theme = "dark";
+        this._openPortalSelect = null;
+        this._selectEnhancers = new Map();
         this.reportPeriod = "week"; // "today" | "week" | "month" | "all"
         this.registerViewMode = (typeof window !== "undefined" && window.innerWidth < 768) ? "cards" : "table";
         this.notifications = [
@@ -49,11 +54,15 @@ class SvmFleetApp {
             }
         }
 
+        this.initTheme();
         this.setupEventListeners();
         this.setupWheelLocks();
+        this.attachStrictDateInputGuards();
         this.populateLoginManagerHubs();
         this.syncHubSelectorOptions();
+        this.syncRegisterVehicleOptions();
         this.renderRoleSelector();
+        this.initSearchableSelects();
         this.updateAuthUI();
         this.updateGreeting();
         this.setRegisterViewMode(this.registerViewMode);
@@ -254,10 +263,29 @@ class SvmFleetApp {
                 if (search) search.focus();
             }
             if (e.key === "Escape") {
+                if (this._openPortalSelect) {
+                    this._closeSelectPortal();
+                    return;
+                }
                 this.closeAllModals();
                 this.closeMobileSidebar();
             }
         });
+
+        window.addEventListener("resize", () => {
+            if (this._openPortalSelect) this._positionSelectPortal();
+            const driverDropdown = document.getElementById("driver-search-dropdown");
+            if (driverDropdown && !driverDropdown.classList.contains("hidden")) {
+                this._positionDriverDropdown();
+            }
+        });
+
+        window.addEventListener("scroll", (e) => {
+            const portal = document.getElementById("svm-select-portal");
+            if (this._openPortalSelect && portal && !portal.contains(e.target)) {
+                this._positionSelectPortal();
+            }
+        }, true);
 
         const calcInputs = [
             "modal-trips", "modal-earnings", "modal-cash", "modal-expenditure",
@@ -292,7 +320,8 @@ class SvmFleetApp {
             "add-vehicle-modal",
             "add-manager-modal",
             "user-guide-modal",
-            "edit-settlement-modal"
+            "edit-settlement-modal",
+            "custom-date-range-modal"
         ];
         modalIds.forEach(id => {
             const modal = document.getElementById(id);
@@ -314,8 +343,16 @@ class SvmFleetApp {
 
             const combobox = document.getElementById("driver-combobox-wrapper");
             const driverDropdown = document.getElementById("driver-search-dropdown");
-            if (combobox && driverDropdown && !combobox.contains(e.target)) {
+            if (combobox && driverDropdown && !combobox.contains(e.target) && !driverDropdown.contains(e.target)) {
                 this.closeDriverDropdown();
+            }
+
+            const portal = document.getElementById("svm-select-portal");
+            if (this._openPortalSelect && portal && !portal.contains(e.target)) {
+                const activeMeta = this._selectEnhancers.get(this._openPortalSelect);
+                if (!activeMeta || !activeMeta.trigger.contains(e.target)) {
+                    this._closeSelectPortal();
+                }
             }
         });
     }
@@ -358,6 +395,7 @@ class SvmFleetApp {
     }
 
     closeAllModals() {
+        this._closeSelectPortal();
         this.closeManualEntryModal();
         this.closeReassignModal();
         this.closeAddDriverModal();
@@ -365,6 +403,373 @@ class SvmFleetApp {
         this.closeAddManagerModal();
         this.closeUserGuideModal();
         this.closeEditSettlementModal();
+        this.closeCustomDateRangeModal();
+    }
+
+    // ------------------------------------------------------------------------
+    // Dark / Light Theme Persistence & Controls
+    // ------------------------------------------------------------------------
+    initTheme() {
+        let saved = "dark";
+        try {
+            const stored = localStorage.getItem("SVM_WEB_THEME");
+            if (stored === "light" || stored === "dark") saved = stored;
+        } catch (_) {
+        }
+        this.setTheme(saved, false);
+    }
+
+    setTheme(theme, persist = true) {
+        const nextTheme = theme === "light" ? "light" : "dark";
+        this.theme = nextTheme;
+        if (typeof document !== "undefined" && document.documentElement) {
+            document.documentElement.setAttribute("data-theme", nextTheme);
+        }
+        if (persist) {
+            try {
+                localStorage.setItem("SVM_WEB_THEME", nextTheme);
+            } catch (_) {
+            }
+        }
+        this._syncThemeUI();
+        if (this.mapController && typeof this.mapController.setTheme === "function") {
+            this.mapController.setTheme(nextTheme);
+        }
+        if (this.fullMapController && typeof this.fullMapController.setTheme === "function") {
+            this.fullMapController.setTheme(nextTheme);
+        }
+        if (this.auth && this.auth.isAuthenticated()) {
+            this.renderTrendChart(this.selectedChartTimeframe || "daily");
+        }
+    }
+
+    toggleTheme() {
+        const next = this.theme === "dark" ? "light" : "dark";
+        this.setTheme(next, true);
+        this.showToast(next === "dark" ? "Dark Mode enabled." : "Light Mode enabled.", "info");
+    }
+
+    _syncThemeUI() {
+        const isDark = this.theme !== "light";
+        document.querySelectorAll(".theme-icon-sun").forEach(el => {
+            el.classList.toggle("hidden", !isDark);
+        });
+        document.querySelectorAll(".theme-icon-moon").forEach(el => {
+            el.classList.toggle("hidden", isDark);
+        });
+        const label = document.getElementById("theme-toggle-label");
+        if (label) label.innerText = isDark ? "Light" : "Dark";
+        const settingsStatus = document.getElementById("settings-theme-status-text");
+        if (settingsStatus) settingsStatus.innerText = isDark ? "Dark Mode Active (Switch to Light)" : "Light Mode Active (Switch to Dark)";
+    }
+
+    // ------------------------------------------------------------------------
+    // Strict Date Input Guards (Blocks Arbitrary Keyboard Text Entry)
+    // ------------------------------------------------------------------------
+    attachStrictDateInputGuards() {
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            if (input.dataset.strictDateAttached === "true") return;
+            input.dataset.strictDateAttached = "true";
+            input.classList.add("svm-date-input");
+
+            const openCalendarPicker = () => {
+                try {
+                    if (typeof input.showPicker === "function") {
+                        input.showPicker();
+                    }
+                } catch (_) {
+                }
+            };
+
+            input.addEventListener("keydown", (e) => {
+                const allowedKeys = new Set(["Tab", "Escape", "Enter", "Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"]);
+                if (e.ctrlKey || e.metaKey || e.altKey) {
+                    if (e.key.toLowerCase() === "v" || e.key.toLowerCase() === "x") e.preventDefault();
+                    return;
+                }
+                if (!allowedKeys.has(e.key)) {
+                    e.preventDefault();
+                    openCalendarPicker();
+                }
+            });
+
+            input.addEventListener("beforeinput", (e) => {
+                if (e.inputType && (e.inputType.includes("Text") || e.inputType === "insertFromPaste")) {
+                    e.preventDefault();
+                }
+            });
+
+            input.addEventListener("paste", (e) => e.preventDefault());
+            input.addEventListener("click", openCalendarPicker);
+        });
+    }
+
+    _isValidIsoDate(dateStr) {
+        if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+        const [y, m, d] = dateStr.split("-").map(Number);
+        const dt = new Date(Date.UTC(y, m - 1, d));
+        return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+    }
+
+    _getTodayIsoDate() {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, "0");
+        const dd = String(now.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // ------------------------------------------------------------------------
+    // Unified Searchable Dropdowns (Viewport Portal — Never Clipped on Mobile)
+    // ------------------------------------------------------------------------
+    _ensureSelectPortal() {
+        let portal = document.getElementById("svm-select-portal");
+        if (portal) return portal;
+
+        portal = document.createElement("div");
+        portal.id = "svm-select-portal";
+        portal.className = "svm-select-portal hidden";
+        portal.setAttribute("role", "listbox");
+        portal.innerHTML = `
+            <div class="svm-select-search-box">
+                <input id="svm-select-portal-search" type="search" autocomplete="off"
+                    placeholder="Search options..." class="svm-select-search-input" aria-label="Search dropdown options" />
+            </div>
+            <div id="svm-select-portal-options" class="svm-select-options"></div>
+        `;
+        document.body.appendChild(portal);
+
+        const searchEl = portal.querySelector("#svm-select-portal-search");
+        if (searchEl) {
+            searchEl.addEventListener("input", () => {
+                if (this._openPortalSelect) {
+                    this._renderPortalOptions(this._openPortalSelect, searchEl.value);
+                }
+            });
+            searchEl.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    this._closeSelectPortal();
+                } else if (e.key === "Enter") {
+                    const firstOpt = portal.querySelector(".svm-select-option");
+                    if (firstOpt) {
+                        e.preventDefault();
+                        firstOpt.click();
+                    }
+                }
+            });
+        }
+        return portal;
+    }
+
+    initSearchableSelects() {
+        document.querySelectorAll("select").forEach(selectEl => {
+            if (!selectEl.id || selectEl.id === "role-selector" || selectEl.id === "modal-quick-driver-select") {
+                return;
+            }
+            this._enhanceSelectElement(selectEl);
+        });
+        this.refreshSearchableSelects();
+    }
+
+    _enhanceSelectElement(selectEl) {
+        if (!selectEl || this._selectEnhancers.has(selectEl)) return;
+
+        const hasLeadingIcon = selectEl.getAttribute("data-has-leading-icon") === "true";
+        const isInlineSelect = selectEl.id === "top-branch-selector" || selectEl.id === "timeframe-date-select";
+
+        const wrapper = document.createElement("div");
+        wrapper.className = `svm-select-wrapper ${isInlineSelect ? "svm-inline svm-compact-mobile" : ""}`;
+        wrapper.dataset.forSelect = selectEl.id || "";
+
+        const trigger = document.createElement("button");
+        trigger.type = "button";
+        trigger.id = `svm-select-trigger-${selectEl.id}`;
+        trigger.className = `svm-select-trigger ${hasLeadingIcon ? "has-leading-icon" : ""}`;
+        trigger.setAttribute("aria-haspopup", "listbox");
+        trigger.setAttribute("aria-expanded", "false");
+        if (selectEl.getAttribute("aria-label")) {
+            trigger.setAttribute("aria-label", selectEl.getAttribute("aria-label"));
+        }
+
+        const labelSpan = document.createElement("span");
+        labelSpan.className = "svm-select-trigger-label";
+        const chevronSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        chevronSvg.setAttribute("viewBox", "0 0 24 24");
+        chevronSvg.setAttribute("fill", "none");
+        chevronSvg.setAttribute("stroke", "currentColor");
+        chevronSvg.setAttribute("stroke-width", "2.2");
+        chevronSvg.setAttribute("stroke-linecap", "round");
+        chevronSvg.setAttribute("stroke-linejoin", "round");
+        chevronSvg.setAttribute("class", "svm-select-trigger-chevron");
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", "m6 9 6 6 6-6");
+        chevronSvg.appendChild(path);
+
+        trigger.appendChild(labelSpan);
+        trigger.appendChild(chevronSvg);
+
+        selectEl.classList.add("svm-native-select-hidden");
+        if (selectEl.parentNode) {
+            selectEl.parentNode.insertBefore(wrapper, selectEl);
+            wrapper.appendChild(selectEl);
+        }
+        wrapper.appendChild(trigger);
+
+        trigger.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (selectEl.disabled) return;
+            if (this._openPortalSelect === selectEl) {
+                this._closeSelectPortal();
+            } else {
+                this._openSelectPortal(selectEl);
+            }
+        });
+
+        selectEl.addEventListener("change", () => {
+            this._syncSingleSelectTrigger(selectEl);
+        });
+
+        if (typeof MutationObserver !== "undefined") {
+            const observer = new MutationObserver(() => {
+                this._syncSingleSelectTrigger(selectEl);
+                if (this._openPortalSelect === selectEl) {
+                    const searchEl = document.getElementById("svm-select-portal-search");
+                    this._renderPortalOptions(selectEl, searchEl ? searchEl.value : "");
+                }
+            });
+            observer.observe(selectEl, { childList: true, attributes: true, attributeFilter: ["disabled"] });
+        }
+
+        this._selectEnhancers.set(selectEl, { wrapper, trigger, labelSpan });
+        this._syncSingleSelectTrigger(selectEl);
+    }
+
+    _syncSingleSelectTrigger(selectEl) {
+        const meta = this._selectEnhancers.get(selectEl);
+        if (!meta) return;
+        const selectedOption = selectEl.options[selectEl.selectedIndex] || selectEl.options[0];
+        meta.labelSpan.textContent = selectedOption ? selectedOption.textContent.trim() : "Select...";
+        meta.trigger.disabled = Boolean(selectEl.disabled);
+        meta.trigger.classList.toggle("opacity-75", Boolean(selectEl.disabled));
+    }
+
+    refreshSearchableSelects() {
+        this._selectEnhancers.forEach((_meta, selectEl) => {
+            this._syncSingleSelectTrigger(selectEl);
+        });
+    }
+
+    _openSelectPortal(selectEl) {
+        const portal = this._ensureSelectPortal();
+        if (this._openPortalSelect && this._openPortalSelect !== selectEl) {
+            this._closeSelectPortal();
+        }
+        this._openPortalSelect = selectEl;
+        const meta = this._selectEnhancers.get(selectEl);
+        if (meta) {
+            meta.trigger.classList.add("open");
+            meta.trigger.setAttribute("aria-expanded", "true");
+        }
+
+        const searchEl = document.getElementById("svm-select-portal-search");
+        if (searchEl) searchEl.value = "";
+        this._renderPortalOptions(selectEl, "");
+        portal.classList.remove("hidden");
+        this._positionSelectPortal();
+
+        if (searchEl && window.innerWidth >= 768) {
+            setTimeout(() => searchEl.focus(), 10);
+        }
+    }
+
+    _positionSelectPortal() {
+        const portal = document.getElementById("svm-select-portal");
+        if (!portal || !this._openPortalSelect) return;
+        const meta = this._selectEnhancers.get(this._openPortalSelect);
+        if (!meta) return;
+
+        const rect = meta.trigger.getBoundingClientRect();
+        const vpW = window.innerWidth;
+        const vpH = window.innerHeight;
+        const margin = 8;
+        const panelWidth = Math.min(Math.max(rect.width, 230), vpW - margin * 2);
+        let left = rect.left;
+        if (left + panelWidth > vpW - margin) {
+            left = Math.max(margin, vpW - panelWidth - margin);
+        }
+
+        const estHeight = Math.min(portal.scrollHeight || 280, 320);
+        const spaceBelow = vpH - rect.bottom - margin;
+        const spaceAbove = rect.top - margin;
+        let top = rect.bottom + 6;
+        if (spaceBelow < 180 && spaceAbove > spaceBelow) {
+            top = Math.max(margin, rect.top - estHeight - 6);
+        }
+
+        portal.style.left = `${Math.round(left)}px`;
+        portal.style.top = `${Math.round(top)}px`;
+        portal.style.width = `${Math.round(panelWidth)}px`;
+    }
+
+    _renderPortalOptions(selectEl, query = "") {
+        const listEl = document.getElementById("svm-select-portal-options");
+        if (!listEl) return;
+        const q = (query || "").toLowerCase().trim();
+        const opts = Array.from(selectEl.options || []);
+        const filtered = opts.filter(opt => !q || opt.textContent.toLowerCase().includes(q) || opt.value.toLowerCase().includes(q));
+
+        listEl.innerHTML = "";
+        if (filtered.length === 0) {
+            const emptyDiv = document.createElement("div");
+            emptyDiv.className = "svm-select-empty";
+            emptyDiv.textContent = "No matching options found";
+            listEl.appendChild(emptyDiv);
+            this._positionSelectPortal();
+            return;
+        }
+
+        filtered.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            const isSelected = selectEl.value === opt.value;
+            btn.className = `svm-select-option ${isSelected ? "selected" : ""}`;
+            btn.setAttribute("role", "option");
+            btn.setAttribute("aria-selected", isSelected ? "true" : "false");
+
+            const textSpan = document.createElement("span");
+            textSpan.className = "truncate";
+            textSpan.textContent = opt.textContent.trim();
+            btn.appendChild(textSpan);
+
+            if (isSelected) {
+                const check = document.createElement("span");
+                check.textContent = "✓";
+                check.className = "text-[#8B5CF6] font-bold shrink-0";
+                btn.appendChild(check);
+            }
+
+            btn.addEventListener("click", () => {
+                selectEl.value = opt.value;
+                this._closeSelectPortal();
+                selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+                this._syncSingleSelectTrigger(selectEl);
+            });
+            listEl.appendChild(btn);
+        });
+        this._positionSelectPortal();
+    }
+
+    _closeSelectPortal() {
+        const portal = document.getElementById("svm-select-portal");
+        if (portal) portal.classList.add("hidden");
+        if (this._openPortalSelect) {
+            const meta = this._selectEnhancers.get(this._openPortalSelect);
+            if (meta) {
+                meta.trigger.classList.remove("open");
+                meta.trigger.setAttribute("aria-expanded", "false");
+            }
+            this._openPortalSelect = null;
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -456,7 +861,9 @@ class SvmFleetApp {
 
         this.populateLoginManagerHubs();
         this.syncHubSelectorOptions();
+        this.syncRegisterVehicleOptions();
         this.renderRoleSelector();
+        this.refreshSearchableSelects();
         this.updateAuthUI();
         this.updateGreeting();
         this.renderNotifications();
@@ -708,7 +1115,9 @@ class SvmFleetApp {
 
         this.populateLoginManagerHubs();
         this.syncHubSelectorOptions();
+        this.syncRegisterVehicleOptions();
         this.renderRoleSelector();
+        this.refreshSearchableSelects();
         this.updateAuthUI();
         this.updateGreeting();
         this.renderNotifications();
@@ -772,6 +1181,7 @@ class SvmFleetApp {
         this.currentHubId = targetVal;
         selector.value = targetVal;
         selector.disabled = false;
+        this.refreshSearchableSelects();
     }
 
     populateHubSelectElement(selectEl, selectedHubId = "", lockToManager = true) {
@@ -787,6 +1197,7 @@ class SvmFleetApp {
             selectEl.value = allowedHubId;
             selectEl.disabled = true;
             selectEl.classList.add("opacity-75", "cursor-not-allowed");
+            this.refreshSearchableSelects();
             return;
         }
 
@@ -801,6 +1212,7 @@ class SvmFleetApp {
             ? selectedHubId
             : fallbackId;
         if (target) selectEl.value = target;
+        this.refreshSearchableSelects();
     }
 
     renderGreeting() {
@@ -963,6 +1375,8 @@ class SvmFleetApp {
         const topSelect = document.getElementById("top-branch-selector");
         if (topSelect) topSelect.value = this.currentHubId;
 
+        this.syncRegisterVehicleOptions();
+        this.refreshSearchableSelects();
         this.updateAuthUI();
         this.updateGreeting();
         this.renderNotifications();
@@ -1005,8 +1419,71 @@ class SvmFleetApp {
         this.renderPlatformDonutChart();
     }
 
+    handleTimeframeSelectChange(val) {
+        if (val === "week") {
+            this.setTimeframe("week");
+        } else if (val === "month") {
+            this.setTimeframe("month");
+        } else if (val === "custom") {
+            this.openCustomDateRangeModal();
+        } else if (val === "yesterday") {
+            this.setTimeframe("day");
+            this.setSpecificDateFilter("2026-11-08");
+        } else {
+            this.setTimeframe("day");
+            this.setDateRangeFilter("all");
+        }
+    }
+
+    openCustomDateRangeModal() {
+        const modal = document.getElementById("custom-date-range-modal");
+        if (!modal) return;
+        const startEl = document.getElementById("custom-range-start");
+        const endEl = document.getElementById("custom-range-end");
+        const fallbackToday = "2026-11-09";
+        if (startEl && !startEl.value) startEl.value = this.customDateRange.start || "2026-11-01";
+        if (endEl && !endEl.value) endEl.value = this.customDateRange.end || fallbackToday;
+        modal.classList.add("open");
+        modal.scrollTop = 0;
+        document.body.classList.add("modal-open");
+    }
+
+    closeCustomDateRangeModal() {
+        const modal = document.getElementById("custom-date-range-modal");
+        if (modal) modal.classList.remove("open");
+        document.body.classList.remove("modal-open");
+    }
+
+    applyCustomDateRange(e) {
+        if (e && typeof e.preventDefault === "function") e.preventDefault();
+        const startVal = document.getElementById("custom-range-start")?.value || "";
+        const endVal = document.getElementById("custom-range-end")?.value || "";
+        if (!this._isValidIsoDate(startVal) || !this._isValidIsoDate(endVal)) {
+            this.showToast("Please choose valid From and To dates from calendar.", "alert");
+            return;
+        }
+        if (startVal > endVal) {
+            this.showToast("'From Date' must be on or before 'To Date'.", "alert");
+            return;
+        }
+        this.customDateRange = { start: startVal, end: endVal };
+        this.specificDateFilter = "";
+        this.selectedDateRange = "custom_range";
+        const picker = document.getElementById("register-date-picker");
+        if (picker) picker.value = "";
+        this.closeCustomDateRangeModal();
+        this.switchTab("register");
+        this.renderDutyRegister();
+        this.showToast(`Filtered trips from ${this.formatInputDateToLog(startVal)} to ${this.formatInputDateToLog(endVal)}`, "success");
+    }
+
     setShiftFilter(filter) {
-        this.shiftFilter = filter;
+        this.shiftFilter = filter || "ALL";
+        const shiftSelect = document.getElementById("register-shift-filter");
+        if (shiftSelect && shiftSelect.value !== this.shiftFilter) {
+            shiftSelect.value = this.shiftFilter;
+            this.refreshSearchableSelects();
+        }
         document.querySelectorAll(".shift-filter-btn").forEach(btn => {
             btn.className = "shift-filter-btn px-3 py-1.5 rounded-full text-xs font-medium border border-[#263149] bg-[#080D1B] text-slate-400 hover:text-white shrink-0 whitespace-nowrap";
         });
@@ -1017,11 +1494,45 @@ class SvmFleetApp {
             "PENDING": "filter-shift-pending",
             "SETTLED": "filter-shift-settled"
         };
-        const activeBtn = document.getElementById(activeMap[filter]);
+        const activeBtn = document.getElementById(activeMap[this.shiftFilter]);
         if (activeBtn) {
             activeBtn.className = "shift-filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#6655F5] text-white border-[#6655F5] shrink-0 whitespace-nowrap";
         }
         this.renderDutyRegister();
+    }
+
+    setRegisterVehicleFilter(regNo) {
+        this.registerVehicleFilter = regNo || "ALL";
+        this.renderDutyRegister();
+    }
+
+    syncRegisterVehicleOptions() {
+        const selectEl = document.getElementById("register-vehicle-filter");
+        if (!selectEl) return;
+        const vehicles = this.getCurrentFilteredVehicles();
+        const currentVal = this.registerVehicleFilter || "ALL";
+        let html = `<option value="ALL">All Fleet Vehicles (${vehicles.length})</option>`;
+        vehicles.forEach(v => {
+            const label = `${v.regNo}${v.model ? " — " + v.model : ""}${v.driverName ? " (" + v.driverName + ")" : ""}`;
+            html += `<option value="${this.escapeHtml(v.regNo)}">${this.escapeHtml(label)}</option>`;
+        });
+        selectEl.innerHTML = html;
+        const exists = currentVal === "ALL" || vehicles.some(v => v.regNo === currentVal);
+        selectEl.value = exists ? currentVal : "ALL";
+        if (!exists) this.registerVehicleFilter = "ALL";
+        this.refreshSearchableSelects();
+    }
+
+    _parseLogDateToIso(logDateStr) {
+        if (!logDateStr) return "";
+        const str = String(logDateStr).trim();
+        if (this._isValidIsoDate(str)) return str;
+        const months = { Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06", Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12" };
+        const m = str.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+        if (m && months[m[2]]) {
+            return `${m[3]}-${months[m[2]]}-${m[1].padStart(2, "0")}`;
+        }
+        return "";
     }
 
     formatInputDateToLog(dateStr) {
@@ -1037,6 +1548,7 @@ class SvmFleetApp {
     setDateRangeFilter(range) {
         this.selectedDateRange = range;
         this.specificDateFilter = "";
+        this.customDateRange = { start: "", end: "" };
         const picker = document.getElementById("register-date-picker");
         if (picker) picker.value = "";
 
@@ -1059,8 +1571,15 @@ class SvmFleetApp {
             this.clearDateFilter();
             return;
         }
+        if (!this._isValidIsoDate(dateStr)) {
+            this.showToast("Please select a valid date using the calendar picker.", "alert");
+            const picker = document.getElementById("register-date-picker");
+            if (picker) picker.value = this.specificDateFilter || "";
+            return;
+        }
         this.specificDateFilter = dateStr;
         this.selectedDateRange = "custom";
+        this.customDateRange = { start: "", end: "" };
 
         ["all", "today", "week", "month"].forEach(r => {
             const btn = document.getElementById(`btn-daterange-${r}`);
@@ -1074,6 +1593,7 @@ class SvmFleetApp {
 
     clearDateFilter() {
         this.specificDateFilter = "";
+        this.customDateRange = { start: "", end: "" };
         this.setDateRangeFilter("all");
     }
 
@@ -1135,9 +1655,19 @@ class SvmFleetApp {
             logs = logs.filter(l => l.status === "SETTLED");
         }
 
+        if (this.registerVehicleFilter && this.registerVehicleFilter !== "ALL") {
+            const vTarget = this.registerVehicleFilter.toLowerCase();
+            logs = logs.filter(l => l.vehicleNo && l.vehicleNo.toLowerCase() === vTarget);
+        }
+
         if (this.specificDateFilter) {
             const formattedTarget = this.formatInputDateToLog(this.specificDateFilter);
             logs = logs.filter(l => l.loginDate === formattedTarget || (l.loginDate && l.loginDate.includes(this.specificDateFilter)));
+        } else if (this.selectedDateRange === "custom_range" && this.customDateRange.start && this.customDateRange.end) {
+            logs = logs.filter(l => {
+                const iso = this._parseLogDateToIso(l.loginDate);
+                return iso && iso >= this.customDateRange.start && iso <= this.customDateRange.end;
+            });
         } else if (this.selectedDateRange === "today") {
             const todayStr = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
             logs = logs.filter(l => (l.loginDate && l.loginDate.includes("09 Nov 2026")) || l.loginDate === todayStr);
@@ -1206,11 +1736,13 @@ class SvmFleetApp {
             return;
         }
 
+        this.syncRegisterVehicleOptions();
         this.renderMetricCards();
         this.renderDutyRegister();
         this.renderDriversGrid();
         this.renderVehiclesGrid();
         this.renderPendingTelemetryList();
+        this.refreshSearchableSelects();
 
         const vehicles = this.getCurrentFilteredVehicles();
         this.updateMapLegends(vehicles);
@@ -1396,11 +1928,13 @@ class SvmFleetApp {
         const getX = (i) => n <= 1 ? padLeft + chartW / 2 : padLeft + (i / (n - 1)) * chartW;
 
         let gridLinesHtml = "";
+        const gridColor = this.theme === "light" ? "#E2E8F0" : "#1E273D";
+        const tickColor = this.theme === "light" ? "#64748B" : "#64748B";
         yTicks.forEach(tick => {
             const y = getY(tick.v);
             gridLinesHtml += `
-                <line x1="${padLeft}" y1="${y}" x2="${svgW - padRight}" y2="${y}" stroke="#1E273D" stroke-width="1" stroke-dasharray="3 4" />
-                <text x="${padLeft - 8}" y="${y + 3}" fill="#64748B" font-size="9" font-family="monospace" text-anchor="end">${tick.l}</text>
+                <line x1="${padLeft}" y1="${y}" x2="${svgW - padRight}" y2="${y}" stroke="${gridColor}" stroke-width="1" stroke-dasharray="3 4" />
+                <text x="${padLeft - 8}" y="${y + 3}" fill="${tickColor}" font-size="9" font-family="monospace" text-anchor="end">${tick.l}</text>
             `;
         });
 
@@ -2256,11 +2790,40 @@ class SvmFleetApp {
         }
     }
 
+    _positionDriverDropdown() {
+        const wrapper = document.getElementById("driver-combobox-wrapper");
+        const dropdown = document.getElementById("driver-search-dropdown");
+        if (!wrapper || !dropdown || dropdown.classList.contains("hidden")) return;
+        const rect = wrapper.getBoundingClientRect();
+        const vpW = window.innerWidth;
+        const vpH = window.innerHeight;
+        const width = Math.min(rect.width || 300, vpW - 16);
+        let left = Math.max(8, Math.min(rect.left, vpW - width - 8));
+        const spaceBelow = vpH - rect.bottom - 10;
+        let top = rect.bottom + 6;
+        if (spaceBelow < 160 && rect.top > spaceBelow) {
+            top = Math.max(8, rect.top - Math.min(dropdown.scrollHeight || 220, 220) - 6);
+        }
+        dropdown.style.left = `${Math.round(left)}px`;
+        dropdown.style.top = `${Math.round(top)}px`;
+        dropdown.style.width = `${Math.round(width)}px`;
+    }
+
     openDriverDropdown() {
         const dropdown = document.getElementById("driver-search-dropdown");
         const chevron = document.getElementById("driver-search-chevron");
         const input = document.getElementById("driver-search-input");
-        if (dropdown) dropdown.classList.remove("hidden");
+        if (dropdown) {
+            if (!this._driverDropdownOriginalParent && dropdown.parentElement) {
+                this._driverDropdownOriginalParent = dropdown.parentElement;
+            }
+            if (dropdown.parentElement !== document.body) {
+                document.body.appendChild(dropdown);
+            }
+            dropdown.classList.remove("hidden");
+            dropdown.classList.add("portal-open");
+            this._positionDriverDropdown();
+        }
         if (chevron) chevron.classList.add("rotate-180");
         if (input) input.focus();
     }
@@ -2268,7 +2831,16 @@ class SvmFleetApp {
     closeDriverDropdown() {
         const dropdown = document.getElementById("driver-search-dropdown");
         const chevron = document.getElementById("driver-search-chevron");
-        if (dropdown) dropdown.classList.add("hidden");
+        if (dropdown) {
+            dropdown.classList.add("hidden");
+            dropdown.classList.remove("portal-open");
+            dropdown.style.left = "";
+            dropdown.style.top = "";
+            dropdown.style.width = "";
+            if (this._driverDropdownOriginalParent && dropdown.parentElement !== this._driverDropdownOriginalParent) {
+                this._driverDropdownOriginalParent.appendChild(dropdown);
+            }
+        }
         if (chevron) chevron.classList.remove("rotate-180");
     }
 
@@ -2326,6 +2898,7 @@ class SvmFleetApp {
                 hubEl.value = allowedHubId;
             }
         }
+        this.refreshSearchableSelects();
 
         this.updateModalCalculation();
     }
@@ -2369,6 +2942,7 @@ class SvmFleetApp {
             const advEl = document.getElementById("modal-advance");
             const remarksEl = document.getElementById("modal-remarks");
             const hubSelect = document.getElementById("modal-hub");
+            const shiftDateEl = document.getElementById("modal-shift-date");
 
             if (regnoEl) regnoEl.value = prefillRegNo;
             if (nameEl) nameEl.value = prefillDriverName;
@@ -2380,8 +2954,11 @@ class SvmFleetApp {
             if (passEl) passEl.value = 0;
             if (advEl) advEl.value = 0;
             if (remarksEl) remarksEl.value = `Manual register entry from ${this.getActiveHubName()} logbook.`;
+            if (shiftDateEl) shiftDateEl.value = this._getTodayIsoDate();
 
             this.populateHubSelectElement(hubSelect, allowedHubId, true);
+            this.attachStrictDateInputGuards();
+            this.refreshSearchableSelects();
 
             modal.querySelectorAll('input[type="number"]').forEach(input => {
                 input.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
@@ -2457,6 +3034,12 @@ class SvmFleetApp {
         }
 
         const shiftType = document.getElementById("modal-shifttype").value;
+        const shiftDateIso = document.getElementById("modal-shift-date")?.value || this._getTodayIsoDate();
+        if (!this._isValidIsoDate(shiftDateIso)) {
+            this.showToast("Please pick a valid Shift Date from the calendar.", "alert");
+            return;
+        }
+        const formattedShiftDate = this.formatInputDateToLog(shiftDateIso);
         const driverName = document.getElementById("modal-drivername").value.trim();
         const driverPhone = document.getElementById("modal-driverphone").value.trim();
         const vehicleNo = document.getElementById("modal-regno").value.trim().toUpperCase();
@@ -2480,9 +3063,9 @@ class SvmFleetApp {
 
         const newLog = {
             shiftType,
-            loginDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+            loginDate: formattedShiftDate,
             loginTime: "06:00 AM",
-            logoutDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+            logoutDate: formattedShiftDate,
             logoutTime: "07:30 PM",
             vehicleNo,
             driverName,
@@ -2542,6 +3125,7 @@ class SvmFleetApp {
                 <option value="${this.escapeHtml(h.id)}" ${v.managerId === h.id ? "selected" : ""}>${this.escapeHtml(h.name)} (${this.escapeHtml(h.managerName)})</option>
             `).join("");
         }
+        this.refreshSearchableSelects();
 
         modal.classList.add("open");
         modal.scrollTop = 0;
@@ -2591,6 +3175,7 @@ class SvmFleetApp {
             vehicleSelect.innerHTML = `<option value="">-- No Vehicle Assigned Yet --</option>` +
                 vehicles.map(v => `<option value="${this.escapeHtml(v.regNo)}">${this.escapeHtml(v.regNo)} (${this.escapeHtml(v.model)}) - ${v.driverName ? "Driver: " + this.escapeHtml(v.driverName) : "Unassigned"}</option>`).join("");
         }
+        this.refreshSearchableSelects();
 
         modal.classList.add("open");
         modal.scrollTop = 0;
@@ -3178,6 +3763,7 @@ class SvmFleetApp {
             input.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
         });
 
+        this.refreshSearchableSelects();
         this.updateEditModalCalculation();
 
         modal.classList.add("open");

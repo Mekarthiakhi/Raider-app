@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.owner.expenses
+package com.fleettrack.app.ui.owner.expenses
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -51,7 +51,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fleettrack.app.ui.components.DatePickerField
 import com.fleettrack.app.ui.components.GlassCard
+import com.fleettrack.app.ui.components.SearchableDropdownField
+import com.fleettrack.app.ui.components.SearchableDropdownOption
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.CardShape
 import com.fleettrack.app.ui.theme.PillShape
@@ -73,9 +76,11 @@ fun AddFuelExpenseScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    val carList = listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "TS09 IJ 7890")
-    var selectedCar by remember { mutableStateOf(carList[0]) }
-    var isCarDropdownExpanded by remember { mutableStateOf(false) }
+    val carOptions = remember {
+        listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "TS09 IJ 7890")
+            .map { SearchableDropdownOption(it, it, "Fleet Cab") }
+    }
+    var selectedCar by remember { mutableStateOf(carOptions[0].value) }
 
     var fuelDate by remember { mutableStateOf("02 Nov 2026") }
     var fuelLiters by remember { mutableStateOf("25.40") }
@@ -126,7 +131,7 @@ fun AddFuelExpenseScreen(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Car Selector Dropdown
+                // Searchable Car Selector Dropdown
                 Text(
                     text = "Car *",
                     color = TextDark,
@@ -134,36 +139,15 @@ fun AddFuelExpenseScreen(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                ExposedDropdownMenuBox(
-                    expanded = isCarDropdownExpanded,
-                    onExpandedChange = { isCarDropdownExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = selectedCar,
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCarDropdownExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    ExposedDropdownMenu(
-                        expanded = isCarDropdownExpanded,
-                        onDismissRequest = { isCarDropdownExpanded = false }
-                    ) {
-                        carList.forEach { car ->
-                            DropdownMenuItem(
-                                text = { Text(car, fontWeight = FontWeight.Medium) },
-                                onClick = {
-                                    selectedCar = car
-                                    isCarDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                SearchableDropdownField(
+                    label = "",
+                    selectedValue = selectedCar,
+                    options = carOptions,
+                    onOptionSelected = { selectedCar = it.value },
+                    dialogTitle = "Select Vehicle",
+                    searchPlaceholder = "Search vehicle reg no...",
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 // Fuel Type Chips
                 Text(
@@ -199,22 +183,18 @@ fun AddFuelExpenseScreen(
                     }
                 }
 
-                // Date
+                // Date (Strict Calendar Picker - No Free Text Entry)
                 Text(
                     text = "Date *",
                     color = TextDark,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
-                OutlinedTextField(
-                    value = fuelDate,
-                    onValueChange = { fuelDate = it },
-                    trailingIcon = {
-                        Icon(Icons.Default.CalendarToday, contentDescription = "Date", tint = PrimaryPurple)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true
+                DatePickerField(
+                    label = "",
+                    selectedDate = fuelDate,
+                    onDateSelected = { fuelDate = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 // Fuel Liters

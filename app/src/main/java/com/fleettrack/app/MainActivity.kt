@@ -13,6 +13,11 @@ import com.fleettrack.app.data.repository.RideRepository
 import com.fleettrack.app.data.repository.VehicleRepository
 import com.fleettrack.app.ui.navigation.FleetNavigation
 import com.fleettrack.app.ui.theme.FleetTrackTheme
+import com.fleettrack.app.ui.theme.ThemeManager
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,6 +45,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        ThemeManager.init(this)
 
         // Seed 30 cabs, drivers, and Uber+Rapido rides if database is empty & sync with Supabase
         lifecycleScope.launch(Dispatchers.IO) {
@@ -57,22 +63,27 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             FleetTrackTheme {
-                val navController = rememberNavController()
-                val sessionPrefs = getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
-                val isLoggedIn = sessionPrefs.getBoolean("is_logged_in", false)
-                val role = sessionPrefs.getString("role", null)
-                val isShiftActive = sessionPrefs.getBoolean("is_shift_active", false)
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val navController = rememberNavController()
+                    val sessionPrefs = getSharedPreferences("svm_fleet_session", android.content.Context.MODE_PRIVATE)
+                    val isLoggedIn = sessionPrefs.getBoolean("is_logged_in", false)
+                    val role = sessionPrefs.getString("role", null)
+                    val isShiftActive = sessionPrefs.getBoolean("is_shift_active", false)
 
-                val startScreen = when {
-                    isLoggedIn && role == "OWNER" -> com.fleettrack.app.ui.navigation.Screen.Dashboard.route
-                    isLoggedIn && role == "DRIVER" -> com.fleettrack.app.ui.navigation.Screen.DriverToday.route
-                    else -> com.fleettrack.app.ui.navigation.Screen.IntroSplash.route
+                    val startScreen = when {
+                        isLoggedIn && role == "OWNER" -> com.fleettrack.app.ui.navigation.Screen.Dashboard.route
+                        isLoggedIn && role == "DRIVER" -> com.fleettrack.app.ui.navigation.Screen.DriverToday.route
+                        else -> com.fleettrack.app.ui.navigation.Screen.IntroSplash.route
+                    }
+
+                    FleetNavigation(
+                        navController = navController,
+                        startDestination = startScreen
+                    )
                 }
-
-                FleetNavigation(
-                    navController = navController,
-                    startDestination = startScreen
-                )
             }
         }
     }

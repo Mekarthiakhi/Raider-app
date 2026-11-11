@@ -1,4 +1,4 @@
-﻿package com.fleettrack.app.ui.owner.expenses
+package com.fleettrack.app.ui.owner.expenses
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,7 +49,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fleettrack.app.ui.components.DatePickerField
 import com.fleettrack.app.ui.components.GlassCard
+import com.fleettrack.app.ui.components.SearchableDropdownField
+import com.fleettrack.app.ui.components.SearchableDropdownOption
+import com.fleettrack.app.ui.components.SearchableDropdownPill
 import com.fleettrack.app.ui.theme.BackgroundLight
 import com.fleettrack.app.ui.theme.CardShape
 import com.fleettrack.app.ui.theme.PillShape
@@ -159,30 +164,22 @@ fun ExpensesScreen(
                         )
                     }
 
-                    // Month Selector Dropdown Pill
-                    Box(
-                        modifier = Modifier
-                            .clip(PillShape)
-                            .background(SurfaceWhite)
-                            .border(1.dp, SurfaceBorder, PillShape)
-                            .padding(horizontal = 14.dp, vertical = 6.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = selectedMonth,
-                                color = TextDark,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Select Month",
-                                tint = TextGray,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
+                    // Searchable Month Selector Dropdown Pill
+                    SearchableDropdownPill(
+                        label = selectedMonth,
+                        selectedValue = selectedMonth,
+                        options = listOf(
+                            SearchableDropdownOption("Nov 2026", "Nov 2026", "Current Month"),
+                            SearchableDropdownOption("Oct 2026", "Oct 2026", "Previous Month"),
+                            SearchableDropdownOption("Sep 2026", "Sep 2026", "Q3 2026"),
+                            SearchableDropdownOption("Aug 2026", "Aug 2026", "Q3 2026"),
+                            SearchableDropdownOption("All Months", "All Months", "Full Year Summary")
+                        ),
+                        dialogTitle = "Select Month",
+                        searchPlaceholder = "Search month (e.g. Oct, Nov)...",
+                        onOptionSelected = { selectedMonth = it.value },
+                        modifier = Modifier.widthIn(min = 128.dp, max = 165.dp)
+                    )
                 }
             }
 
@@ -439,26 +436,29 @@ private fun AddFuelExpenseDialog(
             )
         },
         text = {
+            val carOptions = remember {
+                listOf("TS09 AB 1234", "TS09 CD 5678", "TS09 EF 9012", "TS09 GH 3456", "TS09 IJ 7890")
+                    .map { SearchableDropdownOption(it, it, "Fleet Cab") }
+            }
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                OutlinedTextField(
-                    value = car,
-                    onValueChange = { car = it.uppercase() },
-                    label = { Text("Car Registration") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                SearchableDropdownField(
+                    label = "Car Registration",
+                    selectedValue = car,
+                    options = carOptions,
+                    onOptionSelected = { car = it.value },
+                    dialogTitle = "Select Vehicle",
+                    searchPlaceholder = "Search vehicle reg no...",
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                OutlinedTextField(
-                    value = date,
-                    onValueChange = { date = it },
-                    label = { Text("Date") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                DatePickerField(
+                    label = "Date",
+                    selectedDate = date,
+                    onDateSelected = { date = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Row(
