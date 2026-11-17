@@ -440,6 +440,7 @@ class SvmFleetApp {
         }
         if (this.auth && this.auth.isAuthenticated()) {
             this.renderTrendChart(this.selectedChartTimeframe || "daily");
+            this.renderPlatformDonutChart();
         }
     }
 
