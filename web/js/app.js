@@ -2193,7 +2193,7 @@ class SvmFleetApp {
                             </div>
                             ${modelHtml}
                         </div>
-                        <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full ${isSettled ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 hover:bg-[#10B981]/25' : 'bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30 hover:bg-[#F59E0B]/25'} transition-colors cursor-pointer" title="Click to edit settlement">
+                        <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-${isSettled ? 'settled' : 'pending'} shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors cursor-pointer" title="Click to edit settlement">
                             ${isSettled ? '✓ Settled' : '⏳ Pending'}
                         </button>
                     </div>
@@ -2316,7 +2316,7 @@ class SvmFleetApp {
                                             <div class="flex items-center gap-2 flex-wrap">
                                                 <h4 class="font-extrabold text-base text-white font-mono">${this.escapeHtml(log.vehicleNo)}</h4>
                                                 ${vehModel ? this.renderTruncatedNameHtml(vehModel, 16, "text-[11px] text-slate-400") : ""}
-                                                <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isSettled ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 hover:bg-[#10B981]/25' : 'bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30 hover:bg-[#F59E0B]/25'} transition-colors cursor-pointer" title="Click to edit settlement">
+                                                <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-${isSettled ? 'settled' : 'pending'} text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors cursor-pointer" title="Click to edit settlement">
                                                     ${isSettled ? '✓ Settled' : '⏳ Pending'}
                                                 </button>
                                             </div>
@@ -2401,18 +2401,16 @@ class SvmFleetApp {
             const safeLogId = this.escapeHtml(log.id);
             const vehModel = resolveVehicleModel(log);
 
-            let sourceTag = `<span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#162038] text-slate-200 border border-[#263149]">${this.escapeHtml(log.source || "Uber")}</span>`;
+            let sourceTag = `<span class="platform-badge platform-badge-uber px-2.5 py-0.5 text-[10px] font-bold rounded-full">Uber</span>`;
             if (log.source === "Rapido" || (log.remarks && log.remarks.toLowerCase().includes("rapido"))) {
-                sourceTag = `<span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30">Rapido</span>`;
+                sourceTag = `<span class="platform-badge platform-badge-rapido px-2.5 py-0.5 text-[10px] font-bold rounded-full">Rapido</span>`;
             } else if (log.source === "Ola" || (log.remarks && log.remarks.toLowerCase().includes("ola"))) {
-                sourceTag = `<span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30">Ola</span>`;
-            } else if (log.source === "Uber") {
-                sourceTag = `<span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#0B1021] text-white border border-[#334155]">Uber</span>`;
+                sourceTag = `<span class="platform-badge platform-badge-ola px-2.5 py-0.5 text-[10px] font-bold rounded-full">Ola</span>`;
             }
 
             const statusTag = isSettled
-                ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 hover:bg-[#10B981]/25 transition-colors cursor-pointer" title="Click to Edit Settlement">✓ Settled</button>`
-                : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30 hover:bg-[#F59E0B]/25 transition-colors cursor-pointer" title="Click to Settle & Edit">⏳ Pending</button>`;
+                ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-settled inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Edit Settlement"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Settled</button>`
+                : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-pending inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Settle & Edit"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>⏳ Pending</button>`;
 
             return `
                 <tr class="hover:bg-[#11182A]/70 transition-colors">
@@ -2445,12 +2443,14 @@ class SvmFleetApp {
                     <td class="py-3 px-3 text-center">${sourceTag}</td>
                     <td class="py-3 px-3 text-center">${statusTag}</td>
                     <td class="py-3 px-3 text-right">
-                        <div class="flex items-center justify-end gap-1">
-                            <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="p-1.5 rounded-lg hover:bg-[#1E273D] text-[#6655F5] hover:text-[#8B5CF6] transition-colors cursor-pointer" title="Edit Shift & Settlement">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        <div class="flex items-center justify-end gap-1.5">
+                            <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="action-btn-edit" title="Edit Shift & Settlement">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                <span class="hidden xl:inline text-[11px]">Edit</span>
                             </button>
-                            <button type="button" onclick="window.SVM_APP.printReceipt('${safeLogId}')" class="p-1.5 rounded-lg hover:bg-[#1E273D] text-[#94A3B8] hover:text-white transition-colors cursor-pointer" title="Print Driver Receipt">
-                                <i data-lucide="printer" class="w-4 h-4"></i>
+                            <button type="button" onclick="window.SVM_APP.printReceipt('${safeLogId}')" class="action-btn-receipt" title="Print Driver Receipt">
+                                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                <span class="hidden xl:inline text-[11px]">Receipt</span>
                             </button>
                         </div>
                     </td>
@@ -2467,16 +2467,16 @@ class SvmFleetApp {
             const safeLogId = this.escapeHtml(log.id);
             const vehModel = resolveVehicleModel(log);
 
-            let platformTag = `<span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#162038] text-slate-200 border border-[#263149]">${this.escapeHtml(log.source || "Uber")}</span>`;
+            let platformTag = `<span class="platform-badge platform-badge-uber px-2.5 py-0.5 text-[10px] font-bold rounded-full">Uber</span>`;
             if (log.source === "Rapido" || (log.remarks && log.remarks.toLowerCase().includes("rapido"))) {
-                platformTag = `<span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30">Rapido</span>`;
+                platformTag = `<span class="platform-badge platform-badge-rapido px-2.5 py-0.5 text-[10px] font-bold rounded-full">Rapido</span>`;
             } else if (log.source === "Ola" || (log.remarks && log.remarks.toLowerCase().includes("ola"))) {
-                platformTag = `<span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30">Ola</span>`;
+                platformTag = `<span class="platform-badge platform-badge-ola px-2.5 py-0.5 text-[10px] font-bold rounded-full">Ola</span>`;
             }
 
             const statusTag = isSettled
-                ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 hover:bg-[#10B981]/25 transition-colors cursor-pointer" title="Click to Edit Settlement">✓ Settled</button>`
-                : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30 hover:bg-[#F59E0B]/25 transition-colors cursor-pointer" title="Click to Settle & Edit">⏳ Pending</button>`;
+                ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-settled inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Edit Settlement"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Settled</button>`
+                : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-pending inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Settle & Edit"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>⏳ Pending</button>`;
 
             return `
                 <tr class="hover:bg-[#11182A]/70 transition-colors">
@@ -2506,12 +2506,14 @@ class SvmFleetApp {
                     <td class="py-3 px-3 text-center">${platformTag}</td>
                     <td class="py-3 px-3 text-center">${statusTag}</td>
                     <td class="py-3 px-3 text-right">
-                        <div class="flex items-center justify-end gap-1">
-                            <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="p-1.5 rounded-lg hover:bg-[#1E273D] text-[#6655F5] hover:text-[#8B5CF6] transition-colors cursor-pointer" title="Edit Shift & Settlement">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        <div class="flex items-center justify-end gap-1.5">
+                            <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="action-btn-edit" title="Edit Shift & Settlement">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                <span class="hidden xl:inline text-[11px]">Edit</span>
                             </button>
-                            <button type="button" onclick="window.SVM_APP.printReceipt('${safeLogId}')" class="p-1.5 rounded-lg hover:bg-[#1E273D] text-[#94A3B8] hover:text-white transition-colors cursor-pointer" title="Print Driver Receipt">
-                                <i data-lucide="printer" class="w-4 h-4"></i>
+                            <button type="button" onclick="window.SVM_APP.printReceipt('${safeLogId}')" class="action-btn-receipt" title="Print Driver Receipt">
+                                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                <span class="hidden xl:inline text-[11px]">Receipt</span>
                             </button>
                         </div>
                     </td>
@@ -3735,13 +3737,14 @@ class SvmFleetApp {
                             <td class="py-2.5 px-3 text-right text-[#6655F5] font-bold">₹${Math.round(log.commissionRent || 0).toLocaleString("en-IN")}</td>
                             <td class="py-2.5 px-3 text-right text-[#F59E0B]">₹${Math.round(log.cashCollection || 0).toLocaleString("en-IN")}</td>
                             <td class="py-2.5 px-3 text-center">
-                                <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isSettled ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30' : 'bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30'} cursor-pointer" title="Click to edit settlement">
+                                <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-${isSettled ? 'settled' : 'pending'} px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer" title="Click to edit settlement">
                                     ${isSettled ? '✓ Settled' : '⏳ Pending'}
                                 </button>
                             </td>
                             <td class="py-2.5 px-3 text-right">
-                                <button type="button" onclick="window.SVM_APP.printReceipt('${safeLogId}')" class="text-slate-400 hover:text-white p-1 rounded hover:bg-[#1E273D]" title="Print Receipt">
+                                <button type="button" onclick="window.SVM_APP.printReceipt('${safeLogId}')" class="action-btn-receipt" title="Print Receipt">
                                     <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                    <span class="hidden sm:inline text-[10px]">Print</span>
                                 </button>
                             </td>
                         </tr>
@@ -3944,14 +3947,14 @@ class SvmFleetApp {
                 `;
             } else {
                 container.innerHTML = scoped.map(n => `
-                    <div class="p-3.5 hover:bg-[#161F33] transition-colors flex items-start gap-3 ${n.unread ? 'bg-[#0E1528]/80' : 'opacity-70'}">
+                    <div class="notif-item p-3.5 flex items-start gap-3 cursor-pointer ${n.unread ? 'notif-unread' : 'notif-read'}">
                         <span class="w-2 h-2 mt-1.5 rounded-full shrink-0 ${n.unread ? (n.type === 'success' ? 'bg-[#10B981]' : n.type === 'warning' ? 'bg-[#F59E0B]' : 'bg-[#6655F5]') : 'bg-transparent'}"></span>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-1 mb-0.5">
-                                <span class="font-bold text-xs text-white truncate">${this.escapeHtml(n.title)}</span>
-                                <span class="text-[10px] text-slate-500 font-mono shrink-0">${this.escapeHtml(n.time)}</span>
+                                <span class="notif-title font-bold text-xs truncate">${this.escapeHtml(n.title)}</span>
+                                <span class="notif-time text-[10px] font-mono shrink-0">${this.escapeHtml(n.time)}</span>
                             </div>
-                            <p class="text-[11px] text-slate-300 leading-relaxed">${this.escapeHtml(n.text)}</p>
+                            <p class="notif-text text-[11px] leading-relaxed">${this.escapeHtml(n.text)}</p>
                         </div>
                     </div>
                 `).join("");

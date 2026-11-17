@@ -21,7 +21,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <!-- Custom Glassmorphism Stylesheet (Single Source of Truth with Cache-Busting Version) -->
-    <link rel="stylesheet" href="css/styles.css?v=20261117_v5">
+    <link rel="stylesheet" href="css/styles.css?v=20261117_v6">
 </head>
 <body class="auth-locked bg-[#080D1B] text-slate-100 min-h-screen flex font-sans selection:bg-[#6655F5] selection:text-white">
 
@@ -234,8 +234,8 @@
                     <i data-lucide="settings" class="w-4 h-4 text-[#94A3B8]"></i>
                     <span>Settings</span>
                 </button>
-                <button type="button" onclick="window.SVM_APP.openUserGuideModal()" class="sidebar-link mt-2 border border-[#6655F5]/30 bg-[#6655F5]/10 hover:bg-[#6655F5]/20 text-[#8B5CF6] transition-all">
-                    <i data-lucide="book-open" class="w-4 h-4 text-[#8B5CF6]"></i>
+                <button type="button" onclick="window.SVM_APP.openUserGuideModal()" class="sidebar-link sidebar-guide-btn mt-2 transition-all">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
                     <span class="font-bold">User Guide & Manual</span>
                 </button>
             </nav>
@@ -752,7 +752,7 @@
                                     <th class="py-3 px-4 text-right">Commission</th>
                                     <th class="py-3 px-3 text-center">Source</th>
                                     <th class="py-3 px-3 text-center">Status</th>
-                                    <th class="py-3 px-3 text-right">Receipt</th>
+                                    <th class="py-3 px-3 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="register-table-body" class="divide-y divide-[#1E273D]">

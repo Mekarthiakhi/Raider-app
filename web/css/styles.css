@@ -150,6 +150,131 @@ body.modal-open {
     color: #FFFFFF !important;
 }
 
+/* Sidebar User Guide CTA Button */
+.sidebar-guide-btn {
+    background-color: rgba(102, 85, 245, 0.12) !important;
+    border: 1px solid rgba(102, 85, 245, 0.35) !important;
+    color: #A78BFA !important;
+}
+.sidebar-guide-btn i, .sidebar-guide-btn svg {
+    color: #A78BFA !important;
+    stroke: #A78BFA !important;
+}
+.sidebar-guide-btn:hover {
+    background-color: rgba(102, 85, 245, 0.22) !important;
+    color: #C4B5FD !important;
+}
+
+/* Status Badges (Duty Register & Reports) */
+.status-badge-settled {
+    background-color: rgba(16, 185, 129, 0.18) !important;
+    border: 1px solid rgba(16, 185, 129, 0.45) !important;
+    color: #10B981 !important;
+    font-weight: 800;
+}
+.status-badge-settled:hover {
+    background-color: rgba(16, 185, 129, 0.28) !important;
+    color: #34D399 !important;
+}
+
+.status-badge-pending {
+    background-color: rgba(245, 158, 11, 0.18) !important;
+    border: 1px solid rgba(245, 158, 11, 0.45) !important;
+    color: #F59E0B !important;
+    font-weight: 800;
+}
+.status-badge-pending:hover {
+    background-color: rgba(245, 158, 11, 0.28) !important;
+    color: #FBBF24 !important;
+}
+
+/* Table Action Buttons (Edit & Receipt) */
+.action-btn-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    background-color: rgba(102, 85, 245, 0.15);
+    border: 1px solid rgba(102, 85, 245, 0.35);
+    color: #A78BFA;
+}
+.action-btn-edit:hover {
+    background-color: #6655F5;
+    border-color: #6655F5;
+    color: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(102, 85, 245, 0.4);
+}
+
+.action-btn-receipt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    background-color: #141B30;
+    border: 1px solid #263149;
+    color: #94A3B8;
+}
+.action-btn-receipt:hover {
+    background-color: #1E273D;
+    color: #FFFFFF;
+    border-color: #384566;
+}
+
+/* Platform Badges */
+.platform-badge {
+    display: inline-block;
+    white-space: nowrap;
+}
+.platform-badge-uber {
+    background-color: #0B1021;
+    color: #FFFFFF;
+    border: 1px solid #334155;
+}
+.platform-badge-rapido {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.platform-badge-ola {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+/* Notification Items (Dropdown) */
+.notif-item {
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+.notif-item:hover {
+    background-color: rgba(22, 31, 51, 0.75);
+}
+.notif-item.notif-unread {
+    background-color: rgba(14, 21, 40, 0.85);
+}
+.notif-item.notif-read {
+    opacity: 0.65;
+}
+.notif-title {
+    color: #FFFFFF;
+}
+.notif-time {
+    color: #64748B;
+}
+.notif-text {
+    color: #94A3B8;
+}
+
 /* --------------------------------------------------------------------------
    KPI Theme Cards
    -------------------------------------------------------------------------- */
@@ -1904,13 +2029,10 @@ html[data-theme="light"] .text-\[\#64748B\] {
     color: #64748B !important;
 }
 
-/* Preserve White Ink on Solid Vibrant Buttons, Badges, Tabs & Avatars */
+/* Preserve White Ink ONLY on Solid Filled Vibrant Buttons, Badges, Tabs & Avatars */
 html[data-theme="light"] button.bg-\[\#6655F5\],
 html[data-theme="light"] button.bg-\[\#10B981\],
 html[data-theme="light"] button.bg-\[\#3185F6\],
-html[data-theme="light"] button[class*="bg-[#6655F5]"],
-html[data-theme="light"] button[class*="bg-[#10B981]"],
-html[data-theme="light"] button[class*="bg-[#3185F6]"],
 html[data-theme="light"] button.auth-submit-btn,
 html[data-theme="light"] [class*="bg-gradient-to-tr"],
 html[data-theme="light"] #header-user-avatar,
@@ -1928,9 +2050,6 @@ html[data-theme="light"] #view-mode-cards-btn.bg-\[\#6655F5\] {
 html[data-theme="light"] button.bg-\[\#6655F5\] *,
 html[data-theme="light"] button.bg-\[\#10B981\] *,
 html[data-theme="light"] button.bg-\[\#3185F6\] *,
-html[data-theme="light"] button[class*="bg-[#6655F5]"] *,
-html[data-theme="light"] button[class*="bg-[#10B981]"] *,
-html[data-theme="light"] button[class*="bg-[#3185F6]"] *,
 html[data-theme="light"] button.auth-submit-btn *,
 html[data-theme="light"] .shift-filter-btn.bg-\[\#6655F5\] *,
 html[data-theme="light"] .date-range-btn.bg-\[\#6655F5\] *,
@@ -1940,6 +2059,165 @@ html[data-theme="light"] #view-mode-table-btn.bg-\[\#6655F5\] *,
 html[data-theme="light"] #view-mode-cards-btn.bg-\[\#6655F5\] * {
     color: #FFFFFF !important;
     stroke: #FFFFFF !important;
+}
+
+/* Status Badges in Light Mode (Deep Saturated Text, Never Washed Out) */
+html[data-theme="light"] .status-badge-settled {
+    background-color: #DEF7EC !important;
+    border: 1.5px solid #31C48D !important;
+    color: #03543F !important;
+    font-weight: 800 !important;
+}
+html[data-theme="light"] .status-badge-settled span {
+    background-color: #057A55 !important;
+}
+html[data-theme="light"] .status-badge-settled:hover {
+    background-color: #BCF0DA !important;
+    border-color: #057A55 !important;
+    color: #024731 !important;
+}
+
+html[data-theme="light"] .status-badge-pending {
+    background-color: #FEF08A !important;
+    border: 1.5px solid #EAB308 !important;
+    color: #713F12 !important;
+    font-weight: 800 !important;
+}
+html[data-theme="light"] .status-badge-pending span {
+    background-color: #A16207 !important;
+}
+html[data-theme="light"] .status-badge-pending:hover {
+    background-color: #FDE047 !important;
+    border-color: #CA8A04 !important;
+    color: #58310E !important;
+}
+
+/* Table Action Buttons in Light Mode (Edit & Receipt) */
+html[data-theme="light"] .action-btn-edit {
+    background-color: #EEF2FF !important;
+    border: 1px solid #C7D2FE !important;
+    color: #4F46E5 !important;
+}
+html[data-theme="light"] .action-btn-edit:hover {
+    background-color: #4F46E5 !important;
+    border-color: #4F46E5 !important;
+    color: #FFFFFF !important;
+}
+html[data-theme="light"] .action-btn-edit:hover * {
+    color: #FFFFFF !important;
+    stroke: #FFFFFF !important;
+}
+
+html[data-theme="light"] .action-btn-receipt {
+    background-color: #F1F5F9 !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #334155 !important;
+}
+html[data-theme="light"] .action-btn-receipt:hover {
+    background-color: #E2E8F0 !important;
+    border-color: #94A3B8 !important;
+    color: #0F172A !important;
+}
+html[data-theme="light"] .action-btn-receipt:hover * {
+    color: #0F172A !important;
+    stroke: #0F172A !important;
+}
+
+/* Platform Badges in Light Mode */
+html[data-theme="light"] .platform-badge-uber {
+    background-color: #0F172A !important;
+    color: #FFFFFF !important;
+    border: 1px solid #0F172A !important;
+}
+html[data-theme="light"] .platform-badge-rapido {
+    background-color: #FEF3C7 !important;
+    color: #92400E !important;
+    border: 1px solid #FCD34D !important;
+}
+html[data-theme="light"] .platform-badge-ola {
+    background-color: #D1FAE5 !important;
+    color: #065F46 !important;
+    border: 1px solid #6EE7B7 !important;
+}
+
+/* User Guide CTA Button in Sidebar (Light Mode) */
+html[data-theme="light"] .sidebar-guide-btn {
+    background-color: #EEF2FF !important;
+    border: 1.5px solid #C7D2FE !important;
+    color: #4338CA !important;
+}
+html[data-theme="light"] .sidebar-guide-btn *,
+html[data-theme="light"] .sidebar-guide-btn i,
+html[data-theme="light"] .sidebar-guide-btn svg,
+html[data-theme="light"] .sidebar-guide-btn span {
+    color: #4338CA !important;
+    stroke: #4338CA !important;
+}
+html[data-theme="light"] .sidebar-guide-btn:hover {
+    background-color: #6655F5 !important;
+    border-color: #6655F5 !important;
+    color: #FFFFFF !important;
+}
+html[data-theme="light"] .sidebar-guide-btn:hover *,
+html[data-theme="light"] .sidebar-guide-btn:hover i,
+html[data-theme="light"] .sidebar-guide-btn:hover svg,
+html[data-theme="light"] .sidebar-guide-btn:hover span {
+    color: #FFFFFF !important;
+    stroke: #FFFFFF !important;
+}
+
+/* Sidebar Border Right & Separator in Light Mode */
+html[data-theme="light"] #app-sidebar,
+html[data-theme="light"] aside#app-sidebar,
+html[data-theme="light"] .border-r {
+    border-right-color: #E2E8F0 !important;
+}
+
+/* Notification Floating Dropdown in Light Mode */
+html[data-theme="light"] #notification-dropdown {
+    background-color: #FFFFFF !important;
+    border-color: #CBD5E1 !important;
+    box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.22) !important;
+}
+
+html[data-theme="light"] #notification-dropdown > div:first-child,
+html[data-theme="light"] #notification-dropdown > div:last-child {
+    background-color: #F8FAFC !important;
+    border-color: #E2E8F0 !important;
+}
+
+html[data-theme="light"] #notification-items-container {
+    background-color: #FFFFFF !important;
+}
+
+html[data-theme="light"] .notif-item {
+    background-color: #FFFFFF !important;
+    border-bottom: 1px solid #F1F5F9 !important;
+}
+
+html[data-theme="light"] .notif-item:hover {
+    background-color: #EEF2FF !important;
+}
+
+html[data-theme="light"] .notif-item.notif-unread {
+    background-color: #F5F7FF !important;
+}
+
+html[data-theme="light"] .notif-item.notif-read {
+    opacity: 0.75 !important;
+    background-color: #FFFFFF !important;
+}
+
+html[data-theme="light"] .notif-title {
+    color: #0F172A !important;
+}
+
+html[data-theme="light"] .notif-time {
+    color: #64748B !important;
+}
+
+html[data-theme="light"] .notif-text {
+    color: #475569 !important;
 }
 
 /* High Contrast Status Badges & Pills in Light Mode */
@@ -2075,5 +2353,6 @@ html[data-theme="light"] .leaflet-popup-content strong[style*="#F8FAFC"] {
 html[data-theme="light"] .leaflet-popup-content [style*="#94A3B8"] {
     color: #64748B !important;
 }
+
 
 
