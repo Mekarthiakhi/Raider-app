@@ -20,13 +20,31 @@ class SvmFleetApp {
         this.searchQuery = "";
         this.shiftFilter = "ALL";
         this.registerVehicleFilter = "ALL";
-        this.selectedDateRange = "all"; // "all" | "today" | "week" | "month" | "custom"
+        this.selectedDateRange = "today"; // Default to today
         this.specificDateFilter = ""; // YYYY-MM-DD
         this.customDateRange = { start: "", end: "" };
+        this.registerFromDate = "2026-11-09"; // Default today per User Request 2
+        this.registerToDate = "2026-11-09";
+        this.reportsFromDate = "2026-11-09";
+        this.reportsToDate = "2026-11-09";
+        this.vehiclesSearchQuery = "";
+        this.vehiclesPlatformFilter = "ALL";
+        this.vehiclesStatusFilter = "ALL";
+        this.driversSearchQuery = "";
+        this.driversStatusFilter = "ALL";
+        this.selectedPlatformDrilldown = "Uber";
+        this.pagination = {
+            overviewDuty: { page: 1, pageSize: 6 },
+            fullDuty: { page: 1, pageSize: 10 },
+            reports: { page: 1, pageSize: 10 },
+            vehicles: { page: 1, pageSize: 12, viewMode: "grid" },
+            drivers: { page: 1, pageSize: 12, viewMode: "grid" },
+            platformCabs: { page: 1, pageSize: 10 }
+        };
         this.theme = "dark";
         this._openPortalSelect = null;
         this._selectEnhancers = new Map();
-        this.reportPeriod = "week"; // "today" | "week" | "month" | "all"
+        this.reportPeriod = "today"; // Default today
         this.registerViewMode = (typeof window !== "undefined" && window.innerWidth < 768) ? "cards" : "table";
         this.notifications = [
             { id: 1, hubId: "mgr_moosapet_01", title: "Shift Completed", text: "Suman Goud (TS10 EF 7745) completed 15 trips (₹3,750 gross). 35% commission tier unlocked!", time: "2m ago", unread: true, type: "success" },
@@ -67,6 +85,16 @@ class SvmFleetApp {
         this.updateGreeting();
         this.setRegisterViewMode(this.registerViewMode);
 
+        const regFromEl = document.getElementById("register-from-date");
+        const regToEl = document.getElementById("register-to-date");
+        if (regFromEl) regFromEl.value = this.registerFromDate;
+        if (regToEl) regToEl.value = this.registerToDate;
+
+        const repFromEl = document.getElementById("reports-from-date");
+        const repToEl = document.getElementById("reports-to-date");
+        if (repFromEl) repFromEl.value = this.reportsFromDate;
+        if (repToEl) repToEl.value = this.reportsToDate;
+
         if (session && this.auth && this.auth.isAuthenticated()) {
             this.renderNotifications();
 
@@ -79,6 +107,8 @@ class SvmFleetApp {
             this.renderReportsTab();
             this.renderTrendChart(this.selectedChartTimeframe || "daily");
             this.renderPlatformDonutChart();
+            this.renderDashboardSettlementsWidget();
+            this.renderPlatformDrilldown();
 
             if (this.mapController && this.currentHubId && this.currentHubId !== "ALL") {
                 this.mapController.focusHub(this.currentHubId);
@@ -111,6 +141,88 @@ class SvmFleetApp {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#39;");
+    }
+
+    // ------------------------------------------------------------------------
+    // Universal Pagination Engine (Server-side & Client Indexed - User Request 2)
+    // ------------------------------------------------------------------------
+    paginate(items, page = 1, pageSize = 10) {
+        const total = (items && items.length) || 0;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        const validPage = Math.max(1, Math.min(page, totalPages));
+        const start = (validPage - 1) * pageSize;
+        const end = Math.min(start + pageSize, total);
+        const paginatedItems = total > 0 ? items.slice(start, end) : [];
+        return {
+            items: paginatedItems,
+            page: validPage,
+            pageSize,
+            total,
+            totalPages,
+            startIdx: total === 0 ? 0 : start + 1,
+            endIdx: end
+        };
+    }
+
+    renderPaginationControls(containerId, { page, totalPages, total, startIdx, endIdx }, callbackName) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        if (total === 0) {
+            el.innerHTML = "";
+            return;
+        }
+
+        let pagesHtml = "";
+        for (let p = 1; p <= totalPages; p++) {
+            if (p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1)) {
+                pagesHtml += `<button type="button" onclick="window.SVM_APP.${callbackName}(${p})" class="pagination-btn ${p === page ? 'active' : ''}">${p}</button>`;
+            } else if (p === page - 2 || p === page + 2) {
+                pagesHtml += `<span class="px-1 text-slate-500 text-xs">...</span>`;
+            }
+        }
+
+        el.innerHTML = `
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    Showing <strong class="text-white">${startIdx}</strong> to <strong class="text-white">${endIdx}</strong> of <strong class="text-white">${total}</strong> entries
+                </div>
+                <div class="pagination-controls">
+                    <button type="button" onclick="window.SVM_APP.${callbackName}(${page - 1})" class="pagination-btn" ${page <= 1 ? 'disabled' : ''}>Prev</button>
+                    ${pagesHtml}
+                    <button type="button" onclick="window.SVM_APP.${callbackName}(${page + 1})" class="pagination-btn" ${page >= totalPages ? 'disabled' : ''}>Next</button>
+                </div>
+            </div>
+        `;
+    }
+
+    setOverviewPage(page) {
+        this.pagination.overviewDuty.page = page;
+        this.renderDutyRegister();
+    }
+
+    setFullRegisterPage(page) {
+        this.pagination.fullDuty.page = page;
+        this.renderDutyRegister();
+    }
+
+    setReportsPage(page) {
+        this.pagination.reports.page = page;
+        this.renderReportsTab();
+    }
+
+    setVehiclesPage(page) {
+        this.pagination.vehicles.page = page;
+        this.renderVehiclesGrid();
+    }
+
+    setDriversPage(page) {
+        this.pagination.drivers.page = page;
+        this.renderDriversGrid();
+    }
+
+    setPlatformCabsPage(page) {
+        this.pagination.platformCabs.page = page;
+        this.renderPlatformDrilldown();
     }
 
     truncateName(value, maxLen = 16) {
@@ -1539,10 +1651,21 @@ class SvmFleetApp {
         if (!logDateStr) return "";
         const str = String(logDateStr).trim();
         if (this._isValidIsoDate(str)) return str;
+        // DD/MM/YYYY (e.g. 09/11/2026)
+        const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (slashMatch) {
+            return `${slashMatch[3]}-${slashMatch[2].padStart(2, "0")}-${slashMatch[1].padStart(2, "0")}`;
+        }
+        // DD MMM YYYY (e.g. 09 Nov 2026)
         const months = { Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06", Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12" };
         const m = str.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
         if (m && months[m[2]]) {
             return `${m[3]}-${months[m[2]]}-${m[1].padStart(2, "0")}`;
+        }
+        // YYYY/MM/DD
+        const isoSlashMatch = str.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+        if (isoSlashMatch) {
+            return `${isoSlashMatch[1]}-${isoSlashMatch[2].padStart(2, "0")}-${isoSlashMatch[3].padStart(2, "0")}`;
         }
         return "";
     }
@@ -1557,12 +1680,145 @@ class SvmFleetApp {
         return `${day.padStart(2, "0")} ${months[mIdx]} ${year}`;
     }
 
+    handleRegisterDateRangeChange() {
+        const fromEl = document.getElementById("register-from-date");
+        const toEl = document.getElementById("register-to-date");
+        this.registerFromDate = fromEl ? fromEl.value : "";
+        this.registerToDate = toEl ? toEl.value : "";
+        this.specificDateFilter = "";
+        this.selectedDateRange = "custom_range";
+        this.pagination.fullDuty.page = 1;
+        this.pagination.overviewDuty.page = 1;
+        this.renderDutyRegister();
+    }
+
+    resetRegisterDateRange() {
+        this.registerFromDate = "2026-11-09";
+        this.registerToDate = "2026-11-09";
+        this.specificDateFilter = "";
+        this.selectedDateRange = "today";
+        const fromEl = document.getElementById("register-from-date");
+        const toEl = document.getElementById("register-to-date");
+        if (fromEl) fromEl.value = "2026-11-09";
+        if (toEl) toEl.value = "2026-11-09";
+        this.pagination.fullDuty.page = 1;
+        this.pagination.overviewDuty.page = 1;
+        this.renderDutyRegister();
+    }
+
+    clearRegisterDateRange() {
+        this.registerFromDate = "";
+        this.registerToDate = "";
+        this.specificDateFilter = "";
+        this.selectedDateRange = "all";
+        const fromEl = document.getElementById("register-from-date");
+        const toEl = document.getElementById("register-to-date");
+        if (fromEl) fromEl.value = "";
+        if (toEl) toEl.value = "";
+        this.pagination.fullDuty.page = 1;
+        this.pagination.overviewDuty.page = 1;
+        this.renderDutyRegister();
+    }
+
+    handleReportsDateRangeChange() {
+        const fromEl = document.getElementById("reports-from-date");
+        const toEl = document.getElementById("reports-to-date");
+        this.reportsFromDate = fromEl ? fromEl.value : "";
+        this.reportsToDate = toEl ? toEl.value : "";
+        this.pagination.reports.page = 1;
+        this.renderReportsTab();
+    }
+
+    setVehiclesViewMode(mode) {
+        this.pagination.vehicles.viewMode = mode === "list" ? "list" : "grid";
+        const gridBtn = document.getElementById("vehicles-view-grid-btn");
+        const listBtn = document.getElementById("vehicles-view-list-btn");
+        const gridContainer = document.getElementById("cars-grid");
+        const listContainer = document.getElementById("cars-list-container");
+
+        if (gridBtn) gridBtn.classList.toggle("active", mode === "grid");
+        if (listBtn) listBtn.classList.toggle("active", mode === "list");
+        if (gridContainer) gridContainer.classList.toggle("hidden", mode !== "grid");
+        if (listContainer) listContainer.classList.toggle("hidden", mode !== "list");
+
+        this.renderVehiclesGrid();
+    }
+
+    handleVehicleSearch(val) {
+        this.vehiclesSearchQuery = String(val || "").trim().toLowerCase();
+        this.pagination.vehicles.page = 1;
+        this.renderVehiclesGrid();
+    }
+
+    handleVehiclePlatformFilter(val) {
+        this.vehiclesPlatformFilter = val || "ALL";
+        this.pagination.vehicles.page = 1;
+        this.renderVehiclesGrid();
+    }
+
+    handleVehicleStatusFilter(val) {
+        this.vehiclesStatusFilter = val || "ALL";
+        this.pagination.vehicles.page = 1;
+        this.renderVehiclesGrid();
+    }
+
+    setDriversViewMode(mode) {
+        this.pagination.drivers.viewMode = mode === "list" ? "list" : "grid";
+        const gridBtn = document.getElementById("drivers-view-grid-btn");
+        const listBtn = document.getElementById("drivers-view-list-btn");
+        const gridContainer = document.getElementById("drivers-grid");
+        const listContainer = document.getElementById("drivers-list-container");
+
+        if (gridBtn) gridBtn.classList.toggle("active", mode === "grid");
+        if (listBtn) listBtn.classList.toggle("active", mode === "list");
+        if (gridContainer) gridContainer.classList.toggle("hidden", mode !== "grid");
+        if (listContainer) listContainer.classList.toggle("hidden", mode !== "list");
+
+        this.renderDriversGrid();
+    }
+
+    handleDriverSearch(val) {
+        this.driversSearchQuery = String(val || "").trim().toLowerCase();
+        this.pagination.drivers.page = 1;
+        this.renderDriversGrid();
+    }
+
+    handleDriverStatusFilter(val) {
+        this.driversStatusFilter = val || "ALL";
+        this.pagination.drivers.page = 1;
+        this.renderDriversGrid();
+    }
+
+    selectPlatformDrilldown(platform) {
+        this.selectedPlatformDrilldown = platform || "Uber";
+        this.pagination.platformCabs.page = 1;
+        this.renderPlatformDrilldown();
+    }
+
     setDateRangeFilter(range) {
         this.selectedDateRange = range;
         this.specificDateFilter = "";
         this.customDateRange = { start: "", end: "" };
-        const picker = document.getElementById("register-date-picker");
-        if (picker) picker.value = "";
+        const todayIso = "2026-11-09";
+        const fromEl = document.getElementById("register-from-date");
+        const toEl = document.getElementById("register-to-date");
+
+        if (range === "today") {
+            this.registerFromDate = todayIso;
+            this.registerToDate = todayIso;
+        } else if (range === "week") {
+            this.registerFromDate = "2026-11-03";
+            this.registerToDate = todayIso;
+        } else if (range === "month") {
+            this.registerFromDate = "2026-11-01";
+            this.registerToDate = todayIso;
+        } else if (range === "all") {
+            this.registerFromDate = "";
+            this.registerToDate = "";
+        }
+
+        if (fromEl) fromEl.value = this.registerFromDate;
+        if (toEl) toEl.value = this.registerToDate;
 
         ["all", "today", "week", "month"].forEach(r => {
             const btn = document.getElementById(`btn-daterange-${r}`);
@@ -1575,6 +1831,8 @@ class SvmFleetApp {
             }
         });
 
+        this.pagination.fullDuty.page = 1;
+        this.pagination.overviewDuty.page = 1;
         this.renderDutyRegister();
     }
 
@@ -1585,13 +1843,16 @@ class SvmFleetApp {
         }
         if (!this._isValidIsoDate(dateStr)) {
             this.showToast("Please select a valid date using the calendar picker.", "alert");
-            const picker = document.getElementById("register-date-picker");
-            if (picker) picker.value = this.specificDateFilter || "";
             return;
         }
         this.specificDateFilter = dateStr;
         this.selectedDateRange = "custom";
-        this.customDateRange = { start: "", end: "" };
+        this.registerFromDate = dateStr;
+        this.registerToDate = dateStr;
+        const fromEl = document.getElementById("register-from-date");
+        const toEl = document.getElementById("register-to-date");
+        if (fromEl) fromEl.value = dateStr;
+        if (toEl) toEl.value = dateStr;
 
         ["all", "today", "week", "month"].forEach(r => {
             const btn = document.getElementById(`btn-daterange-${r}`);
@@ -1600,13 +1861,13 @@ class SvmFleetApp {
             }
         });
 
+        this.pagination.fullDuty.page = 1;
+        this.pagination.overviewDuty.page = 1;
         this.renderDutyRegister();
     }
 
     clearDateFilter() {
-        this.specificDateFilter = "";
-        this.customDateRange = { start: "", end: "" };
-        this.setDateRangeFilter("all");
+        this.clearRegisterDateRange();
     }
 
     setRegisterViewMode(mode) {
@@ -1713,7 +1974,15 @@ class SvmFleetApp {
             logs = logs.filter(l => l.vehicleNo && l.vehicleNo.toLowerCase() === vTarget);
         }
 
-        if (this.specificDateFilter) {
+        if (this.registerFromDate || this.registerToDate) {
+            logs = logs.filter(l => {
+                const iso = this._parseLogDateToIso(l.loginDate);
+                if (!iso) return true;
+                if (this.registerFromDate && iso < this.registerFromDate) return false;
+                if (this.registerToDate && iso > this.registerToDate) return false;
+                return true;
+            });
+        } else if (this.specificDateFilter) {
             const formattedTarget = this.formatInputDateToLog(this.specificDateFilter);
             logs = logs.filter(l => l.loginDate === formattedTarget || (l.loginDate && l.loginDate.includes(this.specificDateFilter)));
         } else if (this.selectedDateRange === "custom_range" && this.customDateRange.start && this.customDateRange.end) {
@@ -1788,6 +2057,9 @@ class SvmFleetApp {
         this.renderDutyRegister();
         this.renderDriversGrid();
         this.renderVehiclesGrid();
+        this.renderReportsTab();
+        this.renderDashboardSettlementsWidget();
+        this.renderPlatformDrilldown();
         this.renderPendingTelemetryList();
         this.refreshSearchableSelects();
 
@@ -2161,6 +2433,138 @@ class SvmFleetApp {
     }
 
     // ------------------------------------------------------------------------
+    // Daily Cash & UPI Handover Settlements Widget (User Request 6)
+    // ------------------------------------------------------------------------
+    renderDashboardSettlementsWidget() {
+        const pendingAmountEl = document.getElementById("overview-settlements-pending-amount");
+        const pendingDescEl = document.getElementById("overview-settlements-pending-desc");
+        const settledAmountEl = document.getElementById("overview-settlements-settled-amount");
+        const settledDescEl = document.getElementById("overview-settlements-settled-desc");
+        const fuelAmountEl = document.getElementById("overview-settlements-fuel-amount");
+        const cashAmountEl = document.getElementById("overview-settlements-cash-amount");
+
+        if (!pendingAmountEl && !settledAmountEl) return;
+
+        const allowedHubId = this.getScopedHubId();
+        if (!allowedHubId || !window.DEMO_REPO) {
+            if (pendingAmountEl) pendingAmountEl.innerText = "₹0";
+            if (settledAmountEl) settledAmountEl.innerText = "₹0";
+            if (fuelAmountEl) fuelAmountEl.innerText = "₹0";
+            if (cashAmountEl) cashAmountEl.innerText = "₹0";
+            return;
+        }
+
+        const logs = window.DEMO_REPO.getDutyLogs(allowedHubId);
+        // Target today's shift date (2026-11-09)
+        const todayLogs = logs.filter(l => {
+            const iso = this._parseLogDateToIso(l.loginDate);
+            return iso === "2026-11-09" || (l.loginDate && l.loginDate.includes("09 Nov 2026"));
+        });
+
+        const pendingLogs = todayLogs.filter(l => l.status === "PENDING" || l.status === "OPEN");
+        const settledLogs = todayLogs.filter(l => l.status === "SETTLED");
+
+        const pendingAmount = pendingLogs.reduce((sum, l) => sum + Math.abs(Number(l.netBalance) || 0), 0);
+        const settledAmount = settledLogs.reduce((sum, l) => sum + (Number(l.earnings) || 0), 0);
+        const fuelAmount = todayLogs.reduce((sum, l) => sum + (Number(l.expenditure) || 0), 0);
+        const cashAmount = todayLogs.reduce((sum, l) => sum + (Number(l.cashCollection) || 0), 0);
+
+        if (pendingAmountEl) pendingAmountEl.innerText = `₹${Math.round(pendingAmount).toLocaleString("en-IN")}`;
+        if (pendingDescEl) pendingDescEl.innerText = `${pendingLogs.length} ${pendingLogs.length === 1 ? 'driver' : 'drivers'} awaiting handover`;
+        if (settledAmountEl) settledAmountEl.innerText = `₹${Math.round(settledAmount).toLocaleString("en-IN")}`;
+        if (settledDescEl) settledDescEl.innerText = `${settledLogs.length} ${settledLogs.length === 1 ? 'shift' : 'shifts'} cleared via UPI & cash`;
+        if (fuelAmountEl) fuelAmountEl.innerText = `₹${Math.round(fuelAmount).toLocaleString("en-IN")}`;
+        if (cashAmountEl) cashAmountEl.innerText = `₹${Math.round(cashAmount).toLocaleString("en-IN")}`;
+    }
+
+    // ------------------------------------------------------------------------
+    // Platform Telemetry Drilldown List & Active Stat Card (User Request 7)
+    // ------------------------------------------------------------------------
+    renderPlatformDrilldown() {
+        const titleEl = document.getElementById("platform-drilldown-title");
+        const subtitleEl = document.getElementById("platform-drilldown-subtitle");
+        const badgeEl = document.getElementById("platform-drilldown-badge");
+        const tbody = document.getElementById("platform-cabs-table-body");
+        if (!tbody && !titleEl) return;
+
+        const allowedHubId = this.getScopedHubId();
+        if (!allowedHubId || !window.DEMO_REPO) {
+            if (tbody) tbody.innerHTML = "";
+            return;
+        }
+
+        const platform = this.selectedPlatformDrilldown || "Uber";
+
+        // Update active card styling
+        const cardUber = document.getElementById("platform-stat-card-uber");
+        const cardRapido = document.getElementById("platform-stat-card-rapido");
+        const cardOla = document.getElementById("platform-stat-card-ola");
+
+        if (cardUber) cardUber.classList.toggle("active", platform.toLowerCase() === "uber");
+        if (cardRapido) cardRapido.classList.toggle("active", platform.toLowerCase() === "rapido");
+        if (cardOla) cardOla.classList.toggle("active", platform.toLowerCase() === "ola");
+
+        const allVehicles = this.getCurrentFilteredVehicles();
+        const hubs = window.DEMO_REPO.getHubs();
+        const platformVehicles = allVehicles.filter(v => (v.platform || "").toLowerCase() === platform.toLowerCase());
+
+        if (titleEl) {
+            titleEl.innerHTML = `
+                <i data-lucide="radio" class="w-4 h-4 text-[#6655F5]"></i>
+                <span>Active ${this.escapeHtml(platform)} Cabs - Live Telemetry List</span>
+            `;
+        }
+        if (subtitleEl) {
+            subtitleEl.innerText = `Commercial cabs currently allocated and logging trips on ${platform} network across Hyderabad`;
+        }
+        if (badgeEl) {
+            badgeEl.innerText = `${platformVehicles.length} Vehicles`;
+        }
+
+        const paginated = this.paginate(platformVehicles, this.pagination.platformCabs.page, 10);
+
+        if (tbody) {
+            if (paginated.items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-500 font-sans">No vehicles found allocated to ${this.escapeHtml(platform)}.</td></tr>`;
+            } else {
+                tbody.innerHTML = paginated.items.map((v, idx) => {
+                    const isActive = v.status === "ACTIVE";
+                    const isIdle = v.status === "IDLE";
+                    const hub = hubs.find(h => h.id === v.managerId);
+                    const hubLabel = hub ? hub.shortName : (v.managerId || "Fleet");
+
+                    return `
+                        <tr class="hover:bg-[#11182A]/70 transition-colors">
+                            <td class="py-3 px-3 text-xs font-bold text-[#64748B] font-mono">${paginated.startIdx + idx}</td>
+                            <td class="py-3 px-4 font-mono font-bold text-white text-xs">${this.escapeHtml(v.regNo)}</td>
+                            <td class="py-3 px-4 text-xs text-slate-300">${this.renderTruncatedNameHtml(v.model, 16)}</td>
+                            <td class="py-3 px-4 text-xs font-bold text-slate-200">${this.renderTruncatedNameHtml(v.driverName || 'Unassigned', 16)}</td>
+                            <td class="py-3 px-3">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#141B30] text-[#8B5CF6] border border-[#263149] inline-block">${this.renderTruncatedNameHtml(hubLabel, 16)}</span>
+                            </td>
+                            <td class="py-3 px-3 text-center">
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded ${isActive ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30' : isIdle ? 'bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30' : 'bg-slate-800 text-slate-400'}">
+                                    ${this.escapeHtml(v.status)}
+                                </span>
+                            </td>
+                            <td class="py-3 px-3 text-center font-mono text-xs text-white font-bold">${Number(v.tripsToday) || 0}</td>
+                            <td class="py-3 px-4 text-right font-mono text-xs font-bold text-[#10B981]">₹${Math.round(v.todayEarnings || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-3 px-3 text-right">
+                                <button type="button" onclick="window.SVM_APP.focusVehicleOnMap('${this.escapeHtml(v.regNo)}')" class="action-btn-edit text-[11px]" title="Locate Cab on Live Map">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Locate
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            }
+        }
+
+        this.renderPaginationControls("platform-cabs-pagination", paginated, "setPlatformCabsPage");
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    // ------------------------------------------------------------------------
     // Duty Register, Telemetry, Drivers & Vehicles Views
     // ------------------------------------------------------------------------
     _getVehicleModelMap() {
@@ -2262,16 +2666,18 @@ class SvmFleetApp {
             return vehicleModelMap.get(regKey) || "";
         };
 
+        // Paginate for Overview (default 6 items per page)
+        const overviewPaginated = this.paginate(logs, this.pagination.overviewDuty.page, this.pagination.overviewDuty.pageSize);
+
         if (overviewCardsContainer) {
-            const recentLogs = logs.slice(0, 6);
-            if (recentLogs.length === 0) {
+            if (overviewPaginated.items.length === 0) {
                 overviewCardsContainer.innerHTML = `
                     <div class="col-span-full py-8 text-center text-xs text-slate-500 saas-card">
                         No duty logbook records match your filter.
                     </div>
                 `;
             } else {
-                overviewCardsContainer.innerHTML = recentLogs.map(log =>
+                overviewCardsContainer.innerHTML = overviewPaginated.items.map(log =>
                     this._renderMobileShiftCardHtml(log, {
                         thirdLabel: "Cash",
                         thirdValue: `₹${Math.round(log.cashCollection || 0).toLocaleString("en-IN")}`,
@@ -2283,8 +2689,83 @@ class SvmFleetApp {
             }
         }
 
+        if (tbodyOverview) {
+            if (overviewPaginated.items.length === 0) {
+                tbodyOverview.innerHTML = `<tr><td colspan="11" class="text-center py-6 text-slate-500 font-sans">No duty records match your filter.</td></tr>`;
+            } else {
+                tbodyOverview.innerHTML = overviewPaginated.items.map((log, idx) => {
+                    const isSettled = log.status === "SETTLED";
+                    const initials = (log.driverName || "DR").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) || "DR";
+                    const avatarColors = ["bg-[#6655F5]", "bg-[#0EA5E9]", "bg-[#8B5CF6]", "bg-[#10B981]", "bg-[#EC4899]"];
+                    const avatarColor = avatarColors[Math.abs((log.driverName || "D").charCodeAt(0)) % avatarColors.length];
+                    const safeLogId = this.escapeHtml(log.id);
+                    const vehModel = resolveVehicleModel(log);
+
+                    let sourceTag = `<span class="platform-badge platform-badge-uber px-2.5 py-0.5 text-[10px] font-bold rounded-full">Uber</span>`;
+                    if (log.source === "Rapido" || (log.remarks && log.remarks.toLowerCase().includes("rapido"))) {
+                        sourceTag = `<span class="platform-badge platform-badge-rapido px-2.5 py-0.5 text-[10px] font-bold rounded-full">Rapido</span>`;
+                    } else if (log.source === "Ola" || (log.remarks && log.remarks.toLowerCase().includes("ola"))) {
+                        sourceTag = `<span class="platform-badge platform-badge-ola px-2.5 py-0.5 text-[10px] font-bold rounded-full">Ola</span>`;
+                    }
+
+                    const statusTag = isSettled
+                        ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-settled inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Edit Settlement"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Settled</button>`
+                        : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-pending inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Settle & Edit"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>⏳ Pending</button>`;
+
+                    return `
+                        <tr class="hover:bg-[#11182A]/70 transition-colors">
+                            <td class="py-3 px-3 text-xs font-bold text-[#64748B] font-mono">${overviewPaginated.startIdx + idx}</td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0">
+                                        ${this.escapeHtml(initials)}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-sm text-white">${this.renderTruncatedNameHtml(log.driverName, 16)}</div>
+                                        <div class="text-xs text-[#64748B] font-mono">${this.escapeHtml(log.driverPhone || "")}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="car" class="w-4 h-4 text-[#64748B] shrink-0"></i>
+                                    <div>
+                                        <span class="font-mono text-xs font-bold text-slate-200 block">${this.escapeHtml(log.vehicleNo)}</span>
+                                        ${vehModel ? this.renderTruncatedNameHtml(vehModel, 16, "text-[10px] text-[#64748B] block") : ""}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-3 text-center font-bold text-white text-sm font-mono">${Number(log.trips) || 0}</td>
+                            <td class="py-3 px-4 text-right font-bold text-white font-mono">₹${Math.round(log.earnings || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${(Number(log.expenditure) || 0).toFixed(2)}</td>
+                            <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.cashCollection || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.commissionRent || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-3 px-3 text-center">${sourceTag}</td>
+                            <td class="py-3 px-3 text-center">${statusTag}</td>
+                            <td class="py-3 px-3 text-right">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="action-btn-edit" title="Edit Shift & Settlement">
+                                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                        <span class="hidden xl:inline text-[11px]">Edit</span>
+                                    </button>
+                                    <button type="button" onclick="window.SVM_APP.printReceipt('${safeLogId}')" class="action-btn-receipt" title="Print Driver Receipt">
+                                        <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                        <span class="hidden xl:inline text-[11px]">Receipt</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            }
+        }
+        this.renderPaginationControls("overview-register-pagination", overviewPaginated, "setOverviewPage");
+
+        // Paginate for Full Duty Register (default 10 items per page)
+        const fullPaginated = this.paginate(logs, this.pagination.fullDuty.page, this.pagination.fullDuty.pageSize);
+
         if (cardsContainer) {
-            if (logs.length === 0) {
+            if (fullPaginated.items.length === 0) {
                 cardsContainer.innerHTML = `
                     <div class="col-span-full py-12 text-center text-slate-500 saas-card">
                         <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
@@ -2292,7 +2773,7 @@ class SvmFleetApp {
                     </div>
                 `;
             } else {
-                cardsContainer.innerHTML = logs.map(log => {
+                cardsContainer.innerHTML = fullPaginated.items.map(log => {
                     const isSettled = log.status === "SETTLED";
                     const is12H = log.shiftType === "12_HOURS";
                     const isAuto = log.source === "AUTOMATIC_TELEMETRY" || log.source === "Uber" || log.source === "Rapido" || log.source === "Ola";
@@ -2393,141 +2874,80 @@ class SvmFleetApp {
             }
         }
 
-        const tableRowsHtml = logs.map((log, idx) => {
-            const isSettled = log.status === "SETTLED";
-            const initials = (log.driverName || "DR").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) || "DR";
-            const avatarColors = ["bg-[#6655F5]", "bg-[#0EA5E9]", "bg-[#8B5CF6]", "bg-[#10B981]", "bg-[#EC4899]"];
-            const avatarColor = avatarColors[Math.abs((log.driverName || "D").charCodeAt(0)) % avatarColors.length];
-            const safeLogId = this.escapeHtml(log.id);
-            const vehModel = resolveVehicleModel(log);
+        if (tbodyFull) {
+            if (fullPaginated.items.length === 0) {
+                tbodyFull.innerHTML = `<tr><td colspan="14" class="text-center py-6 text-slate-500 font-sans">No duty records match your filter.</td></tr>`;
+            } else {
+                tbodyFull.innerHTML = fullPaginated.items.map((log, idx) => {
+                    const isSettled = log.status === "SETTLED";
+                    const initials = (log.driverName || "DR").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) || "DR";
+                    const avatarColors = ["bg-[#6655F5]", "bg-[#0EA5E9]", "bg-[#8B5CF6]", "bg-[#10B981]", "bg-[#EC4899]"];
+                    const avatarColor = avatarColors[Math.abs((log.driverName || "D").charCodeAt(0)) % avatarColors.length];
+                    const hubName = this.getHubLabel(log.managerId);
+                    const safeLogId = this.escapeHtml(log.id);
+                    const vehModel = resolveVehicleModel(log);
 
-            let sourceTag = `<span class="platform-badge platform-badge-uber px-2.5 py-0.5 text-[10px] font-bold rounded-full">Uber</span>`;
-            if (log.source === "Rapido" || (log.remarks && log.remarks.toLowerCase().includes("rapido"))) {
-                sourceTag = `<span class="platform-badge platform-badge-rapido px-2.5 py-0.5 text-[10px] font-bold rounded-full">Rapido</span>`;
-            } else if (log.source === "Ola" || (log.remarks && log.remarks.toLowerCase().includes("ola"))) {
-                sourceTag = `<span class="platform-badge platform-badge-ola px-2.5 py-0.5 text-[10px] font-bold rounded-full">Ola</span>`;
-            }
+                    let platformTag = `<span class="platform-badge platform-badge-uber px-2.5 py-0.5 text-[10px] font-bold rounded-full">Uber</span>`;
+                    if (log.source === "Rapido" || (log.remarks && log.remarks.toLowerCase().includes("rapido"))) {
+                        platformTag = `<span class="platform-badge platform-badge-rapido px-2.5 py-0.5 text-[10px] font-bold rounded-full">Rapido</span>`;
+                    } else if (log.source === "Ola" || (log.remarks && log.remarks.toLowerCase().includes("ola"))) {
+                        platformTag = `<span class="platform-badge platform-badge-ola px-2.5 py-0.5 text-[10px] font-bold rounded-full">Ola</span>`;
+                    }
 
-            const statusTag = isSettled
-                ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-settled inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Edit Settlement"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Settled</button>`
-                : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-pending inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Settle & Edit"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>⏳ Pending</button>`;
+                    const statusTag = isSettled
+                        ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-settled inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Edit Settlement"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Settled</button>`
+                        : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-pending inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Settle & Edit"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>⏳ Pending</button>`;
 
-            return `
-                <tr class="hover:bg-[#11182A]/70 transition-colors">
-                    <td class="py-3 px-3 text-xs font-bold text-[#64748B] font-mono">${idx + 1}</td>
-                    <td class="py-3 px-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0">
-                                ${this.escapeHtml(initials)}
-                            </div>
-                            <div class="min-w-0">
-                                <div class="font-bold text-sm text-white">${this.renderTruncatedNameHtml(log.driverName, 16)}</div>
-                                <div class="text-xs text-[#64748B] font-mono">${this.escapeHtml(log.driverPhone || "")}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="car" class="w-4 h-4 text-[#64748B] shrink-0"></i>
-                            <div>
+                    return `
+                        <tr class="hover:bg-[#11182A]/70 transition-colors">
+                            <td class="py-3 px-3 text-xs font-bold text-[#64748B] font-mono">${fullPaginated.startIdx + idx}</td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-full ${avatarColor} flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0">
+                                        ${this.escapeHtml(initials)}
+                                    </div>
+                                    ${this.renderTruncatedNameHtml(log.driverName, 16, "font-bold text-sm text-white")}
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 font-mono text-xs text-[#94A3B8]">${this.escapeHtml(log.driverPhone || "")}</td>
+                            <td class="py-3 px-4">
                                 <span class="font-mono text-xs font-bold text-slate-200 block">${this.escapeHtml(log.vehicleNo)}</span>
                                 ${vehModel ? this.renderTruncatedNameHtml(vehModel, 16, "text-[10px] text-[#64748B] block") : ""}
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-3 text-center font-bold text-white text-sm font-mono">${Number(log.trips) || 0}</td>
-                    <td class="py-3 px-4 text-right font-bold text-white font-mono">₹${Math.round(log.earnings || 0).toLocaleString("en-IN")}</td>
-                    <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${(Number(log.expenditure) || 0).toFixed(2)}</td>
-                    <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.cashCollection || 0).toLocaleString("en-IN")}</td>
-                    <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.commissionRent || 0).toLocaleString("en-IN")}</td>
-                    <td class="py-3 px-3 text-center">${sourceTag}</td>
-                    <td class="py-3 px-3 text-center">${statusTag}</td>
-                    <td class="py-3 px-3 text-right">
-                        <div class="flex items-center justify-end gap-1.5">
-                            <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="action-btn-edit" title="Edit Shift & Settlement">
-                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                <span class="hidden xl:inline text-[11px]">Edit</span>
-                            </button>
-                            <button type="button" onclick="window.SVM_APP.printReceipt('${safeLogId}')" class="action-btn-receipt" title="Print Driver Receipt">
-                                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                                <span class="hidden xl:inline text-[11px]">Receipt</span>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join("");
-
-        const tableRowsFullHtml = logs.map((log, idx) => {
-            const isSettled = log.status === "SETTLED";
-            const initials = (log.driverName || "DR").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) || "DR";
-            const avatarColors = ["bg-[#6655F5]", "bg-[#0EA5E9]", "bg-[#8B5CF6]", "bg-[#10B981]", "bg-[#EC4899]"];
-            const avatarColor = avatarColors[Math.abs((log.driverName || "D").charCodeAt(0)) % avatarColors.length];
-            const hubName = this.getHubLabel(log.managerId);
-            const safeLogId = this.escapeHtml(log.id);
-            const vehModel = resolveVehicleModel(log);
-
-            let platformTag = `<span class="platform-badge platform-badge-uber px-2.5 py-0.5 text-[10px] font-bold rounded-full">Uber</span>`;
-            if (log.source === "Rapido" || (log.remarks && log.remarks.toLowerCase().includes("rapido"))) {
-                platformTag = `<span class="platform-badge platform-badge-rapido px-2.5 py-0.5 text-[10px] font-bold rounded-full">Rapido</span>`;
-            } else if (log.source === "Ola" || (log.remarks && log.remarks.toLowerCase().includes("ola"))) {
-                platformTag = `<span class="platform-badge platform-badge-ola px-2.5 py-0.5 text-[10px] font-bold rounded-full">Ola</span>`;
+                            </td>
+                            <td class="py-3 px-3">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#141B30] text-[#8B5CF6] border border-[#263149] inline-block">${this.renderTruncatedNameHtml(hubName, 16)}</span>
+                            </td>
+                            <td class="py-3 px-3 text-xs text-slate-300 font-mono">${this.escapeHtml(log.loginDate)}</td>
+                            <td class="py-3 px-3 text-center font-bold text-white text-sm font-mono">${Number(log.trips) || 0}</td>
+                            <td class="py-3 px-4 text-right font-bold text-white font-mono">₹${Math.round(log.earnings || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${(Number(log.expenditure) || 0).toFixed(2)}</td>
+                            <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.cashCollection || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.commissionRent || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-3 px-3 text-center">${platformTag}</td>
+                            <td class="py-3 px-3 text-center">${statusTag}</td>
+                            <td class="py-3 px-3 text-right">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="action-btn-edit" title="Edit Shift & Settlement">
+                                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                        <span class="hidden xl:inline text-[11px]">Edit</span>
+                                    </button>
+                                    <button type="button" onclick="window.SVM_APP.printReceipt('${safeLogId}')" class="action-btn-receipt" title="Print Driver Receipt">
+                                        <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                        <span class="hidden xl:inline text-[11px]">Receipt</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
             }
-
-            const statusTag = isSettled
-                ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-settled inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Edit Settlement"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Settled</button>`
-                : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-pending inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Settle & Edit"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>⏳ Pending</button>`;
-
-            return `
-                <tr class="hover:bg-[#11182A]/70 transition-colors">
-                    <td class="py-3 px-3 text-xs font-bold text-[#64748B] font-mono">${idx + 1}</td>
-                    <td class="py-3 px-4">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-full ${avatarColor} flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0">
-                                ${this.escapeHtml(initials)}
-                            </div>
-                            ${this.renderTruncatedNameHtml(log.driverName, 16, "font-bold text-sm text-white")}
-                        </div>
-                    </td>
-                    <td class="py-3 px-4 font-mono text-xs text-[#94A3B8]">${this.escapeHtml(log.driverPhone || "")}</td>
-                    <td class="py-3 px-4">
-                        <span class="font-mono text-xs font-bold text-slate-200 block">${this.escapeHtml(log.vehicleNo)}</span>
-                        ${vehModel ? this.renderTruncatedNameHtml(vehModel, 16, "text-[10px] text-[#64748B] block") : ""}
-                    </td>
-                    <td class="py-3 px-3">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#141B30] text-[#8B5CF6] border border-[#263149] inline-block">${this.renderTruncatedNameHtml(hubName, 16)}</span>
-                    </td>
-                    <td class="py-3 px-3 text-xs text-slate-300 font-mono">${this.escapeHtml(log.loginDate)}</td>
-                    <td class="py-3 px-3 text-center font-bold text-white text-sm font-mono">${Number(log.trips) || 0}</td>
-                    <td class="py-3 px-4 text-right font-bold text-white font-mono">₹${Math.round(log.earnings || 0).toLocaleString("en-IN")}</td>
-                    <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${(Number(log.expenditure) || 0).toFixed(2)}</td>
-                    <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.cashCollection || 0).toLocaleString("en-IN")}</td>
-                    <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.commissionRent || 0).toLocaleString("en-IN")}</td>
-                    <td class="py-3 px-3 text-center">${platformTag}</td>
-                    <td class="py-3 px-3 text-center">${statusTag}</td>
-                    <td class="py-3 px-3 text-right">
-                        <div class="flex items-center justify-end gap-1.5">
-                            <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="action-btn-edit" title="Edit Shift & Settlement">
-                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                <span class="hidden xl:inline text-[11px]">Edit</span>
-                            </button>
-                            <button type="button" onclick="window.SVM_APP.printReceipt('${safeLogId}')" class="action-btn-receipt" title="Print Driver Receipt">
-                                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                                <span class="hidden xl:inline text-[11px]">Receipt</span>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join("");
-
-        if (tbodyOverview) tbodyOverview.innerHTML = tableRowsHtml;
-        if (tbodyFull) tbodyFull.innerHTML = tableRowsFullHtml;
+        }
+        this.renderPaginationControls("full-register-pagination", fullPaginated, "setFullRegisterPage");
 
         const countBadge = document.getElementById("register-records-count");
         if (countBadge) {
             const totalGross = logs.reduce((sum, l) => sum + (Number(l.earnings) || 0), 0);
-            countBadge.innerText = `Showing ${logs.length} Shift Logs (₹${Math.round(totalGross).toLocaleString("en-IN")})`;
+            countBadge.innerText = `Showing ${fullPaginated.startIdx}-${fullPaginated.endIdx} of ${fullPaginated.total} Shift Logs (₹${Math.round(totalGross).toLocaleString("en-IN")})`;
         }
 
         if (window.lucide) {
@@ -2602,84 +3022,172 @@ class SvmFleetApp {
     }
 
     renderDriversGrid() {
-        const container = document.getElementById("drivers-grid");
-        if (!container) return;
+        const gridContainer = document.getElementById("drivers-grid");
+        const listTbody = document.getElementById("drivers-list-tbody");
+        const titleEl = document.getElementById("drivers-tab-title");
+        if (!gridContainer && !listTbody) return;
 
         const allowedHubId = this.getScopedHubId();
         if (!allowedHubId || !window.DEMO_REPO) {
-            container.innerHTML = "";
+            if (gridContainer) gridContainer.innerHTML = "";
+            if (listTbody) listTbody.innerHTML = "";
             return;
         }
 
-        const drivers = this.getCurrentFilteredDrivers();
+        let drivers = this.getCurrentFilteredDrivers();
         const logs = window.DEMO_REPO.getDutyLogs(allowedHubId);
         const hubs = window.DEMO_REPO.getHubs();
 
-        if (drivers.length === 0) {
-            container.innerHTML = `
-                <div class="col-span-full py-12 text-center text-slate-500 saas-card">
-                    No drivers assigned to this hub yet.
-                </div>
-            `;
-            return;
+        // Filter by Search Query
+        if (this.driversSearchQuery) {
+            const q = this.driversSearchQuery;
+            drivers = drivers.filter(d =>
+                (d.name && d.name.toLowerCase().includes(q)) ||
+                (d.phone && d.phone.toLowerCase().includes(q)) ||
+                (d.vehicleNo && d.vehicleNo.toLowerCase().includes(q))
+            );
         }
 
-        container.innerHTML = drivers.map(d => {
-            const hub = hubs.find(h => h.id === d.managerId);
-            const hubLabel = hub ? hub.shortName : (d.managerId || "Fleet");
-            const driverLogs = logs.filter(l =>
-                (l.driverName && d.name && l.driverName.toLowerCase() === d.name.toLowerCase()) ||
-                (l.driverPhone && d.phone && l.driverPhone === d.phone)
-            );
-            const totalShiftsLogged = driverLogs.length;
-            const isOnDuty = d.status === "ON_DUTY";
+        // Filter by Status
+        if (this.driversStatusFilter && this.driversStatusFilter !== "ALL") {
+            drivers = drivers.filter(d => d.status === this.driversStatusFilter);
+        }
 
-            return `
-                <div class="saas-card p-4 flex flex-col justify-between hover:border-[#6655F5]/40 transition-all">
-                    <div>
-                        <div class="flex justify-between items-start mb-2.5 gap-2">
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <h4 class="font-extrabold text-white text-base min-w-0">${this.renderTruncatedNameHtml(d.name, 16)}</h4>
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold rounded-full ${isOnDuty ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30' : 'bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30'}">
-                                        <span class="w-1.5 h-1.5 rounded-full ${isOnDuty ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}"></span>
-                                        ${isOnDuty ? 'ON DUTY' : 'IDLE'}
+        if (titleEl) {
+            const prefix = allowedHubId === "ALL" ? "SVM Fleet" : `${this.getActiveHubName()} Hub`;
+            titleEl.innerText = `${prefix} Drivers (${drivers.length} Profiles)`;
+        }
+
+        const viewMode = this.pagination.drivers.viewMode || "grid";
+        const pageSize = viewMode === "list" ? 10 : 12;
+        const paginated = this.paginate(drivers, this.pagination.drivers.page, pageSize);
+
+        if (gridContainer) {
+            if (paginated.items.length === 0) {
+                gridContainer.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-slate-500 saas-card">
+                        No drivers match your search or filter.
+                    </div>
+                `;
+            } else {
+                gridContainer.innerHTML = paginated.items.map(d => {
+                    const hub = hubs.find(h => h.id === d.managerId);
+                    const hubLabel = hub ? hub.shortName : (d.managerId || "Fleet");
+                    const driverLogs = logs.filter(l =>
+                        (l.driverName && d.name && l.driverName.toLowerCase() === d.name.toLowerCase()) ||
+                        (l.driverPhone && d.phone && l.driverPhone === d.phone)
+                    );
+                    const totalShiftsLogged = driverLogs.length;
+                    const isOnDuty = d.status === "ON_DUTY";
+
+                    return `
+                        <div class="saas-card p-4 flex flex-col justify-between hover:border-[#6655F5]/40 transition-all">
+                            <div>
+                                <div class="flex justify-between items-start mb-2.5 gap-2">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <h4 class="font-extrabold text-white text-base min-w-0">${this.renderTruncatedNameHtml(d.name, 16)}</h4>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold rounded-full ${isOnDuty ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30' : 'bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30'}">
+                                                <span class="w-1.5 h-1.5 rounded-full ${isOnDuty ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}"></span>
+                                                ${isOnDuty ? 'ON DUTY' : 'IDLE'}
+                                            </span>
+                                        </div>
+                                        <a href="tel:${this.escapeHtml(d.phone || '')}" class="text-xs text-[#6655F5] hover:underline font-mono flex items-center gap-1 mt-1">
+                                            <i data-lucide="phone" class="w-3 h-3"></i> ${this.escapeHtml(d.phone)}
+                                        </a>
+                                    </div>
+                                    <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#141B30] text-[#8B5CF6] border border-[#263149] shrink-0">
+                                        ${this.renderTruncatedNameHtml(hubLabel, 16)}
                                     </span>
                                 </div>
-                                <a href="tel:${this.escapeHtml(d.phone || '')}" class="text-xs text-[#6655F5] hover:underline font-mono flex items-center gap-1 mt-1">
-                                    <i data-lucide="phone" class="w-3 h-3"></i> ${this.escapeHtml(d.phone)}
-                                </a>
+                                <div class="grid grid-cols-2 gap-2 mt-3 p-2.5 rounded-xl bg-[#0B1021] border border-[#263149] text-xs">
+                                    <div>
+                                        <span class="text-[10px] text-slate-500 block font-semibold uppercase tracking-wider">Assigned Cab</span>
+                                        <span class="font-mono font-bold text-slate-200 mt-0.5 block">${this.escapeHtml(d.vehicleNo || 'Unassigned')}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-[10px] text-slate-500 block font-semibold uppercase tracking-wider">Duty History</span>
+                                        <span class="font-mono font-bold text-[#6655F5] mt-0.5 block">${totalShiftsLogged} Logs</span>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#141B30] text-[#8B5CF6] border border-[#263149] shrink-0">
-                                ${this.renderTruncatedNameHtml(hubLabel, 16)}
-                            </span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2 mt-3 p-2.5 rounded-xl bg-[#0B1021] border border-[#263149] text-xs">
-                            <div>
-                                <span class="text-[10px] text-slate-500 block font-semibold uppercase tracking-wider">Assigned Cab</span>
-                                <span class="font-mono font-bold text-slate-200 mt-0.5 block">${this.escapeHtml(d.vehicleNo || 'Unassigned')}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-[10px] text-slate-500 block font-semibold uppercase tracking-wider">Duty History</span>
-                                <span class="font-mono font-bold text-[#6655F5] mt-0.5 block">${totalShiftsLogged} Logs</span>
+                            <div class="mt-4 pt-3 border-t border-[#263149] flex justify-between items-center text-xs gap-2">
+                                <span class="text-[#10B981] font-bold flex items-center gap-1">⭐ ${this.escapeHtml(d.rating)}</span>
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" onclick="window.SVM_APP.filterDriverInRegister(${Number(d.id)})" class="px-2.5 py-1.5 rounded-lg bg-[#141B30] hover:bg-[#1E273D] text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors" title="View Duty Register for this driver">
+                                        <i data-lucide="file-text" class="w-3 h-3"></i> Shifts
+                                    </button>
+                                    <button type="button" onclick="window.SVM_APP.openManualEntryForDriver(${Number(d.id)})" class="px-3 py-1.5 rounded-lg bg-[#6655F5] hover:bg-[#5443E8] text-white font-bold text-xs flex items-center gap-1 shadow-md shadow-[#6655F5]/20 cursor-pointer transition-colors">
+                                        <i data-lucide="plus" class="w-3 h-3"></i> Log Shift
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-[#263149] flex justify-between items-center text-xs gap-2">
-                        <span class="text-[#10B981] font-bold flex items-center gap-1">⭐ ${this.escapeHtml(d.rating)}</span>
-                        <div class="flex items-center gap-1.5">
-                            <button type="button" onclick="window.SVM_APP.filterDriverInRegister(${Number(d.id)})" class="px-2.5 py-1.5 rounded-lg bg-[#141B30] hover:bg-[#1E273D] text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors" title="View Duty Register for this driver">
-                                <i data-lucide="file-text" class="w-3 h-3"></i> Shifts
-                            </button>
-                            <button type="button" onclick="window.SVM_APP.openManualEntryForDriver(${Number(d.id)})" class="px-3 py-1.5 rounded-lg bg-[#6655F5] hover:bg-[#5443E8] text-white font-bold text-xs flex items-center gap-1 shadow-md shadow-[#6655F5]/20 cursor-pointer transition-colors">
-                                <i data-lucide="plus" class="w-3 h-3"></i> Log Shift
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join("");
+                    `;
+                }).join("");
+            }
+        }
 
+        if (listTbody) {
+            if (paginated.items.length === 0) {
+                listTbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-500 font-sans">No drivers match your search or filter.</td></tr>`;
+            } else {
+                listTbody.innerHTML = paginated.items.map((d, idx) => {
+                    const hub = hubs.find(h => h.id === d.managerId);
+                    const hubLabel = hub ? hub.shortName : (d.managerId || "Fleet");
+                    const driverLogs = logs.filter(l =>
+                        (l.driverName && d.name && l.driverName.toLowerCase() === d.name.toLowerCase()) ||
+                        (l.driverPhone && d.phone && l.driverPhone === d.phone)
+                    );
+                    const totalShiftsLogged = driverLogs.length;
+                    const isOnDuty = d.status === "ON_DUTY";
+                    const initials = (d.name || "DR").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) || "DR";
+                    const avatarColors = ["bg-[#6655F5]", "bg-[#0EA5E9]", "bg-[#8B5CF6]", "bg-[#10B981]", "bg-[#EC4899]"];
+                    const avatarColor = avatarColors[Math.abs((d.name || "D").charCodeAt(0)) % avatarColors.length];
+
+                    return `
+                        <tr class="hover:bg-[#11182A]/70 transition-colors">
+                            <td class="py-3 px-3 text-xs font-bold text-[#64748B] font-mono">${paginated.startIdx + idx}</td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0">
+                                        ${this.escapeHtml(initials)}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-sm text-white">${this.renderTruncatedNameHtml(d.name, 16)}</div>
+                                        <a href="tel:${this.escapeHtml(d.phone || '')}" class="text-xs text-[#6655F5] hover:underline font-mono">${this.escapeHtml(d.phone)}</a>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 font-mono text-xs font-bold text-slate-200">${this.escapeHtml(d.vehicleNo || 'Unassigned')}</td>
+                            <td class="py-3 px-3">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#141B30] text-[#8B5CF6] border border-[#263149] inline-block">${this.renderTruncatedNameHtml(hubLabel, 16)}</span>
+                            </td>
+                            <td class="py-3 px-3 text-center font-mono text-xs text-white font-bold">${totalShiftsLogged} Shifts</td>
+                            <td class="py-3 px-3 text-center text-xs font-bold text-[#10B981]">⭐ ${this.escapeHtml(d.rating)}</td>
+                            <td class="py-3 px-3 text-center">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold rounded-full ${isOnDuty ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30' : 'bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30'}">
+                                    <span class="w-1.5 h-1.5 rounded-full ${isOnDuty ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}"></span>
+                                    ${isOnDuty ? 'ON DUTY' : 'IDLE'}
+                                </span>
+                            </td>
+                            <td class="py-3 px-3 text-right">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <button type="button" onclick="window.SVM_APP.filterDriverInRegister(${Number(d.id)})" class="action-btn-edit text-[11px]" title="View Shift Logs">
+                                        <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Shifts
+                                    </button>
+                                    <button type="button" onclick="window.SVM_APP.openManualEntryForDriver(${Number(d.id)})" class="px-2.5 py-1 rounded-lg bg-[#6655F5] hover:bg-[#5443E8] text-white text-[11px] font-bold flex items-center gap-1 shadow-sm cursor-pointer transition-colors">
+                                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Log Shift
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            }
+        }
+
+        this.renderPaginationControls("drivers-pagination-controls", paginated, "setDriversPage");
         if (window.lucide) window.lucide.createIcons();
     }
 
@@ -2703,71 +3211,152 @@ class SvmFleetApp {
     }
 
     renderVehiclesGrid() {
-        const container = document.getElementById("cars-grid");
-        if (!container) return;
+        const gridContainer = document.getElementById("cars-grid");
+        const listTbody = document.getElementById("cars-list-tbody");
+        const titleEl = document.getElementById("vehicles-tab-title");
+        if (!gridContainer && !listTbody) return;
 
         const allowedHubId = this.getScopedHubId();
-        const titleEl = document.getElementById("vehicles-tab-title");
-
         if (!allowedHubId || !window.DEMO_REPO) {
-            container.innerHTML = "";
+            if (gridContainer) gridContainer.innerHTML = "";
+            if (listTbody) listTbody.innerHTML = "";
             if (titleEl) titleEl.innerText = "SVM Fleet Vehicles (0 Commercial Cabs)";
             return;
         }
 
-        const vehicles = this.getCurrentFilteredVehicles();
+        let vehicles = this.getCurrentFilteredVehicles();
         const hubs = window.DEMO_REPO.getHubs();
         const canTransfer = Boolean(this.auth && this.auth.canManageHubs());
+
+        // Filter by Search Query
+        if (this.vehiclesSearchQuery) {
+            const q = this.vehiclesSearchQuery;
+            vehicles = vehicles.filter(v =>
+                (v.regNo && v.regNo.toLowerCase().includes(q)) ||
+                (v.model && v.model.toLowerCase().includes(q)) ||
+                (v.driverName && v.driverName.toLowerCase().includes(q)) ||
+                (v.locationName && v.locationName.toLowerCase().includes(q))
+            );
+        }
+
+        // Filter by Platform
+        if (this.vehiclesPlatformFilter && this.vehiclesPlatformFilter !== "ALL") {
+            vehicles = vehicles.filter(v => (v.platform || "").toLowerCase() === this.vehiclesPlatformFilter.toLowerCase());
+        }
+
+        // Filter by Status
+        if (this.vehiclesStatusFilter && this.vehiclesStatusFilter !== "ALL") {
+            vehicles = vehicles.filter(v => v.status === this.vehiclesStatusFilter);
+        }
 
         if (titleEl) {
             const prefix = allowedHubId === "ALL" ? "SVM Fleet" : `${this.getActiveHubName()} Hub`;
             titleEl.innerText = `${prefix} Vehicles (${vehicles.length} Commercial ${vehicles.length === 1 ? "Cab" : "Cabs"})`;
         }
 
-        if (vehicles.length === 0) {
-            container.innerHTML = `
-                <div class="col-span-full py-12 text-center text-slate-500 saas-card">
-                    No vehicles assigned to this hub yet.
-                </div>
-            `;
-            return;
+        const viewMode = this.pagination.vehicles.viewMode || "grid";
+        const pageSize = viewMode === "list" ? 10 : 12;
+        const paginated = this.paginate(vehicles, this.pagination.vehicles.page, pageSize);
+
+        if (gridContainer) {
+            if (paginated.items.length === 0) {
+                gridContainer.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-slate-500 saas-card">
+                        No vehicles match your search or filter.
+                    </div>
+                `;
+            } else {
+                gridContainer.innerHTML = paginated.items.map(v => {
+                    const isActive = v.status === "ACTIVE";
+                    const isIdle = v.status === "IDLE";
+                    const hub = hubs.find(h => h.id === v.managerId);
+
+                    return `
+                        <div class="saas-card p-4 flex flex-col justify-between hover:border-[#6655F5]/40 transition-all">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="min-w-0">
+                                        <h4 class="font-bold text-white font-mono text-base">${this.escapeHtml(v.regNo)}</h4>
+                                        <p class="text-xs text-slate-400">${this.renderTruncatedNameHtml(v.model, 16)}</p>
+                                    </div>
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded ${isActive ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30' : isIdle ? 'bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30' : 'bg-slate-800 text-slate-400'}">
+                                        ${this.escapeHtml(v.status)}
+                                    </span>
+                                </div>
+                                <div class="mt-2 text-xs text-slate-300 flex items-center gap-1.5">
+                                    <i data-lucide="user" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> ${this.renderTruncatedNameHtml(v.driverName || "Unassigned", 16)}
+                                </div>
+                                <div class="mt-1 text-xs text-[#0EA5E9] flex items-center gap-1.5">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> ${this.renderTruncatedNameHtml(v.locationName || "Depot", 16)}
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-3 border-t border-[#263149] flex justify-between items-center text-xs">
+                                <span class="text-slate-400">${this.renderTruncatedNameHtml(hub ? hub.shortName : "Fleet", 16)}</span>
+                                ${canTransfer ? `
+                                    <button type="button" onclick="window.SVM_APP.openReassignModal(${Number(v.id)})" class="text-xs text-[#6655F5] hover:text-[#8B5CF6] font-semibold underline cursor-pointer">
+                                        Transfer Hub
+                                    </button>
+                                ` : ""}
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+            }
         }
 
-        container.innerHTML = vehicles.map(v => {
-            const isActive = v.status === "ACTIVE";
-            const hub = hubs.find(h => h.id === v.managerId);
+        if (listTbody) {
+            if (paginated.items.length === 0) {
+                listTbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-500 font-sans">No vehicles match your search or filter.</td></tr>`;
+            } else {
+                listTbody.innerHTML = paginated.items.map((v, idx) => {
+                    const isActive = v.status === "ACTIVE";
+                    const isIdle = v.status === "IDLE";
+                    const hub = hubs.find(h => h.id === v.managerId);
+                    const hubLabel = hub ? hub.shortName : (v.managerId || "Fleet");
 
-            return `
-                <div class="saas-card p-4 flex flex-col justify-between hover:border-[#6655F5]/40 transition-all">
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="min-w-0">
-                                <h4 class="font-bold text-white font-mono text-base">${this.escapeHtml(v.regNo)}</h4>
-                                <p class="text-xs text-slate-400">${this.renderTruncatedNameHtml(v.model, 16)}</p>
-                            </div>
-                            <span class="px-2 py-0.5 text-[10px] font-bold rounded ${isActive ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30' : 'bg-slate-800 text-slate-400'}">
-                                ${this.escapeHtml(v.status)}
-                            </span>
-                        </div>
-                        <div class="mt-2 text-xs text-slate-300 flex items-center gap-1.5">
-                            <i data-lucide="user" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> ${this.renderTruncatedNameHtml(v.driverName || "Unassigned", 16)}
-                        </div>
-                        <div class="mt-1 text-xs text-[#0EA5E9] flex items-center gap-1.5">
-                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> ${this.renderTruncatedNameHtml(v.locationName || "Depot", 16)}
-                        </div>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-[#263149] flex justify-between items-center text-xs">
-                        <span class="text-slate-400">${this.renderTruncatedNameHtml(hub ? hub.shortName : "Fleet", 16)}</span>
-                        ${canTransfer ? `
-                            <button type="button" onclick="window.SVM_APP.openReassignModal(${Number(v.id)})" class="text-xs text-[#6655F5] hover:text-[#8B5CF6] font-semibold underline cursor-pointer">
-                                Transfer Hub
-                            </button>
-                        ` : ""}
-                    </div>
-                </div>
-            `;
-        }).join("");
+                    let platformTag = `<span class="platform-badge platform-badge-uber px-2.5 py-0.5 text-[10px] font-bold rounded-full">Uber</span>`;
+                    if (v.platform === "Rapido") {
+                        platformTag = `<span class="platform-badge platform-badge-rapido px-2.5 py-0.5 text-[10px] font-bold rounded-full">Rapido</span>`;
+                    } else if (v.platform === "Ola") {
+                        platformTag = `<span class="platform-badge platform-badge-ola px-2.5 py-0.5 text-[10px] font-bold rounded-full">Ola</span>`;
+                    }
 
+                    return `
+                        <tr class="hover:bg-[#11182A]/70 transition-colors">
+                            <td class="py-3 px-3 text-xs font-bold text-[#64748B] font-mono">${paginated.startIdx + idx}</td>
+                            <td class="py-3 px-4">
+                                <div class="font-mono text-xs font-bold text-white">${this.escapeHtml(v.regNo)}</div>
+                                <div class="text-[10px] text-[#64748B]">${this.renderTruncatedNameHtml(v.model, 16)}</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="text-xs font-bold text-slate-200">${this.renderTruncatedNameHtml(v.driverName || 'Unassigned', 16)}</div>
+                            </td>
+                            <td class="py-3 px-3 text-center">${platformTag}</td>
+                            <td class="py-3 px-3">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#141B30] text-[#8B5CF6] border border-[#263149] inline-block">${this.renderTruncatedNameHtml(hubLabel, 16)}</span>
+                                <div class="text-[10px] text-slate-400 mt-0.5">${this.renderTruncatedNameHtml(v.locationName || 'Depot', 14)}</div>
+                            </td>
+                            <td class="py-3 px-3 text-center font-mono text-xs text-white font-bold">${Number(v.tripsToday) || 0}</td>
+                            <td class="py-3 px-4 text-right font-mono text-xs font-bold text-[#10B981]">₹${Math.round(v.todayEarnings || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-3 px-3 text-center">
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded ${isActive ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30' : isIdle ? 'bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30' : 'bg-slate-800 text-slate-400'}">
+                                    ${this.escapeHtml(v.status)}
+                                </span>
+                            </td>
+                            <td class="py-3 px-3 text-right">
+                                ${canTransfer ? `
+                                    <button type="button" onclick="window.SVM_APP.openReassignModal(${Number(v.id)})" class="action-btn-edit text-[11px]" title="Transfer Cab Hub">
+                                        <i data-lucide="shuffle" class="w-3.5 h-3.5"></i> Transfer
+                                    </button>
+                                ` : `<span class="text-slate-600 text-[10px]">—</span>`}
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            }
+        }
+
+        this.renderPaginationControls("vehicles-pagination-controls", paginated, "setVehiclesPage");
         if (window.lucide) window.lucide.createIcons();
     }
 
@@ -3661,7 +4250,19 @@ class SvmFleetApp {
         }
 
         const allLogs = window.DEMO_REPO.getDutyLogs(allowedHubId);
-        const periodLogs = allLogs.filter(l => this._matchesPeriodFilter(l.loginDate, this.reportPeriod));
+        let periodLogs = allLogs;
+
+        if (this.reportsFromDate || this.reportsToDate) {
+            periodLogs = allLogs.filter(l => {
+                const iso = this._parseLogDateToIso(l.loginDate);
+                if (!iso) return true;
+                if (this.reportsFromDate && iso < this.reportsFromDate) return false;
+                if (this.reportsToDate && iso > this.reportsToDate) return false;
+                return true;
+            });
+        } else {
+            periodLogs = allLogs.filter(l => this._matchesPeriodFilter(l.loginDate, this.reportPeriod));
+        }
 
         let totalGross = 0;
         let totalComm = 0;
@@ -3698,15 +4299,17 @@ class SvmFleetApp {
             return vehicleModelMap.get(regKey) || "";
         };
 
+        const paginated = this.paginate(periodLogs, this.pagination.reports.page, 10);
+
         if (reportCards) {
-            if (periodLogs.length === 0) {
+            if (paginated.items.length === 0) {
                 reportCards.innerHTML = `
                     <div class="col-span-full py-8 text-center text-xs text-slate-500 saas-card">
                         No shift records found for this period.
                     </div>
                 `;
             } else {
-                reportCards.innerHTML = periodLogs.map(log =>
+                reportCards.innerHTML = paginated.items.map(log =>
                     this._renderMobileShiftCardHtml(log, {
                         thirdLabel: "Fuel",
                         thirdValue: `₹${Math.round(log.expenditure || 0).toLocaleString("en-IN")}`,
@@ -3719,23 +4322,23 @@ class SvmFleetApp {
         }
 
         if (tbody) {
-            if (periodLogs.length === 0) {
+            if (paginated.items.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="11" class="text-center py-6 text-slate-500 font-sans">No shift records found for this period.</td></tr>`;
             } else {
-                tbody.innerHTML = periodLogs.map((log, idx) => {
+                tbody.innerHTML = paginated.items.map((log, idx) => {
                     const isSettled = log.status === "SETTLED";
                     const safeLogId = this.escapeHtml(log.id);
                     return `
                         <tr class="hover:bg-[#11182A]/70 transition-colors">
-                            <td class="py-2.5 px-3 text-slate-500">${idx + 1}</td>
+                            <td class="py-2.5 px-3 text-slate-500 font-mono">${paginated.startIdx + idx}</td>
                             <td class="py-2.5 px-3 text-white font-mono">${this.escapeHtml(log.loginDate)}</td>
                             <td class="py-2.5 px-3">${this.renderTruncatedNameHtml(log.driverName, 16, "font-bold text-white")}</td>
                             <td class="py-2.5 px-3 text-slate-300 font-mono">${this.escapeHtml(log.vehicleNo)}</td>
-                            <td class="py-2.5 px-3 text-center text-white font-bold">${Number(log.trips) || 0}</td>
-                            <td class="py-2.5 px-3 text-right font-bold text-[#10B981]">₹${Math.round(log.earnings || 0).toLocaleString("en-IN")}</td>
-                            <td class="py-2.5 px-3 text-right text-[#0EA5E9]">₹${Math.round(log.expenditure || 0).toLocaleString("en-IN")}</td>
-                            <td class="py-2.5 px-3 text-right text-[#6655F5] font-bold">₹${Math.round(log.commissionRent || 0).toLocaleString("en-IN")}</td>
-                            <td class="py-2.5 px-3 text-right text-[#F59E0B]">₹${Math.round(log.cashCollection || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-2.5 px-3 text-center text-white font-bold font-mono">${Number(log.trips) || 0}</td>
+                            <td class="py-2.5 px-3 text-right font-bold text-[#10B981] font-mono">₹${Math.round(log.earnings || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-2.5 px-3 text-right text-[#0EA5E9] font-mono">₹${Math.round(log.expenditure || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-2.5 px-3 text-right text-[#6655F5] font-bold font-mono">₹${Math.round(log.commissionRent || 0).toLocaleString("en-IN")}</td>
+                            <td class="py-2.5 px-3 text-right text-[#F59E0B] font-mono">₹${Math.round(log.cashCollection || 0).toLocaleString("en-IN")}</td>
                             <td class="py-2.5 px-3 text-center">
                                 <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-${isSettled ? 'settled' : 'pending'} px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer" title="Click to edit settlement">
                                     ${isSettled ? '✓ Settled' : '⏳ Pending'}
@@ -3752,6 +4355,7 @@ class SvmFleetApp {
                 }).join("");
             }
         }
+        this.renderPaginationControls("reports-pagination", paginated, "setReportsPage");
         if (window.lucide) window.lucide.createIcons();
     }
 
