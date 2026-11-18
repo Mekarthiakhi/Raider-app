@@ -2597,8 +2597,8 @@ class SvmFleetApp {
                             </div>
                             ${modelHtml}
                         </div>
-                        <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-${isSettled ? 'settled' : 'pending'} shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors cursor-pointer" title="Click to edit settlement">
-                            ${isSettled ? '✓ Settled' : '⏳ Pending'}
+                        <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-${isSettled ? 'settled' : 'pending'}" title="Click to edit settlement">
+                            <span class="status-badge-dot"></span>${isSettled ? 'Settled' : 'Pending'}
                         </button>
                     </div>
 
@@ -2709,8 +2709,8 @@ class SvmFleetApp {
                     }
 
                     const statusTag = isSettled
-                        ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-settled inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Edit Settlement"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Settled</button>`
-                        : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-pending inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Settle & Edit"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>⏳ Pending</button>`;
+                        ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-settled" title="Click to Edit Settlement"><span class="status-badge-dot"></span>Settled</button>`
+                        : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-pending" title="Click to Settle & Edit"><span class="status-badge-dot"></span>Pending</button>`;
 
                     return `
                         <tr class="hover:bg-[#11182A]/70 transition-colors">
@@ -2741,7 +2741,7 @@ class SvmFleetApp {
                             <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.cashCollection || 0).toLocaleString("en-IN")}</td>
                             <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.commissionRent || 0).toLocaleString("en-IN")}</td>
                             <td class="py-3 px-3 text-center">${sourceTag}</td>
-                            <td class="py-3 px-3 text-center">${statusTag}</td>
+                            <td class="py-2.5 px-3 text-center whitespace-nowrap">${statusTag}</td>
                             <td class="py-3 px-3 text-right">
                                 <div class="flex items-center justify-end gap-1.5">
                                     <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="action-btn-edit" title="Edit Shift & Settlement">
@@ -2797,8 +2797,8 @@ class SvmFleetApp {
                                             <div class="flex items-center gap-2 flex-wrap">
                                                 <h4 class="font-extrabold text-base text-white font-mono">${this.escapeHtml(log.vehicleNo)}</h4>
                                                 ${vehModel ? this.renderTruncatedNameHtml(vehModel, 16, "text-[11px] text-slate-400") : ""}
-                                                <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-${isSettled ? 'settled' : 'pending'} text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors cursor-pointer" title="Click to edit settlement">
-                                                    ${isSettled ? '✓ Settled' : '⏳ Pending'}
+                                                <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-${isSettled ? 'settled' : 'pending'}" title="Click to edit settlement">
+                                                    <span class="status-badge-dot"></span>${isSettled ? 'Settled' : 'Pending'}
                                                 </button>
                                             </div>
                                             <div class="flex items-center gap-2 text-xs text-slate-300 mt-0.5 flex-wrap">
@@ -2895,8 +2895,8 @@ class SvmFleetApp {
                     }
 
                     const statusTag = isSettled
-                        ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-settled inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Edit Settlement"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Settled</button>`
-                        : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-pending inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold cursor-pointer transition-all shadow-sm" title="Click to Settle & Edit"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>⏳ Pending</button>`;
+                        ? `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-settled" title="Click to Edit Settlement"><span class="status-badge-dot"></span>Settled</button>`
+                        : `<button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-pending" title="Click to Settle & Edit"><span class="status-badge-dot"></span>Pending</button>`;
 
                     return `
                         <tr class="hover:bg-[#11182A]/70 transition-colors">
@@ -2924,7 +2924,7 @@ class SvmFleetApp {
                             <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.cashCollection || 0).toLocaleString("en-IN")}</td>
                             <td class="py-3 px-4 text-right text-slate-300 font-mono text-xs">₹${Math.round(log.commissionRent || 0).toLocaleString("en-IN")}</td>
                             <td class="py-3 px-3 text-center">${platformTag}</td>
-                            <td class="py-3 px-3 text-center">${statusTag}</td>
+                            <td class="py-2.5 px-3 text-center whitespace-nowrap">${statusTag}</td>
                             <td class="py-3 px-3 text-right">
                                 <div class="flex items-center justify-end gap-1.5">
                                     <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="action-btn-edit" title="Edit Shift & Settlement">
@@ -4339,9 +4339,9 @@ class SvmFleetApp {
                             <td class="py-2.5 px-3 text-right text-[#0EA5E9] font-mono">₹${Math.round(log.expenditure || 0).toLocaleString("en-IN")}</td>
                             <td class="py-2.5 px-3 text-right text-[#6655F5] font-bold font-mono">₹${Math.round(log.commissionRent || 0).toLocaleString("en-IN")}</td>
                             <td class="py-2.5 px-3 text-right text-[#F59E0B] font-mono">₹${Math.round(log.cashCollection || 0).toLocaleString("en-IN")}</td>
-                            <td class="py-2.5 px-3 text-center">
-                                <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-${isSettled ? 'settled' : 'pending'} px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer" title="Click to edit settlement">
-                                    ${isSettled ? '✓ Settled' : '⏳ Pending'}
+                            <td class="py-2.5 px-3 text-center whitespace-nowrap">
+                                <button type="button" onclick="window.SVM_APP.openEditSettlementModal('${safeLogId}')" class="status-badge-${isSettled ? 'settled' : 'pending'}" title="Click to edit settlement">
+                                    <span class="status-badge-dot"></span>${isSettled ? 'Settled' : 'Pending'}
                                 </button>
                             </td>
                             <td class="py-2.5 px-3 text-right">

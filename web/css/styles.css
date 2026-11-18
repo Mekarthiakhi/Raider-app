@@ -165,27 +165,65 @@ body.modal-open {
     color: #C4B5FD !important;
 }
 
-/* Status Badges (Duty Register & Reports) */
+/* Status Badges (Duty Register & Reports) - Sleek & Compact (User Requested) */
+.status-badge-settled,
+.status-badge-pending {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+    padding: 0.15rem 0.55rem !important;
+    font-size: 0.6875rem !important; /* 11px */
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    border-radius: 9999px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+    vertical-align: middle !important;
+    transition: all 0.15s ease !important;
+}
+
 .status-badge-settled {
-    background-color: rgba(16, 185, 129, 0.18) !important;
+    background-color: rgba(16, 185, 129, 0.15) !important;
     border: 1px solid rgba(16, 185, 129, 0.45) !important;
     color: #10B981 !important;
-    font-weight: 800;
 }
 .status-badge-settled:hover {
     background-color: rgba(16, 185, 129, 0.28) !important;
     color: #34D399 !important;
+    border-color: #10B981 !important;
 }
 
 .status-badge-pending {
-    background-color: rgba(245, 158, 11, 0.18) !important;
+    background-color: rgba(245, 158, 11, 0.15) !important;
     border: 1px solid rgba(245, 158, 11, 0.45) !important;
     color: #F59E0B !important;
-    font-weight: 800;
 }
 .status-badge-pending:hover {
     background-color: rgba(245, 158, 11, 0.28) !important;
     color: #FBBF24 !important;
+    border-color: #F59E0B !important;
+}
+
+.status-badge-dot {
+    width: 5px !important;
+    height: 5px !important;
+    border-radius: 9999px !important;
+    flex-shrink: 0 !important;
+    display: inline-block !important;
+}
+
+.status-badge-settled .status-badge-dot {
+    background-color: #10B981 !important;
+}
+
+.status-badge-pending .status-badge-dot {
+    background-color: #F59E0B !important;
 }
 
 /* Table Action Buttons (Edit & Receipt) */
@@ -2086,14 +2124,14 @@ html[data-theme="light"] #view-mode-cards-btn.bg-\[\#6655F5\] * {
     stroke: #FFFFFF !important;
 }
 
-/* Status Badges in Light Mode (Deep Saturated Text, Never Washed Out) */
+/* Status Badges in Light Mode (Deep Saturated Text, Never Washed Out, Compact Height) */
 html[data-theme="light"] .status-badge-settled {
     background-color: #DEF7EC !important;
-    border: 1.5px solid #31C48D !important;
+    border: 1px solid #31C48D !important;
     color: #03543F !important;
-    font-weight: 800 !important;
+    font-weight: 700 !important;
 }
-html[data-theme="light"] .status-badge-settled span {
+html[data-theme="light"] .status-badge-settled .status-badge-dot {
     background-color: #057A55 !important;
 }
 html[data-theme="light"] .status-badge-settled:hover {
@@ -2104,11 +2142,11 @@ html[data-theme="light"] .status-badge-settled:hover {
 
 html[data-theme="light"] .status-badge-pending {
     background-color: #FEF08A !important;
-    border: 1.5px solid #EAB308 !important;
+    border: 1px solid #EAB308 !important;
     color: #713F12 !important;
-    font-weight: 800 !important;
+    font-weight: 700 !important;
 }
-html[data-theme="light"] .status-badge-pending span {
+html[data-theme="light"] .status-badge-pending .status-badge-dot {
     background-color: #A16207 !important;
 }
 html[data-theme="light"] .status-badge-pending:hover {

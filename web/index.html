@@ -21,7 +21,35 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <!-- Custom Glassmorphism Stylesheet (Single Source of Truth with Cache-Busting Version) -->
-    <link rel="stylesheet" href="css/styles.css?v=20261117_v7">
+    <link rel="stylesheet" href="css/styles.css?v=20261118_v1">
+    <style>
+        .status-badge-settled,
+        .status-badge-pending {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.35rem !important;
+            padding: 0.15rem 0.55rem !important;
+            font-size: 0.6875rem !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+            border-radius: 9999px !important;
+            height: 22px !important;
+            min-height: 22px !important;
+            max-height: 22px !important;
+            font-weight: 700 !important;
+            cursor: pointer !important;
+            box-sizing: border-box !important;
+            vertical-align: middle !important;
+        }
+        .status-badge-dot {
+            width: 5px !important;
+            height: 5px !important;
+            border-radius: 9999px !important;
+            flex-shrink: 0 !important;
+            display: inline-block !important;
+        }
+    </style>
 </head>
 <body class="auth-locked bg-[#080D1B] text-slate-100 min-h-screen flex font-sans selection:bg-[#6655F5] selection:text-white">
 
@@ -2382,10 +2410,10 @@
     <div id="hub-filter-pills" class="hidden"></div>
 
     <!-- Core Scripts (Isolated Mock Data Layer for Client Demo) -->
-    <script src="js/calculator.js?v=20261117_v7"></script>
-    <script src="js/mockData.js?v=20261117_v7"></script>
-    <script src="js/auth.js?v=20261117_v7"></script>
-    <script src="js/map.js?v=20261117_v7"></script>
-    <script src="js/app.js?v=20261117_v7"></script>
+    <script src="js/calculator.js?v=20261118_v1"></script>
+    <script src="js/mockData.js?v=20261118_v1"></script>
+    <script src="js/auth.js?v=20261118_v1"></script>
+    <script src="js/map.js?v=20261118_v1"></script>
+    <script src="js/app.js?v=20261118_v1"></script>
 </body>
 </html>
