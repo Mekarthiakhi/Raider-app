@@ -140,14 +140,14 @@ body.modal-open {
 }
 
 .sidebar-link.active {
-    background: var(--primary-purple);
+    background: #182236;
     color: #FFFFFF;
-    box-shadow: 0 4px 16px -2px var(--primary-glow);
-    border-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar-link.active i, .sidebar-link.active svg {
-    color: #FFFFFF !important;
+    color: #818CF8 !important;
 }
 
 /* Sidebar User Guide CTA Button */
@@ -314,31 +314,26 @@ body.modal-open {
 }
 
 /* --------------------------------------------------------------------------
-   KPI Theme Cards
+   KPI Theme Cards - Clean Neutral Surface Ramp (Unslop Pass 2)
    -------------------------------------------------------------------------- */
-.kpi-card-purple {
-    background: linear-gradient(135deg, #161633 0%, #11182A 100%);
-    border: 1px solid #2C2D5A;
-}
-
-.kpi-card-blue {
-    background: linear-gradient(135deg, #101E38 0%, #11182A 100%);
-    border: 1px solid #1E3760;
-}
-
-.kpi-card-amber {
-    background: linear-gradient(135deg, #2D1E10 0%, #11182A 100%);
-    border: 1px solid #5A3D1C;
-}
-
-.kpi-card-teal {
-    background: linear-gradient(135deg, #0D2633 0%, #11182A 100%);
-    border: 1px solid #1A4D60;
-}
-
+.kpi-card-purple,
+.kpi-card-blue,
+.kpi-card-amber,
+.kpi-card-teal,
 .kpi-card-emerald {
-    background: linear-gradient(135deg, #0D2B24 0%, #0A1C18 100%);
-    border: 1px solid #1A5445;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* Tabular Numbers & Monospace Currency Formatting (Unslop Pass 5) */
+.font-mono,
+[id^="kpi-"],
+[id^="report-kpi-"],
+.tabular-nums,
+table td {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
 }
 
 /* --------------------------------------------------------------------------
@@ -1913,9 +1908,10 @@ html[data-theme="light"] .sidebar-link:hover svg {
 }
 
 html[data-theme="light"] .sidebar-link.active {
-    background: linear-gradient(90deg, #6655F5 0%, #7C6FF7 100%) !important;
-    color: #FFFFFF !important;
-    box-shadow: 0 4px 14px rgba(102, 85, 245, 0.3) !important;
+    background: #F1F5F9 !important;
+    color: #0F172A !important;
+    border: 1px solid #CBD5E1 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
 }
 
 html[data-theme="light"] .sidebar-link.active,
@@ -1923,8 +1919,8 @@ html[data-theme="light"] .sidebar-link.active *,
 html[data-theme="light"] .sidebar-link.active i,
 html[data-theme="light"] .sidebar-link.active svg,
 html[data-theme="light"] .sidebar-link.active span {
-    color: #FFFFFF !important;
-    stroke: #FFFFFF !important;
+    color: #0F172A !important;
+    stroke: #4F46E5 !important;
 }
 
 html[data-theme="light"] #app-sidebar > div:last-child {

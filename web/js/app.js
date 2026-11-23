@@ -1179,7 +1179,7 @@ class SvmFleetApp {
             }
             if (secretBadge && this.auth) {
                 const isDefault = this.auth.getOwnerSecretKey() === this.auth.DEFAULT_OWNER_SECRET_KEY;
-                secretBadge.innerText = isDefault ? "Default Key Active" : "Custom Key Active ✓";
+                secretBadge.innerText = isDefault ? "Default Key Active" : "Custom Key Active";
             }
             if (addManagerBtn) {
                 addManagerBtn.classList.remove("hidden");
@@ -1333,11 +1333,6 @@ class SvmFleetApp {
     }
 
     updateGreeting() {
-        const hour = new Date().getHours();
-        let timeGreeting = "Good Evening";
-        if (hour < 12) timeGreeting = "Good Morning";
-        else if (hour < 17) timeGreeting = "Good Afternoon";
-
         const titleEl = document.getElementById("greeting-title");
         const subtitleEl = document.getElementById("greeting-subtitle");
         const session = this.auth && this.auth.isAuthenticated() ? this.auth.getSession() : null;
@@ -1345,10 +1340,10 @@ class SvmFleetApp {
 
         if (!session) {
             if (titleEl) {
-                titleEl.innerHTML = `<span>${timeGreeting}, SVM Fleet Portal</span> <span class="text-2xl">🚕</span>`;
+                titleEl.innerHTML = `<span>SVM Fleet Operations Command</span>`;
             }
             if (subtitleEl) {
-                subtitleEl.innerText = "Sign in to access live fleet operations.";
+                subtitleEl.innerText = "Sign in to access live fleet operations and shift telemetry.";
             }
             return;
         }
@@ -1362,26 +1357,28 @@ class SvmFleetApp {
                 : (session.userName || "Hub Manager");
             const rawMgrName = (hub && hub.managerName) ? hub.managerName : (session.userName || "Hub Manager");
             const cleanMgrName = rawMgrName.split("(")[0].trim() || rawMgrName;
+            const hubLabel = hub ? hub.shortName : "Depot";
             if (titleEl) {
-                titleEl.innerHTML = `<span>${this.escapeHtml(timeGreeting)}, ${this.renderTruncatedNameHtml(cleanMgrName, 18, "", fullManagerLabel)}</span> <span class="text-2xl">👋</span>`;
+                titleEl.innerHTML = `<span>${this.renderTruncatedNameHtml(cleanMgrName, 18, "", fullManagerLabel)} • ${this.escapeHtml(hubLabel)} Dispatch</span>`;
             }
             if (subtitleEl) {
                 subtitleEl.innerText = hub
-                    ? `Here's your fleet performance for ${hub.name}.`
-                    : `Here's your assigned hub performance for today.`;
+                    ? `Active shifts, cash handovers, and vehicle duty roster for ${hub.name}`
+                    : `Active shifts, cash handovers, and vehicle duty roster for assigned depot`;
             }
             return;
         }
 
         const rawOwner = session.userName || "Akhilesh (Fleet Owner)";
         const cleanOwner = rawOwner.split("(")[0].trim() || rawOwner;
+        const scopeLabel = hub ? hub.name : "Hyderabad (All Hubs)";
         if (titleEl) {
-            titleEl.innerHTML = `<span>${this.escapeHtml(timeGreeting)}, ${this.renderTruncatedNameHtml(cleanOwner, 18, "", rawOwner)}</span> <span class="text-2xl">👋</span>`;
+            titleEl.innerHTML = `<span>Fleet Operations Command • ${this.escapeHtml(scopeLabel)}</span>`;
         }
         if (subtitleEl) {
             subtitleEl.innerText = hub
-                ? `Here's your fleet performance for ${hub.name}.`
-                : `Here's your fleet performance across all Hyderabad hubs today.`;
+                ? `Real-time dispatch, active shift roster, and revenue telemetry for ${hub.name}`
+                : `Real-time dispatch, active shift roster, and revenue telemetry across all Hyderabad depots`;
         }
     }
 
@@ -1397,7 +1394,7 @@ class SvmFleetApp {
         const hubs = window.DEMO_REPO ? window.DEMO_REPO.getHubs() : [];
         let options = `
             <option value="OWNER:ALL" ${this.currentHubId === "ALL" ? "selected" : ""}>
-                👑 Fleet Owner (Master - All Hubs)
+                Fleet Owner (Master - All Hubs)
             </option>
         `;
 
@@ -1405,7 +1402,7 @@ class SvmFleetApp {
             const isSelected = this.currentHubId === hub.id;
             options += `
                 <option value="OWNER:${this.escapeHtml(hub.id)}" ${isSelected ? "selected" : ""}>
-                    📍 Filter Hub: ${this.escapeHtml(hub.shortName)} (${this.escapeHtml(hub.managerName)})
+                    Depot: ${this.escapeHtml(hub.shortName)} (${this.escapeHtml(hub.managerName)})
                 </option>
             `;
         });
@@ -3633,7 +3630,7 @@ class SvmFleetApp {
 
             const badgeEl = document.getElementById("calc-preview-trips-badge");
             if (badgeEl) {
-                badgeEl.innerText = result.minTripsMet ? `✓ Target Met (${trips} trips)` : `⚠ Below Minimum (${trips}/${shiftType === "12_HOURS" ? 10 : 18} trips)`;
+                badgeEl.innerText = result.minTripsMet ? `Target Met (${trips} trips)` : `Below Minimum (${trips}/${shiftType === "12_HOURS" ? 10 : 18} trips)`;
                 badgeEl.className = result.minTripsMet ? "text-[#10B981] font-bold text-xs" : "text-[#F59E0B] font-bold text-xs";
             }
 
@@ -4434,7 +4431,7 @@ class SvmFleetApp {
 
             const badgeEl = document.getElementById("edit-calc-trips-badge");
             if (badgeEl) {
-                badgeEl.innerText = result.minTripsMet ? `✓ Target Met (${trips} trips)` : `⚠ Below Minimum (${trips}/${shiftType === "12_HOURS" ? 10 : 18} trips)`;
+                badgeEl.innerText = result.minTripsMet ? `Target Met (${trips} trips)` : `Below Minimum (${trips}/${shiftType === "12_HOURS" ? 10 : 18} trips)`;
                 badgeEl.className = result.minTripsMet ? "text-[#10B981] font-bold text-xs" : "text-[#F59E0B] font-bold text-xs";
             }
 
