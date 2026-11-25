@@ -310,19 +310,6 @@
                     <i data-lucide="settings" class="w-4 h-4 text-[#94A3B8]"></i>
                     <span>Settings</span>
                 </button>
-                <button type="button" onclick="window.SVM_APP.openUserGuideModal()"
-                    class="sidebar-link sidebar-guide-btn mt-2 transition-all">
-                    <i data-lucide="book-open" class="w-4 h-4"></i>
-                    <span class="font-bold">User Guide & Manual</span>
-                </button>
-                <button type="button" id="sidebar-tour-btn"
-                    onclick="window.SVM_TOUR ? window.SVM_TOUR.start() : (window.SVM_APP && window.SVM_APP.startInteractiveTour())"
-                    class="sidebar-link mt-1 text-indigo-400 hover:text-white bg-indigo-950/30 hover:bg-indigo-900/40 border border-indigo-500/20 transition-all">
-                    <i data-lucide="compass" class="w-4 h-4 text-indigo-400"></i>
-                    <span class="font-bold">Interactive Tour</span>
-                    <span
-                        class="ml-auto text-[9px] bg-indigo-500/30 text-indigo-300 px-1.5 py-0.5 rounded font-mono font-bold">LIVE</span>
-                </button>
             </nav>
         </div>
 
@@ -549,13 +536,6 @@
                                 This Month
                             </button>
                         </div>
-
-                        <!-- Add Shift Button (Unified modal trigger) -->
-                        <button id="btn-open-manual-entry" type="button"
-                            class="px-4 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#6655F5]/35 transition-all border border-white/20 active:scale-95 cursor-pointer">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                            <span>Add Shift</span>
-                        </button>
                     </div>
                 </div>
 
@@ -1082,7 +1062,7 @@
                                         <i data-lucide="download" class="w-4 h-4 text-[#10B981]"></i>
                                         <span>Export CSV</span>
                                     </button>
-                                    <button type="button" onclick="window.SVM_APP.openManualEntryModal()"
+                                    <button type="button" id="register-add-shift-btn" onclick="window.SVM_APP.openManualEntryModal()"
                                         class="px-4 py-2 rounded-xl bg-[#6655F5] hover:bg-[#5443E8] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#6655F5]/25 cursor-pointer shrink-0 whitespace-nowrap">
                                         <i data-lucide="plus" class="w-4 h-4"></i>
                                         <span>Add Shift</span>

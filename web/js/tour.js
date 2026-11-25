@@ -46,12 +46,12 @@
                 },
                 {
                     id: 'add_shift',
-                    tab: 'overview',
-                    selector: '#btn-open-manual-entry',
-                    mobileSelector: '#btn-open-manual-entry',
+                    tab: 'register',
+                    selector: '#register-add-shift-btn',
+                    mobileSelector: '#register-add-shift-btn',
                     badge: 'SHIFT ENTRY',
                     title: '2. Record Driver Shift (+ Add Shift)',
-                    text: 'Click this button whenever a driver returns to depot. Search the driver, pick their assigned vehicle from the daily rotation pool (30 cabs), enter trips completed, fuel spent, and Uber/Rapido earnings. The official commission engine auto-computes tier earnings and settlement vouchers.',
+                    text: 'Click "+ Add Shift" in the Duty Register whenever a driver finishes duty. Search the driver, pick their assigned vehicle from the daily rotation pool (30 cabs), enter trips completed, fuel spent, and Uber/Rapido earnings. The official commission engine auto-computes tier earnings and settlement vouchers.',
                     actionLabel: 'Open Shift Entry Form',
                     action: () => {
                         if (window.SVM_APP && typeof window.SVM_APP.openManualEntryModal === 'function') {
