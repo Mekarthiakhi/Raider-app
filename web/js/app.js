@@ -98,7 +98,7 @@ class SvmFleetApp {
         if (session && this.auth && this.auth.isAuthenticated()) {
             this.renderNotifications();
 
-            if (typeof HyderabadMapController !== "undefined") {
+            if (typeof HyderabadMapController !== "undefined" && document.getElementById("hyderabad-map")) {
                 this.mapController = new HyderabadMapController("hyderabad-map");
                 this.mapController.init();
             }
@@ -983,7 +983,7 @@ class SvmFleetApp {
 
         this.switchTab("overview");
 
-        if (!this.mapController && typeof HyderabadMapController !== "undefined") {
+        if (!this.mapController && typeof HyderabadMapController !== "undefined" && document.getElementById("hyderabad-map")) {
             this.mapController = new HyderabadMapController("hyderabad-map");
             this.mapController.init();
         }

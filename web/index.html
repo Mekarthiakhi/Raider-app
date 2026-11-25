@@ -783,83 +783,6 @@
 
                 </div>
 
-                <!-- Row 3: Live Hyderabad Map (2 cols) + Incoming Shift Telemetry (1 col) -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                    <!-- Live Hyderabad Fleet Map (2 cols) -->
-                    <div class="lg:col-span-2 saas-card p-5 flex flex-col min-h-[340px] lg:h-[400px]">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                            <div>
-                                <h3 class="font-bold text-sm text-white flex items-center gap-2">
-                                    <i data-lucide="map-pin" class="w-4 h-4 text-[#6655F5]"></i>
-                                    <span>Live Hyderabad Fleet Map</span>
-                                </h3>
-                                <p class="text-[11px] text-[#94A3B8] mt-0.5">Real-time fleet status across all hubs
-                                    (Demo Data)</p>
-                            </div>
-
-                            <!-- Legend Pills matching screenshot -->
-                            <div id="overview-map-legends" class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                                <span
-                                    class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 text-[10px] font-bold">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span> Active (18)
-                                </span>
-                                <span
-                                    class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30 text-[10px] font-bold">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span> Idle (7)
-                                </span>
-                                <span
-                                    class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30 text-[10px] font-bold">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></span> Offline (5)
-                                </span>
-                                <button type="button" onclick="window.SVM_APP.switchTab('map')"
-                                    class="text-[#94A3B8] hover:text-white transition-colors" title="Expand Full Map"
-                                    aria-label="Expand Full Map">
-                                    <i data-lucide="maximize-2" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Map Canvas Container with OpenStreetMap Dark Invert Filter -->
-                        <div id="hyderabad-map"
-                            class="flex-1 rounded-xl overflow-hidden border border-[#263149] relative"></div>
-                    </div>
-
-                    <!-- Incoming Shift Telemetry (1 col) -->
-                    <div class="saas-card p-5 flex flex-col justify-between min-h-[340px] lg:h-[400px]">
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="zap" class="w-4 h-4 text-[#6655F5]"></i>
-                                    <h3 class="font-bold text-sm text-white">Incoming Shift Telemetry</h3>
-                                </div>
-                                <span
-                                    class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 text-[10px] font-bold">
-                                    <span class="pulse-dot"></span> Live
-                                </span>
-                            </div>
-                            <p class="text-[11px] text-[#94A3B8] mb-3">
-                                Real-time updates from driver companion app (Demo)
-                            </p>
-                        </div>
-
-                        <!-- Telemetry Stream List (Driver A, B, C, D) -->
-                        <div id="telemetry-pending-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1">
-                            <!-- Populated dynamically via JS -->
-                        </div>
-
-                        <!-- Manual Entry Action Trigger at bottom of Telemetry -->
-                        <div class="mt-3 pt-3 border-t border-[#263149]">
-                            <button type="button" onclick="window.SVM_APP.openManualEntryModal()"
-                                class="w-full py-2 rounded-xl bg-[#161F33] hover:bg-[#1E273D] border border-[#263149] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
-                                <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-[#6655F5]"></i>
-                                <span>Manual Shift Entry</span>
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-
                 <!-- Daily Cash & UPI Handover Settlements (Executive Dashboard View - User Request 6) -->
                 <div class="saas-card p-4 sm:p-5">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5">
@@ -937,56 +860,6 @@
                             <p class="text-[10px] text-[#94A3B8] mt-1 truncate">Physical cash with managers</p>
                         </div>
                     </div>
-                </div>
-
-                <!-- Bottom Row: Duty Register (Recent Entries) Table with Pagination (User Request 2) -->
-                <div class="saas-card p-5">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                        <div>
-                            <h3 class="font-bold text-base text-white flex items-center gap-2">
-                                <i data-lucide="clipboard-list" class="w-4 h-4 text-[#6655F5]"></i>
-                                <span id="overview-register-title">Moosapet Hub Duty Register (Recent Entries)</span>
-                            </h3>
-                            <p class="text-xs text-[#94A3B8] mt-0.5">Daily commission & cash settlement logbook</p>
-                        </div>
-                        <button type="button" onclick="window.SVM_APP.switchTab('register')"
-                            class="px-3.5 py-1.5 rounded-xl bg-[#161F33] hover:bg-[#1E273D] border border-[#263149] text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 whitespace-nowrap self-start sm:self-auto">
-                            <span>Open Full Register</span>
-                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#6655F5]"></i>
-                        </button>
-                    </div>
-
-                    <!-- Mobile Cards for Overview Duty Register -->
-                    <div id="overview-register-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
-                        <!-- Populated dynamically via JS -->
-                    </div>
-
-                    <div class="hidden md:block overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr
-                                    class="border-b border-[#263149] text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
-                                    <th class="py-3 px-3">#</th>
-                                    <th class="py-3 px-4">Driver & Mobile</th>
-                                    <th class="py-3 px-4">Vehicle</th>
-                                    <th class="py-3 px-3 text-center">Trips</th>
-                                    <th class="py-3 px-4 text-right">Earned (Gross)</th>
-                                    <th class="py-3 px-4 text-right">Fuel/Exp</th>
-                                    <th class="py-3 px-4 text-right">Cash Coll.</th>
-                                    <th class="py-3 px-4 text-right">Commission</th>
-                                    <th class="py-3 px-3 text-center">Source</th>
-                                    <th class="py-3 px-3 text-center">Status</th>
-                                    <th class="py-3 px-3 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="register-table-body" class="divide-y divide-[#1E273D]">
-                                <!-- Populated dynamically via JS -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Overview Pagination Controls -->
-                    <div id="overview-register-pagination" class="mt-3"></div>
                 </div>
 
             </div>
@@ -1784,7 +1657,7 @@
             <!-- ============================================================== -->
             <!-- VIEW 10: SETTINGS TAB (OWNER ONLY)                             -->
             <!-- ============================================================== -->
-            <div data-tab-content="settings" data-owner-only="true" class="hidden flex flex-col gap-5">
+            <div data-tab-content="settings" class="hidden flex flex-col gap-5">
                 <!-- Owner Security & Secret Key Card -->
                 <div id="settings-owner-security-card" class="saas-card p-4 sm:p-6">
                     <div

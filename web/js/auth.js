@@ -494,6 +494,7 @@ class SvmWebAuth {
 
         const hideOwnerOnly = !owner;
         document.querySelectorAll("[data-owner-only]").forEach(el => {
+            if (el.hasAttribute("data-tab-content")) return;
             el.classList.toggle("hidden", hideOwnerOnly);
             el.setAttribute("aria-hidden", String(hideOwnerOnly));
         });
