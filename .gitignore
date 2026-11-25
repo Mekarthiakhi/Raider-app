@@ -15,4 +15,5 @@ output.json
 *.jks
 ~$*
 .vscode/
+scratch/
 

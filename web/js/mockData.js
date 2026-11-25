@@ -782,6 +782,16 @@ class MockFleetRepository {
             ...log
         };
         this.data.dutyLogs.unshift(newLog);
+
+        // Update driver's recent vehicle in daily rotation pool
+        if (this.data && this.data.drivers && log.vehicleNo) {
+            const d = this.data.drivers.find(drv =>
+                (drv.name && log.driverName && drv.name.toLowerCase() === log.driverName.toLowerCase()) ||
+                (drv.phone && log.driverPhone && drv.phone === log.driverPhone)
+            );
+            if (d) d.vehicleNo = log.vehicleNo;
+        }
+
         this.saveState();
         return newLog;
     }

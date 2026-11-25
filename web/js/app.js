@@ -3099,8 +3099,8 @@ class SvmFleetApp {
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 mt-3 p-2.5 rounded-xl bg-[#0B1021] border border-[#263149] text-xs">
                                     <div>
-                                        <span class="text-[10px] text-slate-500 block font-semibold uppercase tracking-wider">Assigned Cab</span>
-                                        <span class="font-mono font-bold text-slate-200 mt-0.5 block">${this.escapeHtml(d.vehicleNo || 'Unassigned')}</span>
+                                        <span class="text-[10px] text-amber-400/90 block font-semibold uppercase tracking-wider">Rotation Cab</span>
+                                        <span class="font-mono font-bold text-slate-200 mt-0.5 block">${this.escapeHtml(d.vehicleNo || 'Pool Driver')}</span>
                                     </div>
                                     <div class="text-right">
                                         <span class="text-[10px] text-slate-500 block font-semibold uppercase tracking-wider">Duty History</span>
@@ -3156,7 +3156,11 @@ class SvmFleetApp {
                                     </div>
                                 </div>
                             </td>
-                            <td class="py-3 px-4 font-mono text-xs font-bold text-slate-200">${this.escapeHtml(d.vehicleNo || 'Unassigned')}</td>
+                            <td class="py-3 px-4 font-mono text-xs font-bold text-slate-200">
+                                <span class="px-2 py-0.5 rounded text-[10px] bg-[#162038] text-amber-300 border border-amber-500/20 inline-block">
+                                    ${this.escapeHtml(d.vehicleNo || 'Pool Driver')}
+                                </span>
+                            </td>
                             <td class="py-3 px-3">
                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#141B30] text-[#8B5CF6] border border-[#263149] inline-block">${this.renderTruncatedNameHtml(hubLabel, 16)}</span>
                             </td>
@@ -3358,16 +3362,16 @@ class SvmFleetApp {
     }
 
     // ------------------------------------------------------------------------
-    // Searchable Driver Combobox & Manual Shift Entry Modal
+    // Searchable Driver Combobox & Manual Shift Entry Modal (Daily Rotation)
     // ------------------------------------------------------------------------
     populateQuickDriverDropdown() {
         const select = document.getElementById("modal-quick-driver-select");
         const drivers = this.getCurrentFilteredDrivers();
 
         if (select) {
-            let options = `<option value="">-- Choose Driver (or enter manually below) --</option>`;
+            let options = `<option value="">-- Choose Driver (Daily Rotation) --</option>`;
             drivers.forEach(d => {
-                options += `<option value="${Number(d.id)}">${this.escapeHtml(d.name)} (${this.escapeHtml(d.phone)}) - ${this.escapeHtml(d.vehicleNo || "No Cab")}</option>`;
+                options += `<option value="${Number(d.id)}">${this.escapeHtml(d.name)} (${this.escapeHtml(d.phone)}) - Rotation</option>`;
             });
             select.innerHTML = options;
         }
@@ -3391,6 +3395,7 @@ class SvmFleetApp {
         dropdown.innerHTML = drivers.map(d => {
             const initials = (d.name || "DR").split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
             const hubName = this.getHubLabel(d.managerId);
+            const recentCab = d.vehicleNo ? `Recent: ${d.vehicleNo}` : "Rotation Pool";
 
             return `
                 <div class="dropdown-option flex items-center justify-between p-2.5 hover:bg-[#6655F5]/20 cursor-pointer transition-colors"
@@ -3405,8 +3410,8 @@ class SvmFleetApp {
                         </div>
                     </div>
                     <div class="text-right shrink-0">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#162038] text-[#10B981] border border-[#263149] inline-block">
-                            ${this.escapeHtml(d.vehicleNo || "No Cab")}
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#162038] text-amber-400 border border-amber-500/30 inline-block" title="Recent cab in rotation pool">
+                            ${this.escapeHtml(recentCab)}
                         </span>
                         ${this.renderTruncatedNameHtml(hubName, 16, "text-[9px] text-slate-400 block mt-0.5")}
                     </div>
@@ -3425,39 +3430,19 @@ class SvmFleetApp {
         }
     }
 
-    _positionDriverDropdown() {
-        const wrapper = document.getElementById("driver-combobox-wrapper");
-        const dropdown = document.getElementById("driver-search-dropdown");
-        if (!wrapper || !dropdown || dropdown.classList.contains("hidden")) return;
-        const rect = wrapper.getBoundingClientRect();
-        const vpW = window.innerWidth;
-        const vpH = window.innerHeight;
-        const width = Math.min(rect.width || 300, vpW - 16);
-        let left = Math.max(8, Math.min(rect.left, vpW - width - 8));
-        const spaceBelow = vpH - rect.bottom - 10;
-        let top = rect.bottom + 6;
-        if (spaceBelow < 160 && rect.top > spaceBelow) {
-            top = Math.max(8, rect.top - Math.min(dropdown.scrollHeight || 220, 220) - 6);
-        }
-        dropdown.style.left = `${Math.round(left)}px`;
-        dropdown.style.top = `${Math.round(top)}px`;
-        dropdown.style.width = `${Math.round(width)}px`;
-    }
-
     openDriverDropdown() {
         const dropdown = document.getElementById("driver-search-dropdown");
         const chevron = document.getElementById("driver-search-chevron");
         const input = document.getElementById("driver-search-input");
-        if (dropdown) {
-            if (!this._driverDropdownOriginalParent && dropdown.parentElement) {
-                this._driverDropdownOriginalParent = dropdown.parentElement;
+        const wrapper = document.getElementById("driver-combobox-wrapper");
+
+        if (dropdown && wrapper) {
+            // Keep inside wrapper so it stays anchored and scrolls with the modal naturally
+            if (dropdown.parentElement !== wrapper) {
+                wrapper.appendChild(dropdown);
             }
-            if (dropdown.parentElement !== document.body) {
-                document.body.appendChild(dropdown);
-            }
-            dropdown.classList.remove("hidden");
-            dropdown.classList.add("portal-open");
-            this._positionDriverDropdown();
+            dropdown.classList.remove("hidden", "portal-open");
+            dropdown.scrollTop = 0;
         }
         if (chevron) chevron.classList.add("rotate-180");
         if (input) input.focus();
@@ -3469,12 +3454,6 @@ class SvmFleetApp {
         if (dropdown) {
             dropdown.classList.add("hidden");
             dropdown.classList.remove("portal-open");
-            dropdown.style.left = "";
-            dropdown.style.top = "";
-            dropdown.style.width = "";
-            if (this._driverDropdownOriginalParent && dropdown.parentElement !== this._driverDropdownOriginalParent) {
-                this._driverDropdownOriginalParent.appendChild(dropdown);
-            }
         }
         if (chevron) chevron.classList.remove("rotate-180");
     }
@@ -3503,7 +3482,7 @@ class SvmFleetApp {
         if (d) {
             const searchInput = document.getElementById("driver-search-input");
             if (searchInput) {
-                searchInput.value = `${d.name} (${d.vehicleNo || "No Cab"})`;
+                searchInput.value = `${d.name} (${d.phone})`;
             }
             const quickSelect = document.getElementById("modal-quick-driver-select");
             if (quickSelect) quickSelect.value = driverId;
@@ -3521,20 +3500,113 @@ class SvmFleetApp {
 
         const nameEl = document.getElementById("modal-drivername");
         const phoneEl = document.getElementById("modal-driverphone");
-        const regnoEl = document.getElementById("modal-regno");
         const hubEl = document.getElementById("modal-hub");
 
         if (nameEl) nameEl.value = d.name;
         if (phoneEl) phoneEl.value = d.phone;
-        if (regnoEl) regnoEl.value = d.vehicleNo || "";
+
         if (hubEl && !hubEl.disabled) {
             const allowedHubId = this.getScopedHubId(d.managerId);
             if (allowedHubId && allowedHubId !== "ALL") {
                 hubEl.value = allowedHubId;
             }
         }
-        this.refreshSearchableSelects();
 
+        // Suggest recent vehicle or let manager pick any rotation cab
+        this.populateShiftVehicleDropdown(d.managerId, d.vehicleNo || "");
+
+        this.refreshSearchableSelects();
+        this.updateModalCalculation();
+    }
+
+    populateShiftVehicleDropdown(preferredHubId = null, selectedVehicleNo = null) {
+        const select = document.getElementById("modal-vehicle-select");
+        if (!select) return;
+
+        const allVehicles = window.DEMO_REPO ? window.DEMO_REPO.getVehicles("ALL") : [];
+        const hubs = window.DEMO_REPO ? window.DEMO_REPO.getHubs() : [];
+
+        let html = `<option value="">-- Choose Cab from Rotation Pool (30 Cabs) --</option>`;
+
+        hubs.forEach(hub => {
+            const hubVehicles = allVehicles.filter(v => v.managerId === hub.id);
+            if (hubVehicles.length > 0) {
+                const isPreferred = preferredHubId && hub.id === preferredHubId;
+                const groupLabel = `${hub.shortName || hub.name} Pool (${hubVehicles.length} Cabs)${isPreferred ? ' • Assigned Depot' : ''}`;
+                html += `<optgroup label="${this.escapeHtml(groupLabel)}">`;
+                hubVehicles.forEach(v => {
+                    const statusLabel = v.status === "ACTIVE" ? "Active" : (v.status === "IDLE" ? "In Depot" : "Offline");
+                    html += `<option value="${this.escapeHtml(v.regNo)}">${this.escapeHtml(v.regNo)} - ${this.escapeHtml(v.model || "Sedan")} (${statusLabel})</option>`;
+                });
+                html += `</optgroup>`;
+            }
+        });
+
+        html += `<option value="__CUSTOM__">Other / Temporary Replacement Cab</option>`;
+        select.innerHTML = html;
+
+        if (selectedVehicleNo) {
+            this.setShiftVehicleValue(selectedVehicleNo);
+        }
+    }
+
+    setShiftVehicleValue(regNo) {
+        const select = document.getElementById("modal-vehicle-select");
+        const regnoInput = document.getElementById("modal-regno");
+        if (!regnoInput) return;
+
+        const cleanReg = String(regNo || "").trim().toUpperCase();
+        regnoInput.value = cleanReg;
+
+        if (select) {
+            let matched = false;
+            for (let i = 0; i < select.options.length; i++) {
+                const optVal = String(select.options[i].value || "").replace(/\s+/g, '').toUpperCase();
+                if (optVal && optVal === cleanReg.replace(/\s+/g, '').toUpperCase()) {
+                    select.selectedIndex = i;
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched && cleanReg) {
+                select.value = "__CUSTOM__";
+            } else if (!cleanReg) {
+                select.selectedIndex = 0;
+            }
+        }
+    }
+
+    onShiftVehicleSelected(val) {
+        const regnoInput = document.getElementById("modal-regno");
+        if (!regnoInput) return;
+
+        if (val && val !== "__CUSTOM__") {
+            regnoInput.value = val;
+        } else if (val === "__CUSTOM__") {
+            regnoInput.value = "";
+            regnoInput.placeholder = "Enter Cab Reg (e.g. TS09 UB 9999)";
+            regnoInput.focus();
+        }
+        this.updateModalCalculation();
+    }
+
+    onManualRegNoInput(val) {
+        const select = document.getElementById("modal-vehicle-select");
+        if (!select) return;
+
+        const clean = String(val || "").replace(/\s+/g, '').toUpperCase();
+        let matched = false;
+        for (let i = 0; i < select.options.length; i++) {
+            const optVal = String(select.options[i].value || "").replace(/\s+/g, '').toUpperCase();
+            if (optVal && optVal === clean) {
+                select.selectedIndex = i;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched && clean) {
+            select.value = "__CUSTOM__";
+        }
         this.updateModalCalculation();
     }
 
@@ -3592,6 +3664,15 @@ class SvmFleetApp {
             if (shiftDateEl) shiftDateEl.value = this._getTodayIsoDate();
 
             this.populateHubSelectElement(hubSelect, allowedHubId, true);
+            this.populateShiftVehicleDropdown(allowedHubId, prefillRegNo || "");
+
+            if (hubSelect) {
+                hubSelect.onchange = () => {
+                    this.populateShiftVehicleDropdown(hubSelect.value, document.getElementById("modal-regno")?.value);
+                    this.updateModalCalculation();
+                };
+            }
+
             this.attachStrictDateInputGuards();
             this.refreshSearchableSelects();
 
@@ -4591,6 +4672,15 @@ class SvmFleetApp {
         const modal = document.getElementById("user-guide-modal");
         if (modal) modal.classList.remove("open");
         document.body.classList.remove("modal-open");
+    }
+
+    startInteractiveTour() {
+        this.closeUserGuideModal();
+        if (window.SVM_TOUR && typeof window.SVM_TOUR.start === 'function') {
+            window.SVM_TOUR.start();
+        } else {
+            this.showToast("Guided tour is loading...", "info");
+        }
     }
 
     switchGuideTab(tabId) {
